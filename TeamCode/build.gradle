@@ -1,0 +1,69 @@
+//
+// build.gradle in TeamCode
+//
+// Most of the definitions for building your module reside in a common, shared
+// file 'build.common.gradle'. Being factored in this way makes it easier to
+// integrate updates to the FTC into your code. If you really need to customize
+// the build definitions, you can place those customizations in this file, but
+// please think carefully as to whether such customizations are really necessary
+// before doing so.
+
+
+// Custom definitions may go here
+
+// Include common definitions from above.
+apply from: '../build.common.gradle'
+apply from: '../build.dependencies.gradle'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace = 'org.firstinspires.ftc.teamcode'
+
+    packagingOptions {
+        jniLibs.useLegacyPackaging true
+        excludes += ['META-INF/**/*.sha1', 'META-INF/**/*.dylib', 'META-INF/**/*.dll', 'META-INF/**/*.so']
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+configurations {
+    simRun
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+    implementation 'com.areslib:core:1.0-SNAPSHOT'
+    implementation 'com.areslib:ftc-hardware:1.0-SNAPSHOT'
+    
+    simRun 'com.areslib:simulator:1.0-SNAPSHOT'
+}
+
+android.applicationVariants.all { variant ->
+    if (variant.name == "debug") {
+        task("runSim", type: JavaExec) {
+            dependsOn variant.javaCompileProvider
+            mainClass = 'com.areslib.sim.DesktopSimLauncher'
+            
+            // Use getCompileClasspath for Android libs, and simRun for transitive JVM dependencies
+            classpath = files(
+                configurations.simRun, // Place simRun (mocks) first so they override real FTC SDK classes!
+                variant.javaCompileProvider.get().destinationDirectory,
+                variant.getCompileClasspath(null),
+                project.android.bootClasspath
+            )
+            
+            def appArgs = project.hasProperty("appArgs") ? project.property("appArgs").toString().split(" ") : []
+            args(["--headless"] + appArgs)
+        }
+    }
+}
+
+configurations.all {
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'org.java-websocket', module: 'Java-WebSocket'
+    exclude group: 'com.google.code.gson', module: 'gson'
+}
+
