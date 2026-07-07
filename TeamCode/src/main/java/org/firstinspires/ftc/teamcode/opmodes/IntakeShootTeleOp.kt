@@ -6,14 +6,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 
 /**
- * A simulator-only OpMode for testing Game Pieces (Balls) with the
- * Intake and Shooter simulated mechanics.
+ * Full-featured TeleOp with field-centric driving, intake toggle,
+ * and shooter toggle. Works on both real hardware and the desktop simulator.
  *
  * Uses the standard AresTeleOpBase DSL for consistent lifecycle management,
  * while adding team-specific intake/shooter hardware via hardwareMap.
  */
-@TeleOp(name = "Simulator: Intake & Shoot TeleOp", group = "ARES Sim")
-class SimGamePieceTeleOp : AresTeleOpBase() {
+@TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
+class IntakeShootTeleOp : AresTeleOpBase() {
 
     private var intake: DcMotor? = null
     private var shooter: DcMotorEx? = null
@@ -31,11 +31,11 @@ class SimGamePieceTeleOp : AresTeleOpBase() {
                 shooter = hardwareMap.get(DcMotorEx::class.java, "shooter")
                 shooter?.mode = DcMotor.RunMode.RUN_USING_ENCODER
             } catch (e: Exception) {
-                println("[SimGamePieceTeleOp] Optional intake/shooter missing. Drivebase-only mode.")
+                println("[IntakeShootTeleOp] Optional intake/shooter missing. Drivebase-only mode.")
             }
 
-            telemetry.addData("Status", "Simulator OpMode Ready!")
-            telemetry.addData("Notice", "This OpMode is for Desktop Simulation only.")
+            telemetry.addData("Status", "Intake & Shoot TeleOp Ready!")
+            telemetry.addData("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
         }
 
         onLoop { robot, driver, telemetry ->
