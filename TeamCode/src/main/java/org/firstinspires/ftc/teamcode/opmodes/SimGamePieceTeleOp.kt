@@ -40,6 +40,9 @@ class SimGamePieceTeleOp : LinearOpMode() {
         
         try {
             while (opModeIsActive()) {
+                // Update sensors, EKF, and apply previous frame's motor commands first
+                robot.update()
+
                 val g1State = gamepad1.toState()
                 driver.update(g1State)
                 
@@ -78,8 +81,6 @@ class SimGamePieceTeleOp : LinearOpMode() {
                 if (driver.rightTrigger.value > 0.5) {
                     telemetry.addData("Feed", "PUSHING BALL")
                 }
-                
-                robot.update()
                 
                 telemetry.addData("Inventory", "Check the ARES-Analytics Sim UI")
                 telemetry.update()
