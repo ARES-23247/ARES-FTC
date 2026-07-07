@@ -28,8 +28,14 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             
             // 1. Check if AprilTag ID 1 is currently visible (for telemetry purposes)
             val now = com.areslib.util.RobotClock.currentTimeMillis()
-            val tag1MeasurementTele = robot.store.state.vision.measurements.firstOrNull {
-                it.tagId == 1 && (now - it.timestampMs) < 1000L
+            var tag1MeasurementTele: com.areslib.state.VisionMeasurement? = null
+            val measurements = robot.store.state.vision.measurements
+            for (i in 0 until measurements.size) {
+                val it = measurements[i]
+                if (it.tagId == 1 && (now - it.timestampMs) < 1000L) {
+                    tag1MeasurementTele = it
+                    break
+                }
             }
 
             if (tag1MeasurementTele != null) {

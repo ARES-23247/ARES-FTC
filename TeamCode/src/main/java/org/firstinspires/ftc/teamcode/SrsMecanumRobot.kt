@@ -39,7 +39,7 @@ class SrsMecanumRobot(
     blName: String = "bl",
     brName: String = "br",
     srsHubName: String = "srsHub",
-    private val localTelemetry: Any? = null
+    private val localTelemetry: com.areslib.telemetry.LocalTelemetry? = null
 ) : AresRobot() {
 
     // 1. Initialize Telemetry & Network Tables State Publishers
@@ -98,6 +98,19 @@ class SrsMecanumRobot(
         
         // Reset the floodgate energy integration tracker
         floodgate.resetTracker()
+
+        // Background voltage polling to prevent blocking the main update loop
+        kotlin.concurrent.thread(isDaemon = true, name = "VoltagePoller") {
+            try {
+                val voltageSensors = hardwareMap.getAll(VoltageSensor::class.java)
+                while (!Thread.currentThread().isInterrupted) {
+                    cachedBatteryVoltage = if (voltageSensors.isNotEmpty()) voltageSensors[0].voltage else 12.0
+                    Thread.sleep(100)
+                }
+            } catch (e: InterruptedException) {
+                // Thread interrupted on shutdown
+            }
+        }
     }
 
     /**
@@ -130,11 +143,7 @@ class SrsMecanumRobot(
         val wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds)
 
         // 4. Rate-limited battery voltage check to compensate for motor sag without blocking loop
-        if (timestamp - lastVoltageReadTime > 100 || lastVoltageReadTime == 0L) {
-            lastVoltageReadTime = timestamp
-            val voltageSensors = hardwareMap.getAll(VoltageSensor::class.java)
-            cachedBatteryVoltage = if (voltageSensors.isNotEmpty()) voltageSensors[0].voltage else 12.0
-        }
+        // Voltage is polled by the background daemon thread to avoid I2C delays
         val batteryVoltage = cachedBatteryVoltage
 
         // Apply battery-compensated voltage vectors
@@ -173,21 +182,15 @@ class SrsMecanumRobot(
 
         // 7. Human-readable local driver station telemetry
         if (localTelemetry != null) {
-            try {
-                val addDataMethod = localTelemetry.javaClass.getMethod("addData", String::class.java, Any::class.java)
-                val updateMethod = localTelemetry.javaClass.getMethod("update")
-
-                addDataMethod.invoke(localTelemetry, "Current Draw", String.format("%.2f Amps", floodgate.current))
-                addDataMethod.invoke(localTelemetry, "Fuse Load", String.format("%.1f%%", floodgate.fuseThermalLoadPercent))
-                addDataMethod.invoke(localTelemetry, "Voltage", String.format("%.2f V", batteryVoltage))
-                addDataMethod.invoke(localTelemetry, "Pose", String.format("(%.2f, %.2f) %.1f°",
-                    store.state.drive.poseEstimator.estimatedPose.x,
-                    store.state.drive.poseEstimator.estimatedPose.y,
-                    Math.toDegrees(store.state.drive.poseEstimator.estimatedPose.heading.radians)
-                ))
-
-                updateMethod.invoke(localTelemetry)
-            } catch (_: Exception) {}
+            localTelemetry.addData("Current Draw", String.format("%.2f Amps", floodgate.current))
+            localTelemetry.addData("Fuse Load", String.format("%.1f%%", floodgate.fuseThermalLoadPercent))
+            localTelemetry.addData("Voltage", String.format("%.2f V", batteryVoltage))
+            localTelemetry.addData("Pose", String.format("(%.2f, %.2f) %.1f°",
+                store.state.drive.poseEstimator.estimatedPose.x,
+                store.state.drive.poseEstimator.estimatedPose.y,
+                Math.toDegrees(store.state.drive.poseEstimator.estimatedPose.heading.radians)
+            ))
+            localTelemetry.update()
         }
     }
 

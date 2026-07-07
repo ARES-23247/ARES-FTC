@@ -45,12 +45,14 @@ android.applicationVariants.all { variant ->
     if (variant.name == "debug") {
         task("runSim", type: JavaExec) {
             dependsOn variant.javaCompileProvider
+            dependsOn "compile${variant.name.capitalize()}Kotlin"
             mainClass = 'com.areslib.sim.DesktopSimLauncher'
             
             // Use getCompileClasspath for Android libs, and simRun for transitive JVM dependencies
             classpath = files(
                 configurations.simRun, // Place simRun (mocks) first so they override real FTC SDK classes!
                 variant.javaCompileProvider.get().destinationDirectory,
+                "${buildDir}/tmp/kotlin-classes/${variant.name}",
                 variant.getCompileClasspath(null),
                 project.android.bootClasspath
             )

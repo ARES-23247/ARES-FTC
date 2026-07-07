@@ -112,7 +112,7 @@ abstract class AresTeleOpBase : LinearOpMode() {
                 robot.update(g1State, g2State)
             }
         } finally {
-            // Note: robot.close() handles proxy restart and zulip log uploads automatically!
+            // Note: robot.close() handles proxy restart and local archiving automatically!
             robot.close()
         }
     }
