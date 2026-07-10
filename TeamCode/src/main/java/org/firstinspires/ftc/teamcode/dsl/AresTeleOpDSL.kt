@@ -66,9 +66,16 @@ abstract class AresTeleOpBase : LinearOpMode() {
         // Dispatch alliance choice to core Redux store
         robot.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
 
-        // Set initial pose/heading offset at center (0,0)
+        val alliance = robot.store.state.drive.alliance
+        val startPose = if (alliance == com.areslib.state.Alliance.RED) {
+            com.areslib.math.Pose2d(0.0, -1.2, com.areslib.math.Rotation2d(Math.PI / 2.0))
+        } else {
+            com.areslib.math.Pose2d(0.0, 1.2, com.areslib.math.Rotation2d(-Math.PI / 2.0))
+        }
+
+        // Set initial pose/heading offset
         robot.pinpointIO?.initialize(
-            com.areslib.math.Pose2d(0.0, 0.0, com.areslib.math.Rotation2d(0.0)),
+            startPose,
             resetHardware = true
         )
 

@@ -66,8 +66,8 @@
         "type": "com.ares.analytics.shared.Obstacle.Rectangle",
         "id": "rect_1783685848692",
         "name": "Rectangle Obstacle 3",
-        "centerX": -0.0021496203436981885,
-        "centerY": 0.002149632666260018,
+        "centerX": -0.012563310255063631,
+        "centerY": -0.003057212289422795,
         "width": 0.5,
         "height": 0.5,
         "colorHex": "#FDD835"
