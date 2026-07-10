@@ -14,6 +14,8 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
     override fun define() = aresTeleOp {
         
         onInit { robot, telemetry ->
+            robot.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
+
             telemetry.addData("Status", "Ready! Aligning via Limelight...")
             telemetry.addData("Alliance", "RED")
             telemetry.addData("EKF Pose (X, Y, Deg)", String.format("(%.2f, %.2f) %.1f°",
@@ -51,25 +53,36 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
 
             // 2. Drive the robot
-            if (driver.b.isPressed) {
-                telemetry.addData("Alignment Mode", "ACTIVE (Tag 1 Seen & B Held!)")
-                robot.alignToTag(1)
-            } else {
-                telemetry.addData("Alignment Mode", "INACTIVE (Manual Drive)")
-                
-                val joystickForward = -driver.leftStickY.value.toDouble()
-                val joystickLeft = -driver.leftStickX.value.toDouble()
-                val rotate = -driver.rightStickX.value.toDouble()
-                
-                // The Simulator & FTC Field coordinate system has +X pointing right and +Y pointing up.
-                // The driver is standing at the bottom (-Y wall) looking up (+Y).
-                // Pushing UP (joystickForward > 0) should move the robot +Y.
-                // Pushing RIGHT (joystickLeft < 0) should move the robot +X.
-                robot.driveFieldCentric(
-                    x = -joystickLeft, 
-                    y = joystickForward, 
-                    rotation = rotate
-                )
+            when {
+                driver.b.isPressed -> {
+                    telemetry.addData("Alignment Mode", "ACTIVE (Tag 1 Seen & B Held!)")
+                    robot.alignToTag(1)
+                }
+                driver.a.isPressed -> {
+                    telemetry.addData("Alignment Mode", "ACTIVE (Drive to BackdropLeft Held!)")
+                    robot.driveToWaypoint("BackdropLeft", true)
+                }
+                driver.x.isPressed -> {
+                    telemetry.addData("Alignment Mode", "ACTIVE (Drive to TestWaypoint Held!)")
+                    robot.driveToWaypoint("TestWaypoint", true)
+                }
+                else -> {
+                    telemetry.addData("Alignment Mode", "INACTIVE (Manual Drive)")
+                    robot.driveToWaypoint("BackdropLeft", false)
+                    robot.driveToWaypoint("TestWaypoint", false)
+                    
+                    val joystickForward = -driver.leftStickY.value.toDouble()
+                    val joystickLeft = -driver.leftStickX.value.toDouble()
+                    val rotate = -driver.rightStickX.value.toDouble()
+                    
+                    // Use the lower-level facade to enable Anti-Drift heading lock
+                    robot.mecanumDrive.fieldRelativeDrive(
+                        vx = -joystickLeft, 
+                        vy = joystickForward, 
+                        omega = rotate,
+                        useHeadingLock = true
+                    )
+                }
             }
         }
     }
