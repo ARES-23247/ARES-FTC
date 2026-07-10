@@ -76,6 +76,7 @@ abstract class AresTeleOpBase : LinearOpMode() {
         driver.rightStickX.label("Robot Rotation")
         driver.b.label("Auto-Align to Tag 1")
         driver.y.label("Reset Field Centric Pose")
+        driver.x.label("Drive to TestWaypoint")
 
         try {
             while (opModeInInit()) {
@@ -103,8 +104,18 @@ abstract class AresTeleOpBase : LinearOpMode() {
                 
                 // Reset pose if Triangle (Y) is pressed (from original boilerplate)
                 if (gamepad1.y) {
+                    val now = com.areslib.util.RobotClock.currentTimeMillis()
                     robot.pinpointIO?.initialize(
                         com.areslib.math.Pose2d(0.0, 0.0, com.areslib.math.Rotation2d(0.0))
+                    )
+                    robot.store.dispatch(
+                        com.areslib.action.RobotAction.PoseUpdate(
+                            xMeters = 0.0,
+                            yMeters = 0.0,
+                            headingRadians = 0.0,
+                            timestampMs = now,
+                            isReset = true
+                        )
                     )
                 }
                 
