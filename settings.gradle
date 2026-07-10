@@ -1,4 +1,12 @@
 include ':FtcRobotController'
 include ':TeamCode'
 
-includeBuild '../ARESLib-Kotlin'
+if (file('../ARESLib-Kotlin').exists()) {
+    includeBuild('../ARESLib-Kotlin') {
+        dependencySubstitution {
+            substitute module('com.github.ARES-23247.ARESLib-Kotlin:core') using project(':core')
+            substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware') using project(':ftc-hardware')
+            substitute module('com.github.ARES-23247.ARESLib-Kotlin:simulator') using project(':simulator')
+        }
+    }
+}

@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
-    implementation("com.areslib:core:1.0-SNAPSHOT")
-    implementation("com.areslib:ftc-hardware:1.0-SNAPSHOT")
-    implementation("com.areslib:simulator:1.0-SNAPSHOT")
+    implementation("com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT")
+    implementation("com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT")
+    implementation("com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT")
 }
 
 sourceSets {
