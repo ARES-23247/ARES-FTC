@@ -25,28 +25,30 @@ class ARESMecanumDiagnostic : LinearOpMode() {
 
         waitForStart()
 
-        while (opModeIsActive()) {
-            val flPower = if (gamepad1.a) 0.4 else 0.0  // Cross / A
-            val frPower = if (gamepad1.b) 0.4 else 0.0  // Circle / B
-            val rlPower = if (gamepad1.x) 0.4 else 0.0  // Square / X
-            val rrPower = if (gamepad1.y) 0.4 else 0.0  // Triangle / Y
+        try {
+            while (opModeIsActive()) {
+                val flPower = if (gamepad1.a) 0.4 else 0.0  // Cross / A
+                val frPower = if (gamepad1.b) 0.4 else 0.0  // Circle / B
+                val rlPower = if (gamepad1.x) 0.4 else 0.0  // Square / X
+                val rrPower = if (gamepad1.y) 0.4 else 0.0  // Triangle / Y
 
-            fl?.power = flPower
-            fr?.power = frPower
-            rl?.power = rlPower
-            rr?.power = rrPower
+                fl?.power = flPower
+                fr?.power = frPower
+                rl?.power = rlPower
+                rr?.power = rrPower
 
-            telemetry.addData("--- Raw Motor Controls ---", "")
-            telemetry.addData("Hold Cross / A", "Spin FL (\"fl\") -> Speed: ${flPower}")
-            telemetry.addData("Hold Circle / B", "Spin FR (\"fr\") -> Speed: ${frPower}")
-            telemetry.addData("Hold Square / X", "Spin RL (\"rl\") -> Speed: ${rlPower}")
-            telemetry.addData("Hold Triangle / Y", "Spin RR (\"rr\") -> Speed: ${rrPower}")
-            telemetry.update()
+                telemetry.addData("--- Raw Motor Controls ---", "")
+                telemetry.addData("Hold Cross/A (FL)", flPower)
+                telemetry.addData("Hold Circle/B (FR)", frPower)
+                telemetry.addData("Hold Square/X (RL)", rlPower)
+                telemetry.addData("Hold Triangle/Y (RR)", rrPower)
+                telemetry.update()
+            }
+        } finally {
+            fl?.power = 0.0
+            fr?.power = 0.0
+            rl?.power = 0.0
+            rr?.power = 0.0
         }
-
-        fl?.power = 0.0
-        fr?.power = 0.0
-        rl?.power = 0.0
-        rr?.power = 0.0
     }
 }

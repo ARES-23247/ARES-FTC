@@ -16,6 +16,8 @@ class AresRobot(
 ) {
     val base = FtcMecanumRobot(
         hardwareMap = hardwareMap,
+        blName = "rl",
+        brName = "rr",
         localTelemetry = localTelemetry
     )
     

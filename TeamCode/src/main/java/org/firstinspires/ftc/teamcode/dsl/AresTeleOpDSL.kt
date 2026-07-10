@@ -101,9 +101,12 @@ abstract class AresTeleOpBase : LinearOpMode() {
             // NOTE: FtcMecanumRobot base init auto-stops the proxy for us now!
             com.areslib.ftc.telemetry.LimelightProxyAutoStart.stop()
             
+            val g1State = com.areslib.telemetry.GamepadState()
+            val g2State = com.areslib.telemetry.GamepadState()
+            
             while (opModeIsActive()) {
-                val g1State = gamepad1.toState()
-                val g2State = gamepad2.toState()
+                g1State.update(gamepad1)
+                g2State.update(gamepad2)
                 
                 driver.update(g1State)
                 
@@ -141,25 +144,27 @@ abstract class AresTeleOpBase : LinearOpMode() {
  * Converts an FTC SDK Gamepad into a platform-agnostic GamepadState
  * for the ARESLib logging pipeline.
  */
-fun Gamepad.toState() = GamepadState(
-    leftStickX = left_stick_x,
-    leftStickY = left_stick_y,
-    rightStickX = right_stick_x,
-    rightStickY = right_stick_y,
-    leftTrigger = left_trigger,
-    rightTrigger = right_trigger,
-    a = a,
-    b = b,
-    x = x,
-    y = y,
-    dpadUp = dpad_up,
-    dpadDown = dpad_down,
-    dpadLeft = dpad_left,
-    dpadRight = dpad_right,
-    leftBumper = left_bumper,
-    rightBumper = right_bumper,
-    leftStickButton = left_stick_button,
-    rightStickButton = right_stick_button,
-    start = start,
-    back = back
-)
+fun Gamepad.toState() = GamepadState().apply { update(this@toState) }
+
+fun GamepadState.update(gamepad: Gamepad) {
+    leftStickX = gamepad.left_stick_x
+    leftStickY = gamepad.left_stick_y
+    rightStickX = gamepad.right_stick_x
+    rightStickY = gamepad.right_stick_y
+    leftTrigger = gamepad.left_trigger
+    rightTrigger = gamepad.right_trigger
+    a = gamepad.a
+    b = gamepad.b
+    x = gamepad.x
+    y = gamepad.y
+    dpadUp = gamepad.dpad_up
+    dpadDown = gamepad.dpad_down
+    dpadLeft = gamepad.dpad_left
+    dpadRight = gamepad.dpad_right
+    leftBumper = gamepad.left_bumper
+    rightBumper = gamepad.right_bumper
+    leftStickButton = gamepad.left_stick_button
+    rightStickButton = gamepad.right_stick_button
+    start = gamepad.start
+    back = gamepad.back
+}

@@ -43,17 +43,36 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             if (tag1MeasurementTele != null) {
                 val targetSpace = tag1MeasurementTele.robotPoseTargetSpace
                 val ageMs = now - tag1MeasurementTele.timestampMs
-                telemetry.addData("Tag 1 Tracking", String.format("VISIBLE (Age: %dms)", ageMs))
-                telemetry.addData("Tag 1 Raw Z (Dist)", String.format("%.3fm (abs: %.3fm, %.2f ft)", 
-                    targetSpace.z, kotlin.math.abs(targetSpace.z), kotlin.math.abs(targetSpace.z) * 3.28084))
-                telemetry.addData("Tag 1 Raw X (Lat)", String.format("%.3fm", targetSpace.x))
-                telemetry.addData("Tag 1 Raw Yaw", String.format("%.1f°", Math.toDegrees(targetSpace.rotation.y)))
+                telemetry.addData("Tag 1 Tracking", "VISIBLE")
+                telemetry.addData("Tag 1 Age Ms", ageMs)
+                telemetry.addData("Tag 1 Raw Z", targetSpace.z)
+                telemetry.addData("Tag 1 Raw X", targetSpace.x)
+                telemetry.addData("Tag 1 Raw Yaw Rad", targetSpace.rotation.y)
             } else {
                 telemetry.addData("Tag 1 Tracking", "NOT VISIBLE")
             }
 
+            val joystickForward = -driver.leftStickY.value.toDouble()
+            val joystickLeft = -driver.leftStickX.value.toDouble()
+            val rotate = -driver.rightStickX.value.toDouble()
+            val hasManualInput = kotlin.math.abs(joystickForward) > 0.05 ||
+                                 kotlin.math.abs(joystickLeft) > 0.05 ||
+                                 kotlin.math.abs(rotate) > 0.05
+
             // 2. Drive the robot
             when {
+                hasManualInput -> {
+                    telemetry.addData("Alignment Mode", "INACTIVE (Manual Override)")
+                    robot.driveToWaypoint("BackdropLeft", false)
+                    robot.driveToWaypoint("TestWaypoint", false)
+                    
+                    robot.mecanumDrive.fieldRelativeDrive(
+                        vx = -joystickLeft, 
+                        vy = joystickForward, 
+                        omega = rotate,
+                        useHeadingLock = true
+                    )
+                }
                 driver.b.isPressed -> {
                     telemetry.addData("Alignment Mode", "ACTIVE (Tag 1 Seen & B Held!)")
                     robot.alignToTag(1)
@@ -71,11 +90,6 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
                     robot.driveToWaypoint("BackdropLeft", false)
                     robot.driveToWaypoint("TestWaypoint", false)
                     
-                    val joystickForward = -driver.leftStickY.value.toDouble()
-                    val joystickLeft = -driver.leftStickX.value.toDouble()
-                    val rotate = -driver.rightStickX.value.toDouble()
-                    
-                    // Use the lower-level facade to enable Anti-Drift heading lock
                     robot.mecanumDrive.fieldRelativeDrive(
                         vx = -joystickLeft, 
                         vy = joystickForward, 
