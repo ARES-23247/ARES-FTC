@@ -15,6 +15,7 @@
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlinx.kover'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
@@ -26,6 +27,10 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
     }
 }
 
@@ -41,6 +46,7 @@ dependencies {
     simRun 'com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT'
 
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
 }
 
 android.applicationVariants.all { variant ->
@@ -70,5 +76,22 @@ configurations.all {
     exclude group: 'org.java-websocket', module: 'Java-WebSocket'
     exclude group: 'com.google.code.gson', module: 'gson'
     exclude group: 'org.nanohttpd', module: 'nanohttpd'
+}
+
+koverReport {
+    defaults {
+        filters {
+            excludes {
+                classes("org.firstinspires.ftc.teamcode.opmodes.*")
+            }
+        }
+    }
+    androidReports("debug") {
+        filters {
+            excludes {
+                classes("org.firstinspires.ftc.teamcode.opmodes.*")
+            }
+        }
+    }
 }
 
