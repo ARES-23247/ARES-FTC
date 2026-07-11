@@ -18,7 +18,37 @@ class AresRobot(
         hardwareMap = hardwareMap,
         blName = "rl",
         brName = "rr",
-        localTelemetry = localTelemetry
+        localTelemetry = localTelemetry,
+        trackWidthMeters = org.firstinspires.ftc.teamcode.config.TunerConstants.TRACK_WIDTH_METERS,
+        wheelBaseMeters = org.firstinspires.ftc.teamcode.config.TunerConstants.WHEEL_BASE_METERS,
+        headingKp = org.firstinspires.ftc.teamcode.config.TunerConstants.HEADING_KP,
+        headingKi = org.firstinspires.ftc.teamcode.config.TunerConstants.HEADING_KI,
+        headingKd = org.firstinspires.ftc.teamcode.config.TunerConstants.HEADING_KD,
+        headingDeadzoneDeg = org.firstinspires.ftc.teamcode.config.TunerConstants.HEADING_DEADZONE_DEG,
+        driveKs = org.firstinspires.ftc.teamcode.config.TunerConstants.DRIVE_KS,
+        driveSlewRateLimit = org.firstinspires.ftc.teamcode.config.TunerConstants.DRIVE_SLEW_RATE_LIMIT,
+        odomQx = org.firstinspires.ftc.teamcode.config.TunerConstants.ODOM_QX,
+        odomQy = org.firstinspires.ftc.teamcode.config.TunerConstants.ODOM_QY,
+        odomQtheta = org.firstinspires.ftc.teamcode.config.TunerConstants.ODOM_QTHETA,
+        pinpointXOffsetMm = org.firstinspires.ftc.teamcode.config.TunerConstants.PINPOINT_X_OFFSET_MM,
+        pinpointYOffsetMm = org.firstinspires.ftc.teamcode.config.TunerConstants.PINPOINT_Y_OFFSET_MM,
+        pinpointEncoderResolution = org.firstinspires.ftc.teamcode.config.TunerConstants.PINPOINT_ENCODER_RESOLUTION,
+        pinpointXDirection = org.firstinspires.ftc.teamcode.config.TunerConstants.PINPOINT_X_DIRECTION,
+        pinpointYDirection = org.firstinspires.ftc.teamcode.config.TunerConstants.PINPOINT_Y_DIRECTION,
+        motorKp = org.firstinspires.ftc.teamcode.config.TunerConstants.MOTOR_KP,
+        motorKi = org.firstinspires.ftc.teamcode.config.TunerConstants.MOTOR_KI,
+        motorKd = org.firstinspires.ftc.teamcode.config.TunerConstants.MOTOR_KD,
+        motorKf = org.firstinspires.ftc.teamcode.config.TunerConstants.MOTOR_KF,
+        visionStdDevs = com.areslib.math.Vector3(
+            org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_STD_DEVS_X,
+            org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_STD_DEVS_Y,
+            org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_STD_DEVS_HEADING
+        ),
+        visionFilterConfig = com.areslib.hardware.vision.VisionFilterConfig(
+            maxDistanceMeters = org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_MAX_DISTANCE_METERS,
+            maxAmbiguity = org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_MAX_AMBIGUITY,
+            mahalanobisThreshold = org.firstinspires.ftc.teamcode.config.TunerConstants.VISION_MAHALANOBIS_THRESHOLD
+        )
     )
     
     val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
