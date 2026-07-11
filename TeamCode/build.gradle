@@ -39,6 +39,8 @@ dependencies {
     implementation 'com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT'
     
     simRun 'com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT'
+
+    testImplementation 'junit:junit:4.13.2'
 }
 
 android.applicationVariants.all { variant ->
