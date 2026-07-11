@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
-import com.qualcomm.robotcore.hardware.DcMotor
-import com.qualcomm.robotcore.hardware.DcMotorEx
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 
 /**
@@ -15,38 +13,34 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 @TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
 class IntakeShootTeleOp : AresTeleOpBase() {
 
-    private var intake: DcMotor? = null
-    private var shooter: DcMotorEx? = null
-    private var intakeActive = false
-    private var shooterActive = false
     private var lastLeftBumper = false
     private var lastRightBumper = false
 
     override fun define() = aresTeleOp {
 
         onInit { _, telemetry ->
-            // Initialize team-specific hardware outside the core FtcMecanumRobot
-            try {
-                intake = hardwareMap.get(DcMotor::class.java, "intake")
-                shooter = hardwareMap.get(DcMotorEx::class.java, "shooter")
-                shooter?.mode = DcMotor.RunMode.RUN_USING_ENCODER
-            } catch (e: Exception) {
-                println("[IntakeShootTeleOp] Optional intake/shooter missing. Drivebase-only mode.")
-            }
-
             telemetry.addData("Status", "Intake & Shoot TeleOp Ready!")
             telemetry.addData("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
         }
 
         onLoop { robot, driver, telemetry ->
+            val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
+
             // --- Toggle intake on rising edge of left bumper ---
             val leftBumper = driver.leftBumper.isPressed
-            if (leftBumper && !lastLeftBumper) intakeActive = !intakeActive
+            if (leftBumper && !lastLeftBumper) {
+                val currentIntake = robot.store.state.superstructure.intakeActive
+                robot.store.dispatch(com.areslib.action.RobotAction.SetIntakeActive(!currentIntake, timestamp))
+            }
             lastLeftBumper = leftBumper
 
             // --- Toggle shooter on rising edge of right bumper ---
             val rightBumper = driver.rightBumper.isPressed
-            if (rightBumper && !lastRightBumper) shooterActive = !shooterActive
+            if (rightBumper && !lastRightBumper) {
+                val currentFlywheel = robot.store.state.superstructure.flywheelActive
+                robot.store.dispatch(com.areslib.action.RobotAction.SetFlywheelTargetRPM(2000.0, timestamp))
+                robot.store.dispatch(com.areslib.action.RobotAction.SetFlywheelActive(!currentFlywheel, timestamp))
+            }
             lastRightBumper = rightBumper
 
             // 1. Drivetrain Control (Standard Field Centric)
@@ -60,20 +54,12 @@ class IntakeShootTeleOp : AresTeleOpBase() {
                 rotation = rotate
             )
 
-            // 2. Intake Control
-            intake?.power = if (intakeActive) 1.0 else 0.0
-            telemetry.addData("Intake", if (intakeActive) "ACTIVE" else "INACTIVE")
+            // 2. Read state from store for telemetry print
+            val state = robot.store.state
+            telemetry.addData("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
+            telemetry.addData("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (2000 RPM)" else "INACTIVE")
 
-            // 3. Shooter Control
-            if (shooterActive) {
-                try { shooter?.velocity = 2000.0 } catch (_: Exception) { shooter?.power = 1.0 }
-                telemetry.addData("Shooter", "ACTIVE (2000 RPM)")
-            } else {
-                try { shooter?.velocity = 0.0 } catch (_: Exception) { shooter?.power = 0.0 }
-                telemetry.addData("Shooter", "INACTIVE")
-            }
-
-            // 4. Feed mechanism (handled by sim InteractionModel on trigger press)
+            // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
             if (driver.rightTrigger.value > 0.5) {
                 telemetry.addData("Feed", "PUSHING BALL")
             }
