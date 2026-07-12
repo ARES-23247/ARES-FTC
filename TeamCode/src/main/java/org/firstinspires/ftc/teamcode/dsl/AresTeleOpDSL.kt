@@ -40,7 +40,6 @@ abstract class AresTeleOpBase : LinearOpMode() {
     }
     
     override fun runOpMode() {
-        com.areslib.telemetry.RobotStatusTracker.opModeInstance = this
         val builder = define()
         
         // Configure the EKF with the tag positions of the selected field layout
@@ -95,6 +94,7 @@ abstract class AresTeleOpBase : LinearOpMode() {
                 sleep(20)
             }
             if (isStopRequested) return
+            com.areslib.telemetry.RobotStatusTracker.activeOpMode = "TeleOp"
 
             // Mark initialization complete to enable active-play vision outlier filtering
             robot.visionTracker.isInInit = false
