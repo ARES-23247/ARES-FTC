@@ -48,7 +48,7 @@ object TunerConstants {
     // Vision Filtering baseline standard deviations (X meters, Y meters, Heading radians)
     var VISION_STD_DEVS_X = 0.05
     var VISION_STD_DEVS_Y = 0.05
-    var VISION_STD_DEVS_HEADING = 1000.0
+    var VISION_STD_DEVS_HEADING = 0.1
     
     // Vision Outlier Rejection Thresholds
     var VISION_MAX_DISTANCE_METERS = 6.0
