@@ -68,9 +68,9 @@ abstract class AresTeleOpBase : LinearOpMode() {
 
         val alliance = robot.store.state.drive.alliance
         val startPose = if (alliance == com.areslib.state.Alliance.RED) {
-            com.areslib.math.Pose2d(0.0, -1.2, com.areslib.math.Rotation2d(Math.PI / 2.0))
-        } else {
             com.areslib.math.Pose2d(0.0, 1.2, com.areslib.math.Rotation2d(-Math.PI / 2.0))
+        } else {
+            com.areslib.math.Pose2d(0.0, -1.2, com.areslib.math.Rotation2d(Math.PI / 2.0))
         }
 
         // Set initial pose/heading offset
@@ -117,14 +117,12 @@ abstract class AresTeleOpBase : LinearOpMode() {
                 // Reset pose if Triangle (Y) is pressed (from original boilerplate)
                 if (gamepad1.y) {
                     val now = com.areslib.util.RobotClock.currentTimeMillis()
-                    robot.pinpointIO?.initialize(
-                        com.areslib.math.Pose2d(0.0, 0.0, com.areslib.math.Rotation2d(0.0))
-                    )
+                    robot.pinpointIO?.initialize(startPose)
                     robot.store.dispatch(
                         com.areslib.action.RobotAction.PoseUpdate(
-                            xMeters = 0.0,
-                            yMeters = 0.0,
-                            headingRadians = 0.0,
+                            xMeters = startPose.x,
+                            yMeters = startPose.y,
+                            headingRadians = startPose.heading.radians,
                             timestampMs = now,
                             isReset = true
                         )
