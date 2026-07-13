@@ -18,10 +18,10 @@ object TunerConstants {
     var PATH_ROTATION_KD = 0.05
     
     // Drive Feedback (Heading Lock PID)
-    var HEADING_KP = 4.5
+    var HEADING_KP = 2.5
     var HEADING_KI = 0.0
-    var HEADING_KD = 0.25
-    var HEADING_DEADZONE_DEG = 0.5
+    var HEADING_KD = 0.3
+    var HEADING_DEADZONE_DEG = 1.5
     
     // Drivetrain Feedforward (Static friction) & Slew Acceleration Limits
     var DRIVE_KS = 0.0
