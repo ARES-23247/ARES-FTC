@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.hardware
 
-import com.areslib.hardware.FlywheelIO
+import org.firstinspires.ftc.teamcode.hardware.FlywheelIO
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
 class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private val motor: DcMotorEx? = try {
-        hardwareMap.get(DcMotorEx::class.java, "shooter")
+        com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
     } catch (_: Exception) {
         null
     }
@@ -41,17 +41,25 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
             return (ticksPerSec / ticksPerRev) * 60.0
         }
 
+    private var cachedAmps = 0.0
+    private var loopCounter = 0
+
     override val currentAmps: Double
-        get() = try {
-            motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
-        } catch (_: Exception) {
-            0.0
-        }
+        get() = cachedAmps
 
     override val tempCelsius: Double
         get() = 0.0
 
-    override fun refresh() {}
+    override fun refresh() {
+        loopCounter++
+        if (loopCounter % 10 == 0) {
+            try {
+                cachedAmps = motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
+            } catch (_: Exception) {
+                cachedAmps = 0.0
+            }
+        }
+    }
 
     override fun safe() {
         setAppliedVoltage(0.0)

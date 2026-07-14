@@ -9,18 +9,25 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
-import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBuilder
-import org.firstinspires.ftc.teamcode.dsl.toState
-import org.firstinspires.ftc.teamcode.dsl.update
+import com.areslib.ftc.dsl.FtcTeleOpBuilder
+import com.areslib.ftc.toState
+import com.areslib.ftc.update
 import org.junit.Assert.*
 import org.junit.Test
 import org.mockito.Mockito
 import kotlin.concurrent.thread
 
+import com.areslib.telemetry.GamepadState
+import com.areslib.telemetry.RobotStatusTracker
+
 class AresTeleOpBaseTest {
+
+    @Volatile
+    var killFlag = false
 
     @Test
     fun testAresTeleOpBaseLifecycle() {
+        com.areslib.telemetry.RobotStatusTracker.isEnabled = false
         val fl = Mockito.mock(DcMotorEx::class.java)
         val fr = Mockito.mock(DcMotorEx::class.java)
         val bl = Mockito.mock(DcMotorEx::class.java)
@@ -49,11 +56,16 @@ class AresTeleOpBaseTest {
                 this.telemetry = mockTelemetry
             }
 
-            override fun define(): AresTeleOpBuilder {
+            override fun define(): FtcTeleOpBuilder<org.firstinspires.ftc.teamcode.opmodes.AresRobot> {
                 return aresTeleOp {
                     onInit { _, _ -> }
                     onLoop { _, _, _ -> }
                 }
+            }
+
+            override fun updateRobot(robot: org.firstinspires.ftc.teamcode.opmodes.AresRobot, g1: GamepadState, g2: GamepadState) {
+                if (killFlag) throw RuntimeException("Kill test thread")
+                super.updateRobot(robot, g1, g2)
             }
         }
 
@@ -70,22 +82,32 @@ class AresTeleOpBaseTest {
 
         userMonitoredForStartField.set(opMode, false)
 
+        // 1. Start thread and let it enter opModeInInit()
         val t = thread {
-            opMode.runOpMode()
+            try {
+                opMode.runOpMode()
+            } catch (e: RuntimeException) {
+                if (e.message != "Kill test thread") throw e
+            }
         }
+        Thread.sleep(500)
 
         try {
-            // 1. Let init run for a bit
-            Thread.sleep(150)
-            
-            // 2. Transition to active (setting userMonitoredForStart to true starts the opMode)
-            userMonitoredForStartField.set(opMode, true)
+            // verify telemetry and state during init
+            assertFalse(RobotStatusTracker.isEnabled)
+
+            // 2. Transition to active (setting isStarted to true)
+            try {
+                val isStartedField = linearOpModeClass.superclass.getDeclaredField("isStarted")
+                isStartedField.isAccessible = true
+                isStartedField.set(opMode, true)
+            } catch (e: Exception) {}
             Thread.sleep(150)
         } finally {
-            // 3. Force loop to exit by setting userMonitoredForStart back to false
-            userMonitoredForStartField.set(opMode, false)
+            // 3. Force loop to exit by throwing
+            killFlag = true
             t.interrupt()
-            t.join(2000)
+            t.join(5000)
             
             // 4. Force stop the default NT4 Server using reflection to prevent JVM leakage
             try {
@@ -97,6 +119,21 @@ class AresTeleOpBaseTest {
             } catch (_: Exception) {}
         }
 
+        if (t.isAlive) {
+            System.err.println("Diagnostic: Thread t is still alive! State: ${t.state}")
+            for (ste in t.stackTrace) {
+                System.err.println("   at $ste")
+            }
+            System.err.println("LinearOpMode fields:")
+            for (field in LinearOpMode::class.java.declaredFields) {
+                try {
+                    field.isAccessible = true
+                    System.err.println("  ${field.name} (${field.type}) = ${field.get(opMode)}")
+                } catch (e: Exception) {
+                    System.err.println("  ${field.name} (${field.type}) = <error>")
+                }
+            }
+        }
         assertFalse("OpMode thread should have stopped and exited cleanly", t.isAlive)
     }
 
@@ -151,3 +188,4 @@ class AresTeleOpBaseTest {
         assertEquals(0.1f, state2.leftStickX, 1e-4f)
     }
 }
+

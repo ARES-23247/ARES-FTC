@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode
 
 import org.firstinspires.ftc.teamcode.config.TunerConstants
+import org.firstinspires.ftc.teamcode.opmodes.TestPathAuto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
@@ -25,18 +26,7 @@ class AresRobotTest {
         assertTrue("Mahalanobis threshold should be reasonable", TunerConstants.VISION_MAHALANOBIS_THRESHOLD > 0.0)
     }
 
-    @Test
-    fun testAresTeleOpBuilder() {
-        val builder = org.firstinspires.ftc.teamcode.dsl.AresTeleOpBuilder()
-        var initCalled = false
-        var loopCalled = false
 
-        builder.onInit { _, _ -> initCalled = true }
-        builder.onLoop { _, _, _ -> loopCalled = true }
-
-        assertNotNull("onInitBlock should be configured", builder.onInitBlock)
-        assertNotNull("onLoopBlock should be configured", builder.onLoopBlock)
-    }
 
     @Test
     fun testTestPathAutoMetadata() {

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
+import org.firstinspires.ftc.teamcode.dsl.*
 
 /**
  * Full-featured TeleOp with field-centric driving, intake toggle,
@@ -23,26 +24,32 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             telemetry.addData("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
         }
 
-        onLoop { robot, driver, telemetry ->
-            val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
-
+        onConfigure { robot, driver ->
             // --- Toggle intake on rising edge of left bumper ---
-            val leftBumper = driver.leftBumper.isPressed
-            if (leftBumper && !lastLeftBumper) {
-                val currentIntake = robot.store.state.superstructure.intakeActive
-                robot.store.dispatch(com.areslib.action.RobotAction.SetIntakeActive(!currentIntake, timestamp))
+            driver.leftBumper.onPress("Toggle Intake") {
+                val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
+                val currentIntake = robot.base.store.state.superstructure.intakeActive
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+                    IntakeState(intakeActive = !currentIntake)
+                ))
             }
-            lastLeftBumper = leftBumper
 
             // --- Toggle shooter on rising edge of right bumper ---
-            val rightBumper = driver.rightBumper.isPressed
-            if (rightBumper && !lastRightBumper) {
-                val currentFlywheel = robot.store.state.superstructure.flywheelActive
-                robot.store.dispatch(com.areslib.action.RobotAction.SetFlywheelTargetRPM(2000.0, timestamp))
-                robot.store.dispatch(com.areslib.action.RobotAction.SetFlywheelActive(!currentFlywheel, timestamp))
+            driver.rightBumper.onPress("Toggle Shooter") {
+                val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
+                val currentFlywheel = robot.base.store.state.superstructure.flywheelActive
+                val currentTarget = if (!currentFlywheel) 2000.0 else 0.0
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+                    FlywheelState(
+                        flywheelActive = !currentFlywheel,
+                        flywheelTargetRPM = currentTarget,
+                        currentRPM = robot.base.store.state.superstructure.currentRPM
+                    )
+                ))
             }
-            lastRightBumper = rightBumper
+        }
 
+        onLoop { robot, driver, telemetry ->
             // 1. Drivetrain Control (Standard Field Centric)
             val joystickForward = -driver.leftStickY.value.toDouble()
             val joystickLeft = -driver.leftStickX.value.toDouble()
@@ -55,7 +62,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             )
 
             // 2. Read state from store for telemetry print
-            val state = robot.store.state
+            val state = robot.base.store.state
             telemetry.addData("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
             telemetry.addData("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (2000 RPM)" else "INACTIVE")
 

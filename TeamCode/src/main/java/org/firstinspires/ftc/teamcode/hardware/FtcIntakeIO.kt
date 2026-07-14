@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.hardware
 
-import com.areslib.hardware.IntakeIO
+import org.firstinspires.ftc.teamcode.hardware.IntakeIO
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
 class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     private val motor: DcMotorEx? = try {
-        hardwareMap.get(DcMotorEx::class.java, "intake")
+        com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "intake"))
     } catch (_: Exception) {
         null
     }
@@ -27,14 +27,22 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     override val pivotCurrentAmps: Double
         get() = 0.0
 
-    override val rollerCurrentAmps: Double
-        get() = try {
-            motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
-        } catch (_: Exception) {
-            0.0
-        }
+    private var cachedRollerAmps = 0.0
+    private var loopCounter = 0
 
-    override fun refresh() {}
+    override val rollerCurrentAmps: Double
+        get() = cachedRollerAmps
+
+    override fun refresh() {
+        loopCounter++
+        if (loopCounter % 10 == 0) {
+            try {
+                cachedRollerAmps = motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
+            } catch (_: Exception) {
+                cachedRollerAmps = 0.0
+            }
+        }
+    }
 
     override fun safe() {
         setRollerVoltage(0.0)

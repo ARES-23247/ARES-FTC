@@ -1,169 +1,37 @@
 package org.firstinspires.ftc.teamcode.dsl
 
-import com.areslib.ftc.FtcMecanumRobot
-import com.areslib.telemetry.AresGamepad
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
-import com.qualcomm.robotcore.hardware.Gamepad
+import com.areslib.ftc.dsl.FtcTeleOpBase
+import com.areslib.ftc.dsl.FtcTeleOpBuilder
 import com.areslib.telemetry.GamepadState
-import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 
 /**
- * DSL Builder class for constructing an Ares TeleOp.
+ * Team-specific base class for declarative student OpModes.
+ * Bridges the generic library DSL with the concrete AresRobot wrapper.
  */
-class AresTeleOpBuilder {
-    internal var onInitBlock: ((FtcMecanumRobot, Telemetry) -> Unit)? = null
-    internal var onLoopBlock: ((FtcMecanumRobot, AresGamepad, Telemetry) -> Unit)? = null
-
-    fun onInit(block: (robot: FtcMecanumRobot, telemetry: Telemetry) -> Unit) {
-        onInitBlock = block
+abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>() {
+    
+    override fun buildRobot(): AresRobot {
+        return AresRobot(hardwareMap, telemetry)
     }
 
-    fun onLoop(block: (robot: FtcMecanumRobot, driver: AresGamepad, telemetry: Telemetry) -> Unit) {
-        onLoopBlock = block
+    override fun updateRobot(robot: AresRobot, g1: GamepadState, g2: GamepadState) {
+        // First update the core drivebase/EKF with gamepad inputs
+        robot.base.update(g1, g2)
+        // Then update the physical intake/shooter hardware based on the state
+        robot.update()
     }
-}
 
-/**
- * Base class for declarative student OpModes.
- * Manages lifecycle loops, proxy starting, log uploading, Redux loops, and telemetry flushing.
- */
-abstract class AresTeleOpBase : LinearOpMode() {
-    abstract fun define(): AresTeleOpBuilder
+    override fun closeRobot(robot: AresRobot) {
+        robot.close()
+    }
 
     /**
-     * Entrypoint for the DSL configuration block.
+     * Entrypoint for the DSL configuration block, typed to AresRobot.
      */
-    fun aresTeleOp(block: AresTeleOpBuilder.() -> Unit): AresTeleOpBuilder {
-        val builder = AresTeleOpBuilder()
+    fun aresTeleOp(block: FtcTeleOpBuilder<AresRobot>.() -> Unit): FtcTeleOpBuilder<AresRobot> {
+        val builder = FtcTeleOpBuilder<AresRobot>()
         builder.block()
         return builder
     }
-    
-    override fun runOpMode() {
-        val builder = define()
-        
-        // Configure the EKF with the tag positions of the selected field layout
-        com.areslib.math.PoseEstimator.activeTags = com.areslib.math.FieldLayouts.getTagsForLayout(com.areslib.math.FieldLayout.SQUARE_STANDARD)
-
-        val robot = FtcMecanumRobot(
-            hardwareMap = hardwareMap,
-            flName = "fl",
-            frName = "fr",
-            blName = "rl", // based on the original OpMode, it's 'rl' and 'rr'
-            brName = "rr",
-            pinpointName = "pinpoint",
-            limelightName = "limelight",
-            localTelemetry = telemetry,
-            flDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
-            blDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
-            frDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
-            brDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE
-        )
-
-        // Calibrate static friction feedforward (kS) to overcome physical drivetrain deadband
-        robot.mecanumIO.kS = 0.05
-
-        // Dispatch alliance choice to core Redux store
-        robot.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
-
-        val alliance = robot.store.state.drive.alliance
-        val startPose = if (alliance == com.areslib.state.Alliance.RED) {
-            com.areslib.math.Pose2d(0.0, 1.2, com.areslib.math.Rotation2d(-Math.PI / 2.0))
-        } else {
-            com.areslib.math.Pose2d(0.0, -1.2, com.areslib.math.Rotation2d(Math.PI / 2.0))
-        }
-
-        // Set initial pose/heading offset
-        robot.pinpointIO?.initialize(
-            startPose,
-            resetHardware = true
-        )
-
-        val driver = AresGamepad()
-        driver.leftStick.label("Field-centric Translation (X/Y)")
-        driver.rightStickX.label("Robot Rotation")
-        driver.b.label("Auto-Align to Tag 1")
-        driver.y.label("Reset Field Centric Pose")
-        driver.x.label("Drive to TestWaypoint")
-
-        try {
-            while (opModeInInit()) {
-                robot.update(null, null)
-                builder.onInitBlock?.invoke(robot, telemetry)
-                telemetry.update()
-                sleep(20)
-            }
-            if (isStopRequested) return
-            com.areslib.telemetry.RobotStatusTracker.activeOpMode = "TeleOp"
-
-            // Mark initialization complete to enable active-play vision outlier filtering
-            robot.visionTracker.isInInit = false
-
-            // NOTE: FtcMecanumRobot base init auto-stops the proxy for us now!
-            com.areslib.ftc.telemetry.LimelightProxyAutoStart.stop()
-            
-            val g1State = com.areslib.telemetry.GamepadState()
-            val g2State = com.areslib.telemetry.GamepadState()
-            
-            while (opModeIsActive()) {
-                g1State.update(gamepad1)
-                g2State.update(gamepad2)
-                
-                driver.update(g1State)
-                
-                // Allow the user DSL loop to dispatch inputs
-                builder.onLoopBlock?.invoke(robot, driver, telemetry)
-                
-                // Reset pose if Triangle (Y) is pressed (from original boilerplate)
-                if (gamepad1.y) {
-                    val now = com.areslib.util.RobotClock.currentTimeMillis()
-                    robot.pinpointIO?.initialize(startPose)
-                    robot.store.dispatch(
-                        com.areslib.action.RobotAction.PoseUpdate(
-                            xMeters = startPose.x,
-                            yMeters = startPose.y,
-                            headingRadians = startPose.heading.radians,
-                            timestampMs = now,
-                            isReset = true
-                        )
-                    )
-                }
-                
-                // Compute kinematics, push to motors, upload NT4 frames
-                robot.update(g1State, g2State)
-            }
-        } finally {
-            // Note: robot.close() handles proxy restart and local archiving automatically!
-            robot.close()
-        }
-    }
-}
-
-/**
- * Converts an FTC SDK Gamepad into a platform-agnostic GamepadState
- * for the ARESLib logging pipeline.
- */
-fun Gamepad.toState() = GamepadState().apply { update(this@toState) }
-
-fun GamepadState.update(gamepad: Gamepad) {
-    leftStickX = gamepad.left_stick_x
-    leftStickY = gamepad.left_stick_y
-    rightStickX = gamepad.right_stick_x
-    rightStickY = gamepad.right_stick_y
-    leftTrigger = gamepad.left_trigger
-    rightTrigger = gamepad.right_trigger
-    a = gamepad.a
-    b = gamepad.b
-    x = gamepad.x
-    y = gamepad.y
-    dpadUp = gamepad.dpad_up
-    dpadDown = gamepad.dpad_down
-    dpadLeft = gamepad.dpad_left
-    dpadRight = gamepad.dpad_right
-    leftBumper = gamepad.left_bumper
-    rightBumper = gamepad.right_bumper
-    leftStickButton = gamepad.left_stick_button
-    rightStickButton = gamepad.right_stick_button
-    start = gamepad.start
-    back = gamepad.back
 }
