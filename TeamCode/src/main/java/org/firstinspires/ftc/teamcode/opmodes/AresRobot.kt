@@ -19,6 +19,8 @@ class AresRobot(
         hardwareMap = hardwareMap,
         rlName = "rl",
         rrName = "rr",
+        pinpointName = org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT,
+        limelightName = org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT,
         localTelemetry = localTelemetry
     )
     

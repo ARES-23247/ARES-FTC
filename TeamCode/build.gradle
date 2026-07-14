@@ -69,6 +69,22 @@ android.applicationVariants.all { variant ->
             def appArgs = project.hasProperty("appArgs") ? project.property("appArgs").toString().split(" ") : []
             args(["--headless"] + appArgs)
         }
+        
+        task("runVerification", type: JavaExec) {
+            dependsOn variant.javaCompileProvider
+            dependsOn "compile${variant.name.capitalize()}Kotlin"
+            mainClass = 'com.areslib.sim.VerificationAppKt'
+            
+            classpath = files(
+                configurations.simRun,
+                variant.javaCompileProvider.get().destinationDirectory,
+                "${buildDir}/tmp/kotlin-classes/${variant.name}",
+                variant.getCompileClasspath(null),
+                project.android.bootClasspath
+            )
+            
+            args = []
+        }
     }
 }
 
