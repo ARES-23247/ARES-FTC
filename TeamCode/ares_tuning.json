@@ -1,0 +1,43 @@
+{
+  "trackWidthMeters": 0.45,
+  "wheelBaseMeters": 0.45,
+  "pathTranslationGains": {
+    "kP": 2.0,
+    "kI": 0.0,
+    "kD": 0.02,
+    "kF": 0.0
+  },
+  "pathRotationGains": {
+    "kP": 2.5,
+    "kI": 0.0,
+    "kD": 0.05,
+    "kF": 0.0
+  },
+  "headingGains": {
+    "kP": 4.5,
+    "kI": 0.0,
+    "kD": 0.25,
+    "kF": 0.0
+  },
+  "headingDeadzoneDeg": 0.5,
+  "driveFeedforward": {
+    "kS": 0.0,
+    "kV": 0.0,
+    "kA": 0.0
+  },
+  "visionStdDevsX": 0.05,
+  "visionStdDevsY": 0.05,
+  "visionStdDevsHeading": 0.1,
+  "visionMaxDistanceMeters": 6.0,
+  "visionMaxAmbiguity": 0.2,
+  "visionMahalanobisThreshold": 12.0,
+  "odomQx": 0.01,
+  "odomQy": 0.01,
+  "odomQtheta": 0.01,
+  "pinpointXOffsetMm": -2.646690996383435,
+  "pinpointYOffsetMm": -0.013876460111646236,
+  "pinpointEncoderResolution": 20.44,
+  "ticksPerMeter": 2000.0,
+  "driverDeadbandExponent": 1.0,
+  "driverSlewRateLimit": 999.0
+}

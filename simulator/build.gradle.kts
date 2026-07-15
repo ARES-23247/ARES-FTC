@@ -7,11 +7,17 @@ dependencies {
     implementation("com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT")
     implementation("com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT")
     implementation("com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT")
+    implementation("com.github.ARES-23247.ARESLib-Kotlin:ftc-mocks:master-SNAPSHOT")
+    
+    val wpiVersion = "2024.3.2"
+    implementation("edu.wpi.first.ntcore:ntcore-java:$wpiVersion")
+    implementation("edu.wpi.first.wpilibj:wpilibj-java:$wpiVersion")
+    implementation("edu.wpi.first.wpiutil:wpiutil-java:$wpiVersion")
 }
 
 sourceSets {
     main {
-        java.srcDirs("../TeamCode/src/main/java")
+        java.srcDirs("../TeamCode/src/main/java", "src/main/kotlin")
     }
 }
 
@@ -34,4 +40,13 @@ tasks.named<JavaExec>("run") {
         argsList.addAll(project.property("appArgs").toString().split(" "))
     }
     args(argsList)
+}
+
+tasks.register<JavaExec>("runCalibrationVerification") {
+    group = "application"
+    mainClass.set("org.firstinspires.ftc.teamcode.CalibrationVerificationAppKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
 }

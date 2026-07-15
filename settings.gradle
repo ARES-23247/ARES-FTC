@@ -49,6 +49,7 @@ if (!currentVersion.startsWith("17") && !currentVersion.startsWith("21") && !cur
 
 include ':FtcRobotController'
 include ':TeamCode'
+include ':simulator'
 
 if (file('../ARESLib-Kotlin').exists()) {
     includeBuild('../ARESLib-Kotlin') {
@@ -56,6 +57,7 @@ if (file('../ARESLib-Kotlin').exists()) {
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:core') using project(':core')
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware') using project(':ftc-hardware')
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:simulator') using project(':simulator')
+            substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-mocks') using project(':ftc-mocks')
         }
     }
 }
