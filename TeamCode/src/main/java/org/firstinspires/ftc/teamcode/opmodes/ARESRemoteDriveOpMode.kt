@@ -59,21 +59,6 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                                 timestampMs = now
                             ))
                         }
-                        "intake" -> {
-                            val state = parts.getOrNull(1) == "on"
-                            println("[RemoteDrive] Setting intake active = $state")
-                            robot.setIntakeActive(state)
-                        }
-                        "flywheel" -> {
-                            val rpm = parts.getOrNull(1)?.toDoubleOrNull()
-                            if (rpm != null) {
-                                println("[RemoteDrive] Setting flywheel active with RPM = $rpm")
-                                robot.setFlywheelActive(true, rpm)
-                            } else {
-                                println("[RemoteDrive] Setting flywheel inactive")
-                                robot.setFlywheelActive(false)
-                            }
-                        }
                     }
                 }
 
