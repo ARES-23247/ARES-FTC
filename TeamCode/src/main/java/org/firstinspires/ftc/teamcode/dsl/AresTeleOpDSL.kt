@@ -16,10 +16,7 @@ abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>() {
     }
 
     override fun updateRobot(robot: AresRobot, g1: GamepadState, g2: GamepadState) {
-        // First update the core drivebase/EKF with gamepad inputs
-        robot.base.update(g1, g2)
-        // Then update the physical intake/shooter hardware based on the state
-        robot.update()
+        robot.update(g1, g2)
     }
 
     override fun closeRobot(robot: AresRobot) {

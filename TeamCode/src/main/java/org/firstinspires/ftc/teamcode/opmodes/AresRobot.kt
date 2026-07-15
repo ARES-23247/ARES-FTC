@@ -47,11 +47,15 @@ class AresRobot(
         }
     }
 
-    fun update() {
+    @kotlin.jvm.JvmOverloads
+    fun update(
+        gamepad1: com.areslib.telemetry.GamepadState? = null,
+        gamepad2: com.areslib.telemetry.GamepadState? = null
+    ) {
         val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
 
         // 1. Update drivebase sensors, EKF, and kinematics
-        base.update()
+        base.update(gamepad1, gamepad2)
 
         // 2. Read flywheel sensor RPM and update Redux store
         val currentRPM = flywheelIO.velocityRpm
