@@ -129,15 +129,25 @@ fun main(args: Array<String>) {
         Thread.sleep(300)
     }
 
-    // Run all four auto-calibrations sequentially
+    // Run all calibrations sequentially
     try {
         runCalibrationTest("START_PINPOINT_SPIN", "PINPOINT_SPIN")
         runCalibrationTest("START_TRACK_WIDTH_SPIN", "TRACK_WIDTH_SPIN")
         runCalibrationTest("START_LINEAR_DRIVE", "LINEAR_DRIVE")
         runCalibrationTest("START_VISION_CALIBRATION", "VISION_CALIBRATION")
         
+        // Run combined SysId routines for Drive Linear, Drive Angular, and Flywheel
+        runCalibrationTest("START_LINEAR_QUASISTATIC", "QUASISTATIC")
+        runCalibrationTest("START_LINEAR_DYNAMIC", "DYNAMIC")
+        
+        runCalibrationTest("START_ANGULAR_QUASISTATIC", "QUASISTATIC")
+        runCalibrationTest("START_ANGULAR_DYNAMIC", "DYNAMIC")
+        
+        runCalibrationTest("START_FLYWHEEL_QUASISTATIC", "QUASISTATIC")
+        runCalibrationTest("START_FLYWHEEL_DYNAMIC", "DYNAMIC")
+        
         println("\n=================================================================")
-        println("ALL CALIBRATION ROUTINES PASSED HEADLESSLY!")
+        println("ALL CALIBRATION AND SYSID ROUTINES PASSED HEADLESSLY!")
         println("=================================================================")
     } catch (e: Exception) {
         e.printStackTrace()

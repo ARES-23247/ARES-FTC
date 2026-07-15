@@ -36,6 +36,11 @@ class AresRobot(
         // Initialize subsystem states in the Redux store
         base.store.dispatch(RobotAction.UpdateSubsystemState(IntakeState()))
         base.store.dispatch(RobotAction.UpdateSubsystemState(FlywheelState()))
+        
+        // Register custom SysId velocity provider (RPM to rad/s)
+        base.customSysIdVelocityProvider = {
+            flywheelIO.velocityRpm * (2.0 * kotlin.math.PI / 60.0)
+        }
     }
 
     fun update() {
@@ -64,10 +69,17 @@ class AresRobot(
             intakeIO.setRollerVoltage(0.0)
         }
 
-        if (updatedState.superstructure.flywheelActive) {
-            flywheelIO.setVelocityRpm(updatedState.superstructure.flywheelTargetRPM)
+        val sysId = base.sysIdManager
+        if (sysId.isActive() && sysId.activeMechanism == com.areslib.control.assist.SysIdMechanism.FLYWHEEL) {
+            val velocityRadPerSec = currentRPM * (2.0 * kotlin.math.PI / 60.0)
+            val voltage = sysId.update(timestamp, velocityRadPerSec)
+            flywheelIO.setAppliedVoltage(voltage)
         } else {
-            flywheelIO.setVelocityRpm(0.0)
+            if (updatedState.superstructure.flywheelActive) {
+                flywheelIO.setVelocityRpm(updatedState.superstructure.flywheelTargetRPM)
+            } else {
+                flywheelIO.setVelocityRpm(0.0)
+            }
         }
     }
 
