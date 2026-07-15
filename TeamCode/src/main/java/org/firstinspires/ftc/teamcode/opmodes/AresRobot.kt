@@ -19,6 +19,10 @@ class AresRobot(
         hardwareMap = hardwareMap,
         rlName = "rl",
         rrName = "rr",
+        flDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
+        frDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
+        rlDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
+        rrDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
         pinpointName = org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT,
         limelightName = org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT,
         localTelemetry = localTelemetry
