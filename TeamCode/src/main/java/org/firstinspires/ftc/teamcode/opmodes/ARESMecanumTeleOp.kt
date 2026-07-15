@@ -25,8 +25,6 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         }
         
         onLoop { robot, driver, telemetry ->
-            
-
 
             val joystickForward = -driver.leftStickY.value.toDouble()
             val joystickLeft = -driver.leftStickX.value.toDouble()
