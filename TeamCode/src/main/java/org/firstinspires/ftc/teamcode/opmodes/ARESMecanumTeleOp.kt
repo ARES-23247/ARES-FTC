@@ -13,7 +13,22 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
 
     override fun define() = aresTeleOp {
         
+        onConfigure { robot, driver ->
+            driver.y.onPress("Reset Field Centric Pose") {
+                val alliance = robot.base.store.state.drive.alliance
+                val initialHeading = if (alliance == com.areslib.state.Alliance.RED) Math.PI / 2.0 else -Math.PI / 2.0
+                robot.base.resetPose(com.areslib.math.geometry.Pose2d(0.0, 0.0, com.areslib.math.geometry.Rotation2d(initialHeading)))
+            }
+        }
+
         onInit { robot, telemetry ->
+            robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
+            
+            // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
+            val alliance = robot.base.store.state.drive.alliance
+            val initialHeading = if (alliance == com.areslib.state.Alliance.RED) Math.PI / 2.0 else -Math.PI / 2.0
+            robot.base.resetPose(com.areslib.math.geometry.Pose2d(0.0, 0.0, com.areslib.math.geometry.Rotation2d(initialHeading)))
+
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
 
             telemetry.addData("Alliance", "RED")
