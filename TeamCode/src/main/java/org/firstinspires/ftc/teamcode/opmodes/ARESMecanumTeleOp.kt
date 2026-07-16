@@ -41,10 +41,17 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         
         onLoop { robot, driver, telemetry ->
 
-            val joystickForward = -driver.leftStickY.value.toDouble()
-            val joystickLeft = -driver.leftStickX.value.toDouble()
+            var joystickForward = -driver.leftStickY.value.toDouble()
+            var joystickLeft = -driver.leftStickX.value.toDouble()
             val rotate = -driver.rightStickX.value.toDouble()
-            // 2. Drive the robot (Red Alliance Perspective)
+            
+            val alliance = robot.base.store.state.drive.alliance
+            if (alliance == com.areslib.state.Alliance.BLUE) {
+                joystickForward = -joystickForward
+                joystickLeft = -joystickLeft
+            }
+            
+            // 2. Drive the robot (Field-Centric Perspective)
             // - Pushing forward (+joystickForward) moves +Y (away from red driver)
             // - Pushing left (+joystickLeft) moves +X (to red driver's left -> wait, driver left is -X on field)
             // So: vy = joystickForward (forward = +Y)
