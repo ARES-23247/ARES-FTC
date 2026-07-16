@@ -8,6 +8,10 @@ import com.areslib.ftc.FtcMecanumRobot
 class CustomPathAuto : FtcMecanumAutoBase<AresRobot>() {
     override val pathName: String = "TestPath"
     
+    override fun buildAuto(timestampMs: Long): com.areslib.sequencer.Task {
+        return robot.autoBuilder.buildPath("TestPath")
+    }
+
     override fun buildRobot(): AresRobot {
         return AresRobot(hardwareMap, telemetry)
     }
