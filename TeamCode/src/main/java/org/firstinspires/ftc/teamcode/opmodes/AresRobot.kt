@@ -34,15 +34,19 @@ class AresRobot(
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO))
         } catch (e: Exception) {
-            localTelemetry?.addData("Subsystem", "Intake failed to load: ${e.message}")
+            addTelemetry("Subsystem", "Intake failed to load: ${e.message}")
         }
 
         try {
             val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO))
         } catch (e: Exception) {
-            localTelemetry?.addData("Subsystem", "Flywheel failed to load: ${e.message}")
+            addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
+    }
+
+    fun addTelemetry(key: String, value: Any) {
+        base.telemetryManager.customDriverStationText[key] = value.toString()
     }
 
     @kotlin.jvm.JvmOverloads

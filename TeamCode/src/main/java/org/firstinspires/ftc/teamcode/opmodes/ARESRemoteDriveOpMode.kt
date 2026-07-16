@@ -14,7 +14,7 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
         
         onInit { robot, telemetry ->
             robot.base.mecanumIO.slewRateLimit = null // Disable slew limits for direct remote tracking
-            telemetry.addData("Status", "Remote NT4 client drive mode initialized.")
+            robot.addTelemetry("Status", "Remote NT4 client drive mode initialized.")
         }
         
         onLoop { robot, driver, telemetry ->
@@ -62,11 +62,11 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                     }
                 }
 
-                telemetry.addData("Status", "DRIVING")
-                telemetry.addData("Inputs", "vx=%.2f, vy=%.2f, omega=%.2f".format(vx, vy, omega))
+                robot.addTelemetry("Status", "DRIVING")
+                robot.addTelemetry("Inputs", "vx=%.2f, vy=%.2f, omega=%.2f".format(vx, vy, omega))
             } else {
                 robot.base.mecanumDrive.fieldRelativeDrive(0.0, 0.0, 0.0, false)
-                telemetry.addData("Status", "DISCONNECTED / STALE HEARTBEAT")
+                robot.addTelemetry("Status", "DISCONNECTED / STALE HEARTBEAT")
             }
         }
     }

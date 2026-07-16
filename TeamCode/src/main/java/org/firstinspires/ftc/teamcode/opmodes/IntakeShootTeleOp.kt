@@ -20,8 +20,8 @@ class IntakeShootTeleOp : AresTeleOpBase() {
     override fun define() = aresTeleOp {
 
         onInit { robot, telemetry ->
-            telemetry.addData("Status", "Intake & Shoot TeleOp Ready!")
-            telemetry.addData("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
+            robot.addTelemetry("Status", "Intake & Shoot TeleOp Ready!")
+            robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
             
             // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
             robot.resetPoseForAlliance()
@@ -56,15 +56,15 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
             // 2. Read state from store for telemetry print
             val state = robot.base.store.state
-            telemetry.addData("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
-            telemetry.addData("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (2000 RPM)" else "INACTIVE")
+            robot.addTelemetry("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
+            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (2000 RPM)" else "INACTIVE")
 
             // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
             if (driver.rightTrigger.value > 0.5) {
-                telemetry.addData("Feed", "PUSHING BALL")
+                robot.addTelemetry("Feed", "PUSHING BALL")
             }
 
-            telemetry.addData("Inventory", "Check the ARES-Analytics Sim UI")
+            robot.addTelemetry("Inventory", "Check the ARES-Analytics Sim UI")
         }
     }
 }
