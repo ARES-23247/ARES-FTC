@@ -4,14 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.areslib.ftc.dsl.FtcMecanumAutoBase
 import com.areslib.ftc.FtcMecanumRobot
 
-@Autonomous(name = "TestPath Auto", group = "ARES")
+@Autonomous(name = "TestAuto", group = "ARES")
 class CustomPathAuto : FtcMecanumAutoBase<AresRobot>() {
-    override val pathName: String = "TestPath"
+    override val pathName: String = "TestAuto"
     
-    override fun buildAuto(timestampMs: Long): com.areslib.sequencer.Task {
-        return robot.autoBuilder.buildPath("TestPath")
-    }
-
     override fun buildRobot(): AresRobot {
         return AresRobot(hardwareMap, telemetry)
     }

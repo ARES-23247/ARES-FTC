@@ -5,11 +5,33 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "intake"))
     } catch (_: Exception) {
         null
+    }
+
+    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { thread ->
+        Thread(thread, "ARES-IntakeTelemetry-Thread").apply { isDaemon = true }
+    }
+
+    @Volatile private var cachedRollerAmps = 0.0
+
+    init {
+        scheduler.scheduleAtFixedRate({
+            if (motor != null) {
+                try {
+                    cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
+                } catch (_: Exception) {
+                    // Keep last cached values
+                }
+            }
+        }, 0, 100, TimeUnit.MILLISECONDS)
     }
 
     override fun setPivotAngle(degrees: Double) {}
@@ -27,21 +49,11 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     override val pivotCurrentAmps: Double
         get() = 0.0
 
-    private var cachedRollerAmps = 0.0
-    private var loopCounter = 0
-
     override val rollerCurrentAmps: Double
         get() = cachedRollerAmps
 
     override fun refresh() {
-        loopCounter++
-        if (loopCounter % 10 == 0) {
-            try {
-                cachedRollerAmps = motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
-            } catch (_: Exception) {
-                cachedRollerAmps = 0.0
-            }
-        }
+        // Telemetry reads are performed in the background thread to prevent loop jitter
     }
 
     override fun safe() {
@@ -50,5 +62,14 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     override fun close() {
         safe()
+        scheduler.shutdown()
+        try {
+            if (!scheduler.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                scheduler.shutdownNow()
+            }
+        } catch (_: InterruptedException) {
+            scheduler.shutdownNow()
+            Thread.currentThread().interrupt()
+        }
     }
 }

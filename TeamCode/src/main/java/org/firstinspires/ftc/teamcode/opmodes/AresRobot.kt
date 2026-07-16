@@ -29,6 +29,22 @@ class AresRobot(
         localTelemetry = localTelemetry
     )
 
+    init {
+        try {
+            val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO))
+        } catch (e: Exception) {
+            localTelemetry?.addData("Subsystem", "Intake failed to load: ${e.message}")
+        }
+
+        try {
+            val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO))
+        } catch (e: Exception) {
+            localTelemetry?.addData("Subsystem", "Flywheel failed to load: ${e.message}")
+        }
+    }
+
     @kotlin.jvm.JvmOverloads
     fun update(
         gamepad1: com.areslib.telemetry.GamepadState? = null,

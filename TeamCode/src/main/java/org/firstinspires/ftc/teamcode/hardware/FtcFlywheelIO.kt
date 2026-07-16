@@ -5,6 +5,10 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
@@ -15,6 +19,28 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     // Gearing / Encoder conversion: GoBilda motor has 28 ticks per motor shaft revolution.
     // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
     private val ticksPerRev = 28.0
+
+    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { thread ->
+        Thread(thread, "ARES-FlywheelTelemetry-Thread").apply { isDaemon = true }
+    }
+
+    @Volatile private var cachedVelocityRpm = 0.0
+    @Volatile private var cachedAmps = 0.0
+
+    init {
+        scheduler.scheduleAtFixedRate({
+            if (motor != null) {
+                try {
+                    val current = motor.getCurrent(CurrentUnit.AMPS)
+                    val ticksPerSec = motor.velocity
+                    cachedAmps = current
+                    cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
+                } catch (_: Exception) {
+                    // Keep last cached values
+                }
+            }
+        }, 0, 100, TimeUnit.MILLISECONDS)
+    }
 
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
@@ -34,15 +60,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     }
 
     override val velocityRpm: Double
-        get() {
-            if (motor == null) return 0.0
-            // ticks per second to RPM: (ticksPerSec / ticksPerRev) * 60
-            val ticksPerSec = motor.velocity
-            return (ticksPerSec / ticksPerRev) * 60.0
-        }
-
-    private var cachedAmps = 0.0
-    private var loopCounter = 0
+        get() = cachedVelocityRpm
 
     override val currentAmps: Double
         get() = cachedAmps
@@ -51,14 +69,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
         get() = 0.0
 
     override fun refresh() {
-        loopCounter++
-        if (loopCounter % 10 == 0) {
-            try {
-                cachedAmps = motor?.getCurrent(CurrentUnit.AMPS) ?: 0.0
-            } catch (_: Exception) {
-                cachedAmps = 0.0
-            }
-        }
+        // Telemetry reads are performed in the background thread to prevent loop jitter
     }
 
     override fun safe() {
@@ -67,5 +78,14 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
 
     override fun close() {
         safe()
+        scheduler.shutdown()
+        try {
+            if (!scheduler.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                scheduler.shutdownNow()
+            }
+        } catch (_: InterruptedException) {
+            scheduler.shutdownNow()
+            Thread.currentThread().interrupt()
+        }
     }
 }

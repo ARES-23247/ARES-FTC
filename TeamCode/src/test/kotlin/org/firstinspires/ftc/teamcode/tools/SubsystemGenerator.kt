@@ -125,6 +125,7 @@ fun main() {
             private val motor: DcMotorEx = hardwareMap.get(DcMotorEx::class.java, "$lowerName")
             private var _cachedPosition = 0.0
             private var _cachedAmps = 0.0
+            private var loopCounter = 0
             
             init {
                 // Register with HardwareRegistry for diagnostics if desired
@@ -138,11 +139,14 @@ fun main() {
                 get() = _cachedAmps
 
             override fun refresh() {
-                _cachedPosition = motor.currentPosition.toDouble()
-                try {
-                    _cachedAmps = motor.getCurrent(org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS)
-                } catch (e: Exception) {
-                    // Safe catch
+                loopCounter++
+                if (loopCounter % 10 == 0) {
+                    _cachedPosition = motor.currentPosition.toDouble()
+                    try {
+                        _cachedAmps = motor.getCurrent(org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS)
+                    } catch (e: Exception) {
+                        // Safe catch
+                    }
                 }
             }
 
