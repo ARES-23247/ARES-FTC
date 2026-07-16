@@ -46,6 +46,10 @@ class AresRobot(
         base.driveRobotCentric(x, y, rotation)
     }
 
+    fun resetPoseForAlliance() {
+        base.resetPoseForAlliance()
+    }
+
     fun close() {
         base.close()
     }

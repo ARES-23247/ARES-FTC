@@ -15,9 +15,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         
         onConfigure { robot, driver ->
             driver.y.onPress("Reset Field Centric Pose") {
-                val alliance = robot.base.store.state.drive.alliance
-                val initialHeading = if (alliance == com.areslib.state.Alliance.RED) Math.PI / 2.0 else -Math.PI / 2.0
-                robot.base.resetPose(com.areslib.math.geometry.Pose2d(0.0, 0.0, com.areslib.math.geometry.Rotation2d(initialHeading)))
+                robot.resetPoseForAlliance()
             }
         }
 
@@ -25,9 +23,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             
             // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
-            val alliance = robot.base.store.state.drive.alliance
-            val initialHeading = if (alliance == com.areslib.state.Alliance.RED) Math.PI / 2.0 else -Math.PI / 2.0
-            robot.base.resetPose(com.areslib.math.geometry.Pose2d(0.0, 0.0, com.areslib.math.geometry.Rotation2d(initialHeading)))
+            robot.resetPoseForAlliance()
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
 
@@ -39,29 +35,10 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             ))
         }
         
-        onLoop { robot, driver, telemetry ->
+        onLoop { robot, driver, _ ->
 
-            var joystickForward = -driver.leftStickY.value.toDouble()
-            var joystickLeft = -driver.leftStickX.value.toDouble()
-            val rotate = -driver.rightStickX.value.toDouble()
-            
-            val alliance = robot.base.store.state.drive.alliance
-            if (alliance == com.areslib.state.Alliance.BLUE) {
-                joystickForward = -joystickForward
-                joystickLeft = -joystickLeft
-            }
-            
             // 2. Drive the robot (Field-Centric Perspective)
-            // - Pushing forward (+joystickForward) moves +Y (away from red driver)
-            // - Pushing left (+joystickLeft) moves +X (to red driver's left -> wait, driver left is -X on field)
-            // So: vy = joystickForward (forward = +Y)
-            //     vx = -joystickLeft (left = -X)
-            robot.base.mecanumDrive.fieldRelativeDrive(
-                vx = -joystickLeft, 
-                vy = joystickForward, 
-                omega = rotate,
-                useHeadingLock = true
-            )
+            robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = true)
         }
     }
 }

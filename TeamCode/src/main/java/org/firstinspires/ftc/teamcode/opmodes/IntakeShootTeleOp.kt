@@ -19,15 +19,17 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
     override fun define() = aresTeleOp {
 
-        onInit { _, telemetry ->
+        onInit { robot, telemetry ->
             telemetry.addData("Status", "Intake & Shoot TeleOp Ready!")
             telemetry.addData("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
+            
+            // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
+            robot.resetPoseForAlliance()
         }
 
         onConfigure { robot, driver ->
             // --- Toggle intake on rising edge of left bumper ---
             driver.leftBumper.onPress("Toggle Intake") {
-                val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
                 val currentIntake = robot.base.store.state.superstructure.intakeActive
                 robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
                     IntakeState(intakeActive = !currentIntake)
@@ -36,7 +38,6 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
             // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
-                val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
                 val currentFlywheel = robot.base.store.state.superstructure.flywheelActive
                 val currentTarget = if (!currentFlywheel) 2000.0 else 0.0
                 robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
@@ -51,15 +52,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onLoop { robot, driver, telemetry ->
             // 1. Drivetrain Control (Standard Field Centric)
-            val joystickForward = -driver.leftStickY.value.toDouble()
-            val joystickLeft = -driver.leftStickX.value.toDouble()
-            val rotate = -driver.rightStickX.value.toDouble()
-
-            robot.driveFieldCentric(
-                x = -joystickLeft,
-                y = joystickForward,
-                rotation = rotate
-            )
+            robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = false)
 
             // 2. Read state from store for telemetry print
             val state = robot.base.store.state
