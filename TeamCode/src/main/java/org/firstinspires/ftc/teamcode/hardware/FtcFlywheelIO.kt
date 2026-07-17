@@ -20,27 +20,8 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
     private val ticksPerRev = 28.0
 
-    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { thread ->
-        Thread(thread, "ARES-FlywheelTelemetry-Thread").apply { isDaemon = true }
-    }
-
     @Volatile private var cachedVelocityRpm = 0.0
     @Volatile private var cachedAmps = 0.0
-
-    init {
-        scheduler.scheduleAtFixedRate({
-            if (motor != null) {
-                try {
-                    val current = motor.getCurrent(CurrentUnit.AMPS)
-                    val ticksPerSec = motor.velocity
-                    cachedAmps = current
-                    cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
-                } catch (_: Exception) {
-                    // Keep last cached values
-                }
-            }
-        }, 0, 100, TimeUnit.MILLISECONDS)
-    }
 
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
@@ -69,7 +50,16 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
         get() = 0.0
 
     override fun refresh() {
-        // Telemetry reads are performed in the background thread to prevent loop jitter
+        if (motor != null) {
+            try {
+                val current = motor.getCurrent(CurrentUnit.AMPS)
+                val ticksPerSec = motor.velocity
+                cachedAmps = current
+                cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
+            } catch (_: Exception) {
+                // Keep last cached values
+            }
+        }
     }
 
     override fun safe() {
@@ -78,14 +68,5 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
 
     override fun close() {
         safe()
-        scheduler.shutdown()
-        try {
-            if (!scheduler.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-                scheduler.shutdownNow()
-            }
-        } catch (_: InterruptedException) {
-            scheduler.shutdownNow()
-            Thread.currentThread().interrupt()
-        }
     }
 }

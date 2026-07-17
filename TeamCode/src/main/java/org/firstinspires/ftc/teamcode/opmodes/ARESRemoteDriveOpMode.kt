@@ -44,7 +44,7 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                 val cmdStr = nt4.getString("ARES/Input/command", "")
                 if (cmdStr.isNotEmpty()) {
                     nt4.putString("ARES/Input/command", "") // Clear command immediately
-                    val parts = cmdStr.split("\\s+".toRegex()).filter { it.isNotEmpty() }
+                    val parts = cmdStr.split(' ').filter { it.isNotBlank() }
                     val cmdName = parts.firstOrNull()
                     when (cmdName) {
                         "reset" -> {
@@ -63,7 +63,9 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                 }
 
                 robot.addTelemetry("Status", "DRIVING")
-                robot.addTelemetry("Inputs", "vx=%.2f, vy=%.2f, omega=%.2f".format(vx, vy, omega))
+                robot.addTelemetry("vx", vx)
+                robot.addTelemetry("vy", vy)
+                robot.addTelemetry("omega", omega)
             } else {
                 robot.base.mecanumDrive.fieldRelativeDrive(0.0, 0.0, 0.0, false)
                 robot.addTelemetry("Status", "DISCONNECTED / STALE HEARTBEAT")

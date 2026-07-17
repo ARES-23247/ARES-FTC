@@ -16,23 +16,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         null
     }
 
-    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { thread ->
-        Thread(thread, "ARES-IntakeTelemetry-Thread").apply { isDaemon = true }
-    }
-
     @Volatile private var cachedRollerAmps = 0.0
-
-    init {
-        scheduler.scheduleAtFixedRate({
-            if (motor != null) {
-                try {
-                    cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
-                } catch (_: Exception) {
-                    // Keep last cached values
-                }
-            }
-        }, 0, 100, TimeUnit.MILLISECONDS)
-    }
 
     override fun setPivotAngle(degrees: Double) {}
 
@@ -53,7 +37,13 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         get() = cachedRollerAmps
 
     override fun refresh() {
-        // Telemetry reads are performed in the background thread to prevent loop jitter
+        if (motor != null) {
+            try {
+                cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
+            } catch (_: Exception) {
+                // Keep last cached values
+            }
+        }
     }
 
     override fun safe() {
@@ -62,14 +52,5 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     override fun close() {
         safe()
-        scheduler.shutdown()
-        try {
-            if (!scheduler.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-                scheduler.shutdownNow()
-            }
-        } catch (_: InterruptedException) {
-            scheduler.shutdownNow()
-            Thread.currentThread().interrupt()
-        }
     }
 }

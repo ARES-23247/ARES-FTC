@@ -31,15 +31,12 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
-        // Dispatch current RPM to the store so visualizer / telemetry is updated
-        val state = store.state.superstructure
-        store.dispatch(RobotAction.UpdateSubsystemState(
-            FlywheelState(
-                flywheelActive = state.flywheelActive,
-                flywheelTargetRPM = state.flywheelTargetRPM,
-                currentRPM = io.velocityRpm
-            )
-        ))
+        // Mutate in place to avoid GC churn
+        val superstructure = store.state.superstructure
+        if (superstructure.has(FlywheelState::class.java)) {
+            val state = superstructure.get(FlywheelState::class.java)
+            state.currentRPM = io.velocityRpm
+        }
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
