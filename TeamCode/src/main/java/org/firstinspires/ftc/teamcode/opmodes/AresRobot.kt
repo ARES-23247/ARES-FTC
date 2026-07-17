@@ -54,8 +54,15 @@ class AresRobot(
         gamepad1: com.areslib.telemetry.GamepadState? = null,
         gamepad2: com.areslib.telemetry.GamepadState? = null
     ) {
-        // Update drivebase sensors, EKF, and kinematics
+        // 1. Poll subsystem sensors (e.g. flywheel encoder) before drivebase update
+        val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
+        base.readAllSensors(timestamp)
+
+        // 2. Update drivebase sensors, EKF, and kinematics
         base.update(gamepad1, gamepad2)
+
+        // 3. Command subsystem actuators with brownout-adjusted power scale
+        base.writeAllOutputs(base.powerManager.powerScale)
     }
 
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) {

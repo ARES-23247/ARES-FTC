@@ -31,10 +31,17 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
-        // Mutate in place to avoid GC churn
         val superstructure = store.state.superstructure
         if (superstructure.has(FlywheelState::class.java)) {
-            superstructure.get(FlywheelState::class.java).currentRPM = io.velocityRpm
+            val current = superstructure.get(FlywheelState::class.java)
+            if (kotlin.math.abs(current.currentRPM - io.velocityRpm) > 5.0) {
+                store.dispatch(
+                    RobotAction.UpdateSubsystemState(
+                        current.copy(currentRPM = io.velocityRpm),
+                        timestampMs
+                    )
+                )
+            }
         }
     }
 

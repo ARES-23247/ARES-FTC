@@ -8,7 +8,7 @@ data class IntakeState(val intakeActive: Boolean = false) : SubsystemState
 data class FlywheelState(
     val flywheelActive: Boolean = false,
     val flywheelTargetRPM: Double = 0.0,
-    var currentRPM: Double = 0.0
+    val currentRPM: Double = 0.0
 ) : SubsystemState
 
 // Extension properties to keep state access compatible with old code:
