@@ -5,11 +5,10 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+
 
 class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
+    private var supportsCurrentSensing = true
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "intake"))
     } catch (_: Exception) {
@@ -37,11 +36,11 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         get() = cachedRollerAmps
 
     override fun refresh() {
-        if (motor != null) {
+        if (motor != null && supportsCurrentSensing) {
             try {
                 cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
             } catch (_: Exception) {
-                // Keep last cached values
+                supportsCurrentSensing = false
             }
         }
     }

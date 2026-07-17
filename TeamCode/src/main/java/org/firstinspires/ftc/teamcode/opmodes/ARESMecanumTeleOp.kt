@@ -17,6 +17,15 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             driver.y.onPress("Reset Field Centric Pose") {
                 robot.resetPoseForAlliance()
             }
+            driver.x.onPress("Toggle Alliance") {
+                val currentAlliance = robot.base.store.state.drive.alliance
+                val newAlliance = when (currentAlliance) {
+                    com.areslib.state.Alliance.RED -> com.areslib.state.Alliance.BLUE
+                    com.areslib.state.Alliance.BLUE -> com.areslib.state.Alliance.RED
+                }
+                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(newAlliance))
+                robot.resetPoseForAlliance()
+            }
         }
 
         onInit { robot, telemetry ->
@@ -27,7 +36,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
 
-            robot.addTelemetry("Alliance", "RED")
+            robot.addTelemetry("Alliance", robot.base.store.state.drive.alliance.name)
             val estPose = robot.base.store.state.drive.poseEstimator.estimatedPose
             robot.addTelemetry("EKF Pose (X, Y, Deg)", String.format("(%.2f, %.2f) %.1f°",
                 estPose.x,

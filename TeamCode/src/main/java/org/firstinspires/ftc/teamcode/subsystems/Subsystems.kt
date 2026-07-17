@@ -34,8 +34,7 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
         // Mutate in place to avoid GC churn
         val superstructure = store.state.superstructure
         if (superstructure.has(FlywheelState::class.java)) {
-            val state = superstructure.get(FlywheelState::class.java)
-            state.currentRPM = io.velocityRpm
+            superstructure.get(FlywheelState::class.java).currentRPM = io.velocityRpm
         }
     }
 

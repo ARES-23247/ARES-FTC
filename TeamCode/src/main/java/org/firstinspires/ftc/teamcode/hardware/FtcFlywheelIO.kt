@@ -5,11 +5,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+
 
 class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
+    private var supportsVelocityControl = true
+    private var supportsCurrentSensing = true
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
     } catch (_: Exception) {
@@ -27,11 +27,16 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
         if (motor == null) return
         // RPM to ticks per second: (RPM / 60) * ticksPerRev
         val ticksPerSec = (rpm / 60.0) * ticksPerRev
-        try {
-            motor.velocity = ticksPerSec
-        } catch (_: Exception) {
-            // Fallback if closed loop velocity is not supported/configured
-            motor.power = if (rpm > 0.0) 1.0 else 0.0
+        when {
+            supportsVelocityControl -> {
+                try {
+                    motor.velocity = ticksPerSec
+                } catch (_: Exception) {
+                    supportsVelocityControl = false
+                    motor.power = if (rpm > 0.0) 1.0 else 0.0
+                }
+            }
+            else -> motor.power = if (rpm > 0.0) 1.0 else 0.0
         }
     }
 
@@ -51,13 +56,16 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
 
     override fun refresh() {
         if (motor != null) {
-            try {
-                val current = motor.getCurrent(CurrentUnit.AMPS)
-                val ticksPerSec = motor.velocity
-                cachedAmps = current
-                cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
-            } catch (_: Exception) {
-                // Keep last cached values
+            val ticksPerSec = motor.velocity
+            cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
+            when {
+                supportsCurrentSensing -> {
+                    try {
+                        cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
+                    } catch (_: Exception) {
+                        supportsCurrentSensing = false
+                    }
+                }
             }
         }
     }
