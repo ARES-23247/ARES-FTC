@@ -23,6 +23,7 @@ class FtcHardwareTest {
 
         Mockito.`when`(mockMotor.velocity).thenReturn(1400.0)
         Thread.sleep(150)
+        io.refresh()
         assertEquals(3000.0, io.velocityRpm, 1e-6)
 
         assertEquals(0.0, io.currentAmps, 1e-6)
@@ -49,6 +50,7 @@ class FtcHardwareTest {
 
         Mockito.`when`(mockMotor.getCurrent(org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit.AMPS)).thenReturn(2.5)
         Thread.sleep(150)
+        io.refresh()
         assertEquals(2.5, io.rollerCurrentAmps, 1e-6)
 
         io.close()

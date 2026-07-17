@@ -26,18 +26,7 @@ class AresRobot(
         rrDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
         pinpointName = org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT,
         limelightName = org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT,
-        localTelemetry = localTelemetry,
-        driveFeedforward = com.areslib.control.tuning.SimpleFeedforwardCoeffs(
-            kS = 0.05,
-            kV = 0.12,
-            kA = 0.01
-        ),
-        motorGains = com.areslib.control.tuning.PIDFCoefficients(
-            kP = 12.0,
-            kI = 3.0,
-            kD = 0.0,
-            kF = 0.0
-        )
+        localTelemetry = localTelemetry
     )
 
     init {
