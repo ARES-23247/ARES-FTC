@@ -112,3 +112,36 @@ koverReport {
     }
 }
 
+task pushPaths(type: Exec) {
+    group = 'ARES'
+    description = 'Pushes all PathPlanner path and auto files to the connected robot SD card via ADB.'
+    
+    // Find adb.exe in SDK location
+    def sdkDir = project.android.sdkDirectory
+    def adbPath = sdkDir ? "${sdkDir.absolutePath}/platform-tools/adb" : "adb"
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        adbPath += ".exe"
+    }
+
+    commandLine adbPath, 'connect', '192.168.43.1:5555'
+    
+    doLast {
+        exec {
+            commandLine adbPath, 'shell', 'mkdir -p /sdcard/FIRST/paths /sdcard/FIRST/autos'
+        }
+        exec {
+            commandLine adbPath, 'push', 'src/main/assets/pathplanner/paths/.', '/sdcard/FIRST/paths/'
+        }
+        exec {
+            commandLine adbPath, 'push', 'src/main/assets/pathplanner/autos/.', '/sdcard/FIRST/autos/'
+        }
+        println "Paths and autos successfully pushed to robot!"
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name == 'installDebug') {
+        task.dependsOn pushPaths
+    }
+}
+
