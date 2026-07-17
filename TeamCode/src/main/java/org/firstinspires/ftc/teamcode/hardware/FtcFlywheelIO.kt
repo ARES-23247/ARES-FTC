@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import org.firstinspires.ftc.teamcode.hardware.FlywheelIO
+import com.areslib.util.RobotClock
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
@@ -10,6 +11,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private var supportsVelocityControl = true
     private var supportsCurrentSensing = true
+    private var lastCurrentReadTimeMs = 0L
+    private val currentReadIntervalMs = 50L
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
     } catch (_: Exception) {
@@ -60,10 +63,14 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
             cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
             when {
                 supportsCurrentSensing -> {
-                    try {
-                        cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
-                    } catch (_: Exception) {
-                        supportsCurrentSensing = false
+                    val now = RobotClock.currentTimeMillis()
+                    if (now - lastCurrentReadTimeMs >= currentReadIntervalMs) {
+                        lastCurrentReadTimeMs = now
+                        try {
+                            cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
+                        } catch (_: Exception) {
+                            supportsCurrentSensing = false
+                        }
                     }
                 }
             }
