@@ -19,7 +19,7 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 
     override fun writeOutputs(state: RobotState, scale: Double) {
         val active = state.superstructure.intakeActive
-        val voltage = if (active) 12.0 * scale else 0.0
+        val voltage = if (active) state.tuning.intakeNominalVoltage * scale else 0.0
         io.setRollerVoltage(voltage)
     }
 

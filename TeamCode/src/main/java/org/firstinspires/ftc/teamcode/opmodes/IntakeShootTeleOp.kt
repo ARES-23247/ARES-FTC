@@ -39,7 +39,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
                 val currentFlywheel = robot.base.store.state.superstructure.flywheelActive
-                val currentTarget = if (!currentFlywheel) 2000.0 else 0.0
+                val currentTarget = if (!currentFlywheel) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
                 robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
                     FlywheelState(
                         flywheelActive = !currentFlywheel,
@@ -57,10 +57,10 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             // 2. Read state from store for telemetry print
             val state = robot.base.store.state
             robot.addTelemetry("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
-            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (2000 RPM)" else "INACTIVE")
+            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (${state.tuning.flywheelTargetRpmPreset} RPM)" else "INACTIVE")
 
             // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
-            if (driver.rightTrigger.value > 0.5) {
+            if (driver.rightTrigger.value > state.tuning.driverTriggerThreshold) {
                 robot.addTelemetry("Feed", "PUSHING BALL")
             }
 
