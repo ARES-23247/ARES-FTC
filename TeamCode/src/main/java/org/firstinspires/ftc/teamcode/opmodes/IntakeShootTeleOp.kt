@@ -14,9 +14,6 @@ import org.firstinspires.ftc.teamcode.dsl.*
 @TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
 class IntakeShootTeleOp : AresTeleOpBase() {
 
-    private var lastLeftBumper = false
-    private var lastRightBumper = false
-
     override fun define() = aresTeleOp {
 
         onInit { robot, telemetry ->
