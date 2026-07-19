@@ -1,17 +1,15 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import org.firstinspires.ftc.teamcode.hardware.IntakeIO
-import com.areslib.util.RobotClock
+import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import com.areslib.hardware.HardwareRegistry
+import com.areslib.hardware.SyncPolledDevice
 
-
-
-class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
+class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, SyncPolledDevice, AutoCloseable {
     @Volatile private var supportsCurrentSensing = true
-    @Volatile private var lastCurrentReadTimeMs = 0L
-    private val currentReadIntervalMs = 50L
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "intake"))
     } catch (_: Exception) {
@@ -19,6 +17,21 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     }
 
     @Volatile private var cachedRollerAmps = 0.0
+    private var lastPower = -999.0
+
+    init {
+        HardwareRegistry.registerRoundRobinDevice(this)
+    }
+
+    override fun pollSync() {
+        if (motor != null && supportsCurrentSensing) {
+            try {
+                cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
+            } catch (_: Exception) {
+                supportsCurrentSensing = false
+            }
+        }
+    }
 
     override fun setPivotAngle(degrees: Double) {}
 
@@ -26,7 +39,10 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     override fun setRollerVoltage(volts: Double) {
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
-        motor?.power = power
+        if (kotlin.math.abs(lastPower - power) > 1e-4) {
+            motor?.power = power
+            lastPower = power
+        }
     }
 
     override val pivotAngleDegrees: Double
@@ -39,17 +55,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         get() = cachedRollerAmps
 
     override fun refresh() {
-        if (motor != null && supportsCurrentSensing) {
-            val now = RobotClock.currentTimeMillis()
-            if (now - lastCurrentReadTimeMs >= currentReadIntervalMs) {
-                lastCurrentReadTimeMs = now
-                try {
-                    cachedRollerAmps = motor.getCurrent(CurrentUnit.AMPS)
-                } catch (_: Exception) {
-                    supportsCurrentSensing = false
-                }
-            }
-        }
+        // Cached values are updated in the background coroutine
     }
 
     override fun safe() {

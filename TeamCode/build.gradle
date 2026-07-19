@@ -42,8 +42,7 @@ dependencies {
     implementation project(':FtcRobotController')
     implementation 'com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT'
     implementation 'com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT'
-    
-    
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     simRun 'com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT'
 
     testImplementation 'junit:junit:4.13.2'

@@ -5,11 +5,7 @@ import com.areslib.state.RobotState
 import com.areslib.subsystem.Subsystem
 import org.firstinspires.ftc.teamcode.hardware.IntakeIO
 import org.firstinspires.ftc.teamcode.hardware.FlywheelIO
-import org.firstinspires.ftc.teamcode.dsl.IntakeState
-import org.firstinspires.ftc.teamcode.dsl.FlywheelState
-import org.firstinspires.ftc.teamcode.dsl.intakeActive
-import org.firstinspires.ftc.teamcode.dsl.flywheelActive
-import org.firstinspires.ftc.teamcode.dsl.flywheelTargetRPM
+
 import com.areslib.action.RobotAction
 
 class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
@@ -31,18 +27,6 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
-        val superstructure = store.state.superstructure
-        if (superstructure.has(FlywheelState::class.java)) {
-            val current = superstructure.get(FlywheelState::class.java)
-            if (kotlin.math.abs(current.currentRPM - io.velocityRpm) > 5.0) {
-                store.dispatch(
-                    RobotAction.UpdateSubsystemState(
-                        current.copy(currentRPM = io.velocityRpm),
-                        timestampMs
-                    )
-                )
-            }
-        }
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {

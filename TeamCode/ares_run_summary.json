@@ -1,7 +1,7 @@
 {
-  "rmseX": 0.01310,
-  "rmseY": 0.09188,
-  "rmseHeading": 0.02964,
-  "maxCurrentAmps": 3.270,
-  "sampleCount": 1232
+  "rmseX": 0.01426,
+  "rmseY": 0.06668,
+  "rmseHeading": 0.03165,
+  "maxCurrentAmps": 3.333,
+  "sampleCount": 1067
 }

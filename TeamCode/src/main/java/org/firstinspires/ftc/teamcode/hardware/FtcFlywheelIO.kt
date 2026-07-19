@@ -1,18 +1,15 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import org.firstinspires.ftc.teamcode.hardware.FlywheelIO
-import com.areslib.util.RobotClock
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import com.areslib.hardware.HardwareRegistry
+import com.areslib.hardware.SyncPolledDevice
 
-
-
-class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
+class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, AutoCloseable {
     private var supportsVelocityControl = true
     @Volatile private var supportsCurrentSensing = true
-    @Volatile private var lastCurrentReadTimeMs = 0L
-    private val currentReadIntervalMs = 50L
     private val motor: DcMotorEx? = try {
         com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
     } catch (_: Exception) {
@@ -25,6 +22,21 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
 
     @Volatile private var cachedVelocityRpm = 0.0
     @Volatile private var cachedAmps = 0.0
+    private var lastPower = -999.0
+
+    init {
+        HardwareRegistry.registerRoundRobinDevice(this)
+    }
+
+    override fun pollSync() {
+        if (motor != null && supportsCurrentSensing) {
+            try {
+                cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
+            } catch (_: Exception) {
+                supportsCurrentSensing = false
+            }
+        }
+    }
 
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
@@ -36,10 +48,20 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                     motor.velocity = ticksPerSec
                 } catch (_: Exception) {
                     supportsVelocityControl = false
-                    motor.power = if (rpm > 0.0) 1.0 else 0.0
+                    val power = if (rpm > 0.0) 1.0 else 0.0
+                    if (kotlin.math.abs(lastPower - power) > 1e-4) {
+                        motor.power = power
+                        lastPower = power
+                    }
                 }
             }
-            else -> motor.power = if (rpm > 0.0) 1.0 else 0.0
+            else -> {
+                val power = if (rpm > 0.0) 1.0 else 0.0
+                if (kotlin.math.abs(lastPower - power) > 1e-4) {
+                    motor.power = power
+                    lastPower = power
+                }
+            }
         }
     }
 
@@ -61,19 +83,6 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
         if (motor != null) {
             val ticksPerSec = motor.velocity
             cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
-            when {
-                supportsCurrentSensing -> {
-                    val now = RobotClock.currentTimeMillis()
-                    if (now - lastCurrentReadTimeMs >= currentReadIntervalMs) {
-                        lastCurrentReadTimeMs = now
-                        try {
-                            cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
-                        } catch (_: Exception) {
-                            supportsCurrentSensing = false
-                        }
-                    }
-                }
-            }
         }
     }
 

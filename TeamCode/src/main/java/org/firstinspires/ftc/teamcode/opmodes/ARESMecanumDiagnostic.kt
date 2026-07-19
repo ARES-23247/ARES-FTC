@@ -43,6 +43,7 @@ class ARESMecanumDiagnostic : LinearOpMode() {
                 telemetry.addData("Hold Square/X (RL)", rlPower)
                 telemetry.addData("Hold Triangle/Y (RR)", rrPower)
                 telemetry.update()
+                Thread.sleep(20)
             }
         } finally {
             fl?.power = 0.0

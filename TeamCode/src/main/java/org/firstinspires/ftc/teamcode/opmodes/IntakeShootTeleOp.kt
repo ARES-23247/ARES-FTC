@@ -25,11 +25,10 @@ class IntakeShootTeleOp : AresTeleOpBase() {
         }
 
         onConfigure { robot, driver ->
-            // --- Toggle intake on rising edge of left bumper ---
             driver.leftBumper.onPress("Toggle Intake") {
                 val currentIntake = robot.base.store.state.superstructure.intakeActive
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    IntakeState(intakeActive = !currentIntake)
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSuperstructure(
+                    intakeActive = !currentIntake
                 ))
             }
 
@@ -37,13 +36,27 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             driver.rightBumper.onPress("Toggle Shooter") {
                 val currentFlywheel = robot.base.store.state.superstructure.flywheelActive
                 val currentTarget = if (!currentFlywheel) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    FlywheelState(
-                        flywheelActive = !currentFlywheel,
-                        flywheelTargetRPM = currentTarget,
-                        currentRPM = robot.base.store.state.superstructure.currentRPM
-                    )
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSuperstructure(
+                    flywheelActive = !currentFlywheel,
+                    flywheelTargetRPM = currentTarget
                 ))
+            }
+
+            // --- Cycle indicator light color with dpad ---
+            val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
+            var indicatorIndex = 0
+
+            driver.dpadUp.onPress("Indicator Next Color") {
+                indicatorIndex = (indicatorIndex + 1) % indicatorColors.size
+                robot.base.store.dispatch(
+                    com.areslib.action.RobotAction.SetIndicatorLight("indicator", indicatorColors[indicatorIndex].position)
+                )
+            }
+            driver.dpadDown.onPress("Indicator Prev Color") {
+                indicatorIndex = (indicatorIndex - 1 + indicatorColors.size) % indicatorColors.size
+                robot.base.store.dispatch(
+                    com.areslib.action.RobotAction.SetIndicatorLight("indicator", indicatorColors[indicatorIndex].position)
+                )
             }
         }
 
@@ -54,7 +67,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             // 2. Read state from store for telemetry print
             val state = robot.base.store.state
             robot.addTelemetry("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
-            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE (${state.tuning.flywheelTargetRpmPreset} RPM)" else "INACTIVE")
+            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE" else "INACTIVE")
 
             // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
             if (driver.rightTrigger.value > state.tuning.driverTriggerThreshold) {

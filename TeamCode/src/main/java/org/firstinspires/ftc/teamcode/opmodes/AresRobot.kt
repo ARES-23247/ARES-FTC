@@ -43,6 +43,14 @@ class AresRobot(
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
+
+        // --- Indicator Light ---
+        try {
+            val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
+        } catch (e: Exception) {
+            addTelemetry("Subsystem", "Indicator light failed to load: ${e.message}")
+        }
     }
 
     fun addTelemetry(key: String, value: Any) {

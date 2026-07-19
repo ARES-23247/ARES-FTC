@@ -3,13 +3,16 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.areslib.ftc.dsl.FtcMecanumAutoBase
 import com.areslib.ftc.FtcMecanumRobot
+import com.areslib.state.Alliance
+import com.areslib.action.RobotAction
 
-@Autonomous(name = "TestAuto", group = "ARES")
-class CustomPathAuto : FtcMecanumAutoBase<AresRobot>() {
+abstract class TestAutoBase(private val alliance: Alliance) : FtcMecanumAutoBase<AresRobot>() {
     override val pathName: String = "TestAuto"
     
     override fun buildRobot(): AresRobot {
-        return AresRobot(hardwareMap, telemetry)
+        val robot = AresRobot(hardwareMap, telemetry)
+        robot.base.store.dispatch(RobotAction.SetAlliance(alliance))
+        return robot
     }
 
     override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot {
@@ -25,3 +28,8 @@ class CustomPathAuto : FtcMecanumAutoBase<AresRobot>() {
     }
 }
 
+@Autonomous(name = "TestAuto - RED", group = "ARES")
+class TestAutoRed : TestAutoBase(Alliance.RED)
+
+@Autonomous(name = "TestAuto - BLUE", group = "ARES")
+class TestAutoBlue : TestAutoBase(Alliance.BLUE)
