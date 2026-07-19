@@ -48,6 +48,14 @@ class AresRobot(
         try {
             val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
+            
+            // Register PathPlanner named commands for each color
+            com.areslib.hardware.actuator.IndicatorLightColor.values().forEach { color ->
+                com.areslib.pathing.NamedCommands.registerCommand(
+                    "SetIndicatorColor_${color.name}",
+                    com.areslib.sequencer.tasks.SetIndicatorColorTask("indicator", color)
+                )
+            }
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Indicator light failed to load: ${e.message}")
         }
