@@ -26,22 +26,12 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onConfigure { robot, driver ->
             driver.leftBumper.onPress("Toggle Intake") {
-                val season = robot.base.store.state.superstructure.season
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    state = season.copy(intakeActive = !season.intakeActive)
-                ))
+                robot.toggleIntake()
             }
 
             // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
-                val season = robot.base.store.state.superstructure.season
-                val currentTarget = if (!season.flywheelActive) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    state = season.copy(
-                        flywheelActive = !season.flywheelActive,
-                        flywheelTargetRPM = currentTarget
-                    )
-                ))
+                robot.toggleShooter()
             }
 
             // --- Cycle indicator light color with dpad ---
@@ -50,15 +40,11 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
             driver.dpadUp.onPress("Indicator Next Color") {
                 indicatorIndex = (indicatorIndex + 1) % indicatorColors.size
-                robot.base.store.dispatch(
-                    com.areslib.action.RobotAction.SetIndicatorLight("indicator", indicatorColors[indicatorIndex].position)
-                )
+                robot.setIndicatorColor(indicatorColors[indicatorIndex])
             }
             driver.dpadDown.onPress("Indicator Prev Color") {
                 indicatorIndex = (indicatorIndex - 1 + indicatorColors.size) % indicatorColors.size
-                robot.base.store.dispatch(
-                    com.areslib.action.RobotAction.SetIndicatorLight("indicator", indicatorColors[indicatorIndex].position)
-                )
+                robot.setIndicatorColor(indicatorColors[indicatorIndex])
             }
         }
 

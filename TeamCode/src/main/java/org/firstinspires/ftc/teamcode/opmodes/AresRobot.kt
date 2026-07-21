@@ -94,6 +94,37 @@ class AresRobot(
         base.resetPoseForAlliance()
     }
 
+    fun toggleIntake() {
+        val season = base.store.state.superstructure.season
+        base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+            state = season.copy(intakeActive = !season.intakeActive)
+        ))
+    }
+
+    fun toggleShooter() {
+        val season = base.store.state.superstructure.season
+        val currentTarget = if (!season.flywheelActive) base.store.state.tuning.flywheelTargetRpmPreset else 0.0
+        base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+            state = season.copy(
+                flywheelActive = !season.flywheelActive,
+                flywheelTargetRPM = currentTarget
+            )
+        ))
+    }
+
+    fun toggleAlliance() {
+        val currentAlliance = base.store.state.drive.alliance
+        val newAlliance = when (currentAlliance) {
+            com.areslib.state.Alliance.RED -> com.areslib.state.Alliance.BLUE
+            com.areslib.state.Alliance.BLUE -> com.areslib.state.Alliance.RED
+        }
+        base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(newAlliance))
+    }
+
+    fun setIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) {
+        base.store.dispatch(com.areslib.action.RobotAction.SetIndicatorLight("indicator", color.position))
+    }
+
     fun close() {
         base.close()
     }

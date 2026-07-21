@@ -18,12 +18,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
                 robot.resetPoseForAlliance()
             }
             driver.x.onPress("Toggle Alliance") {
-                val currentAlliance = robot.base.store.state.drive.alliance
-                val newAlliance = when (currentAlliance) {
-                    com.areslib.state.Alliance.RED -> com.areslib.state.Alliance.BLUE
-                    com.areslib.state.Alliance.BLUE -> com.areslib.state.Alliance.RED
-                }
-                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(newAlliance))
+                robot.toggleAlliance()
                 robot.resetPoseForAlliance()
             }
         }
