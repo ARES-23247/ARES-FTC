@@ -33,9 +33,16 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                 val vy = nt4.getNumber("ARES/Input/vy", 0.0)
                 val omega = nt4.getNumber("ARES/Input/omega", 0.0)
 
+                var vxAdj = vx
+                var vyAdj = vy
+                if (robot.base.store.state.drive.alliance == com.areslib.state.Alliance.BLUE) {
+                    vxAdj = -vx
+                    vyAdj = -vy
+                }
+
                 robot.base.mecanumDrive.fieldRelativeDrive(
-                    vx = vx,
-                    vy = vy,
+                    vx = vxAdj,
+                    vy = vyAdj,
                     omega = omega,
                     useHeadingLock = false
                 )

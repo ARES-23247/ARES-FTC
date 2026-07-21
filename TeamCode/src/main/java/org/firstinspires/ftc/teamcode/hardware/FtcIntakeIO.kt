@@ -40,8 +40,10 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, SyncPolledDevice, AutoCl
     override fun setRollerVoltage(volts: Double) {
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
-            motor?.power = power
-            lastPower = power
+            try {
+                motor?.power = power
+                lastPower = power
+            } catch (_: Exception) {}
         }
     }
 

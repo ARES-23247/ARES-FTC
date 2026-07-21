@@ -82,7 +82,11 @@ class AresRobot(
     }
 
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) {
-        base.driveFieldCentric(x, y, rotation)
+        if (base.store.state.drive.alliance == com.areslib.state.Alliance.BLUE) {
+            base.driveFieldCentric(-x, -y, rotation)
+        } else {
+            base.driveFieldCentric(x, y, rotation)
+        }
     }
 
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {

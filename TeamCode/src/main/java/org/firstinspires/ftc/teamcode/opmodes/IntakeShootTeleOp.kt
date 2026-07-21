@@ -26,19 +26,21 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onConfigure { robot, driver ->
             driver.leftBumper.onPress("Toggle Intake") {
-                val currentIntake = robot.base.store.state.superstructure.intakeActive
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSuperstructure(
-                    intakeActive = !currentIntake
+                val currentIntake = robot.base.store.state.superstructure.season.intakeActive
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+                    state = robot.base.store.state.superstructure.season.copy(intakeActive = !currentIntake)
                 ))
             }
 
             // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
-                val currentFlywheel = robot.base.store.state.superstructure.flywheelActive
+                val currentFlywheel = robot.base.store.state.superstructure.season.flywheelActive
                 val currentTarget = if (!currentFlywheel) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
-                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSuperstructure(
-                    flywheelActive = !currentFlywheel,
-                    flywheelTargetRPM = currentTarget
+                robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
+                    state = robot.base.store.state.superstructure.season.copy(
+                        flywheelActive = !currentFlywheel,
+                        flywheelTargetRPM = currentTarget
+                    )
                 ))
             }
 
@@ -66,8 +68,8 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
             // 2. Read state from store for telemetry print
             val state = robot.base.store.state
-            robot.addTelemetry("Intake", if (state.superstructure.intakeActive) "ACTIVE" else "INACTIVE")
-            robot.addTelemetry("Shooter", if (state.superstructure.flywheelActive) "ACTIVE" else "INACTIVE")
+            robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
+            robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
 
             // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
             if (driver.rightTrigger.value > state.tuning.driverTriggerThreshold) {

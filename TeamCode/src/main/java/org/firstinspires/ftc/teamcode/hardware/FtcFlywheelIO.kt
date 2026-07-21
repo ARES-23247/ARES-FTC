@@ -67,7 +67,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
 
     override fun setAppliedVoltage(volts: Double) {
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
-        motor?.power = power
+        try {
+            motor?.power = power
+        } catch (_: Exception) {}
     }
 
     override val velocityRpm: Double
@@ -81,8 +83,10 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
 
     override fun refresh() {
         if (motor != null) {
-            val ticksPerSec = motor.velocity
-            cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
+            try {
+                val ticksPerSec = motor.velocity
+                cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
+            } catch (_: Exception) {}
         }
     }
 
