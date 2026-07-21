@@ -26,19 +26,19 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onConfigure { robot, driver ->
             driver.leftBumper.onPress("Toggle Intake") {
-                val currentIntake = robot.base.store.state.superstructure.season.intakeActive
+                val season = robot.base.store.state.superstructure.season
                 robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    state = robot.base.store.state.superstructure.season.copy(intakeActive = !currentIntake)
+                    state = season.copy(intakeActive = !season.intakeActive)
                 ))
             }
 
             // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
-                val currentFlywheel = robot.base.store.state.superstructure.season.flywheelActive
-                val currentTarget = if (!currentFlywheel) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
+                val season = robot.base.store.state.superstructure.season
+                val currentTarget = if (!season.flywheelActive) robot.base.store.state.tuning.flywheelTargetRpmPreset else 0.0
                 robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(
-                    state = robot.base.store.state.superstructure.season.copy(
-                        flywheelActive = !currentFlywheel,
+                    state = season.copy(
+                        flywheelActive = !season.flywheelActive,
                         flywheelTargetRPM = currentTarget
                     )
                 ))

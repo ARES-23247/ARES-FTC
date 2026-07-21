@@ -3,8 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.areslib.ftc.FtcMecanumRobot
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
-import com.areslib.hardware.HardwareRegistry
-import com.areslib.action.RobotAction
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT
 import org.firstinspires.ftc.teamcode.dsl.*
 
 /**
@@ -24,8 +24,8 @@ class AresRobot(
         frDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
         rlDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
         rrDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
-        pinpointName = org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT,
-        limelightName = org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT,
+        pinpointName = ODOMETRY_PINPOINT,
+        limelightName = VISION_LIMELIGHT,
         localTelemetry = localTelemetry
     )
 
@@ -82,11 +82,8 @@ class AresRobot(
     }
 
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) {
-        if (base.store.state.drive.alliance == com.areslib.state.Alliance.BLUE) {
-            base.driveFieldCentric(-x, -y, rotation)
-        } else {
-            base.driveFieldCentric(x, y, rotation)
-        }
+        val mult = if (base.store.state.drive.alliance == com.areslib.state.Alliance.BLUE) -1.0 else 1.0
+        base.driveFieldCentric(x * mult, y * mult, rotation)
     }
 
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {
