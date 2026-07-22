@@ -755,9 +755,7 @@ public class UtilityOctoQuadConfigMenu extends LinearOpMode
             }
         }
 
-        /**
-         *
-         */
+        
         public static class StaticItem extends OptionElement
         {
             private String name;
