@@ -12,9 +12,17 @@ import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
 
 /**
  * Team-specific wrapper around the core FtcMecanumRobot.
- * Refactored into a facade delegating to dedicated single-responsibility controllers.
+ * Refactored into a Facade delegating to dedicated single-responsibility controllers.
  * Stripped to drive-only for maximum loop performance.
  * Subsystem IOs (intake, flywheel) can be re-added when physical hardware is present.
+ *
+ * **Physical Units & Conventions:**
+ * - Translational velocities: Meters per second ($m/s$).
+ * - Angular velocities: Radians per second ($rad/s$).
+ * - Heading: CCW-positive radians ($rad$).
+ *
+ * **Performance Guarantees:**
+ * - Zero-GC Allocations in the hot teleop `update()` loop.
  */
 class AresRobot(
     val hardwareMap: HardwareMap,
@@ -71,6 +79,13 @@ class AresRobot(
 
     fun addTelemetry(key: String, value: Any) = telemetryHelper.addTelemetry(key, value)
 
+    /**
+     * Updates the robot state by polling sensors and writing to actuators.
+     * Guaranteed Zero-GC allocations in this hot path loop.
+     *
+     * @param gamepad1 The primary gamepad telemetry state.
+     * @param gamepad2 The secondary gamepad telemetry state.
+     */
     @kotlin.jvm.JvmOverloads
     fun update(
         gamepad1: com.areslib.telemetry.GamepadState? = null,
