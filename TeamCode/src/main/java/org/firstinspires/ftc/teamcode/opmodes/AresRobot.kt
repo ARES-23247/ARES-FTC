@@ -78,6 +78,7 @@ class AresRobot(
              */
             val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
+            setIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
             
             // Register PathPlanner named commands for each color
             com.areslib.hardware.actuator.IndicatorLightColor.values().forEach { color ->
@@ -124,6 +125,9 @@ class AresRobot(
 
         // 3. Command subsystem actuators with brownout-adjusted power scale
         base.writeAllOutputs(base.powerManager.powerScale)
+
+        // 4. Continuously update core Driver Station telemetry
+        telemetryHelper.updateTelemetry()
     }
     /**
      * Documentation for driveFieldCentric

@@ -23,24 +23,13 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
         }
 
-        onInit { robot, telemetry ->
+        onInit { robot, _ ->
             robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             
             // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
             robot.resetPoseForAlliance()
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
-
-            robot.addTelemetry("Alliance", robot.base.store.state.drive.alliance.name)
-            /**
-             * Documentation for estPose
-             */
-            val estPose = robot.base.store.state.drive.poseEstimator.estimatedPose
-            robot.addTelemetry("EKF Pose (X, Y, Deg)", String.format("(%.2f, %.2f) %.1f°",
-                estPose.x,
-                estPose.y,
-                Math.toDegrees(estPose.heading.radians)
-            ))
         }
         
         onLoop { robot, driver, _ ->
