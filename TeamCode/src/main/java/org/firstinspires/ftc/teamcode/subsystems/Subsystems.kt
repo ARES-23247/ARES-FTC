@@ -64,7 +64,8 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
          * Documentation for active
          */
         val active = state.superstructure.season.flywheelActive
-        io.setVelocityRpm(if (active) state.superstructure.season.flywheelTargetRPM else 0.0)
+        val targetRpm = if (active) state.superstructure.season.flywheelTargetRPM * scale else 0.0
+        io.setVelocityRpm(targetRpm)
     }
 
     override fun close() {

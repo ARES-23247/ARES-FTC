@@ -21,88 +21,93 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
         }
         
         onLoop { robot, driver, telemetry ->
-            /**
-             * Documentation for nt4
-             */
-            val nt4 = robot.base.telemetryManager.nt4
-            /**
-             * Documentation for currentHeartbeat
-             */
-            val currentHeartbeat = nt4.getNumber("ARES/Input/heartbeat", 0.0).toLong()
-            /**
-             * Documentation for now
-             */
-            val now = com.areslib.util.RobotClock.currentTimeMillis()
+            try {
+                /**
+                 * Documentation for nt4
+                 */
+                val nt4 = robot.base.telemetryManager.nt4
+                /**
+                 * Documentation for currentHeartbeat
+                 */
+                val currentHeartbeat = nt4.getNumber("ARES/Input/heartbeat", 0.0).toLong()
+                /**
+                 * Documentation for now
+                 */
+                val now = com.areslib.util.RobotClock.currentTimeMillis()
 
-            if (currentHeartbeat != lastHeartbeatVal) {
-                lastHeartbeatVal = currentHeartbeat
-                lastHeartbeatTime = now
-            }
-
-            // Command watchdog: If heartbeat hasn't changed in 1000ms, stop robot
-            if (now - lastHeartbeatTime < 1000L) {
-                /**
-                 * Documentation for vx
-                 */
-                val vx = nt4.getNumber("ARES/Input/vx", 0.0)
-                /**
-                 * Documentation for vy
-                 */
-                val vy = nt4.getNumber("ARES/Input/vy", 0.0)
-                /**
-                 * Documentation for omega
-                 */
-                val omega = nt4.getNumber("ARES/Input/omega", 0.0)
-
-                robot.driveFieldCentric(vx, vy, omega)
-                
-                // Parse commands
-                /**
-                 * Documentation for cmdStr
-                 */
-                val cmdStr = nt4.getString("ARES/Input/command", "")
-                if (cmdStr.isNotEmpty()) {
-                    nt4.putString("ARES/Input/command", "") // Clear command immediately
-                    /**
-                     * Documentation for parts
-                     */
-                    val parts = cmdStr.split(' ').filter { it.isNotBlank() }
-                    /**
-                     * Documentation for cmdName
-                     */
-                    val cmdName = parts.firstOrNull()
-                    when (cmdName) {
-                        "reset" -> {
-                            /**
-                             * Documentation for x
-                             */
-                            val x = parts.getOrNull(1)?.toDoubleOrNull() ?: 0.0
-                            /**
-                             * Documentation for y
-                             */
-                            val y = parts.getOrNull(2)?.toDoubleOrNull() ?: 0.0
-                            /**
-                             * Documentation for h
-                             */
-                            val h = parts.getOrNull(3)?.toDoubleOrNull() ?: 0.0
-                            println("[RemoteDrive] Resetting EKF pose to: ($x, $y) at $h rad")
-                            robot.base.store.dispatch(RobotAction.PoseUpdate(
-                                xMeters = x,
-                                yMeters = y,
-                                headingRadians = h,
-                                timestampMs = now
-                            ))
-                        }
-                    }
+                if (currentHeartbeat != lastHeartbeatVal) {
+                    lastHeartbeatVal = currentHeartbeat
+                    lastHeartbeatTime = now
                 }
 
-                robot.addTelemetry("Status", "DRIVING")
-                robot.addTelemetry("vx", vx)
-                robot.addTelemetry("vy", vy)
-                robot.addTelemetry("omega", omega)
-            } else {
+                // Command watchdog: If heartbeat hasn't changed in 1000ms, stop robot
+                if (now - lastHeartbeatTime < 1000L) {
+                    /**
+                     * Documentation for vx
+                     */
+                    val vx = nt4.getNumber("ARES/Input/vx", 0.0)
+                    /**
+                     * Documentation for vy
+                     */
+                    val vy = nt4.getNumber("ARES/Input/vy", 0.0)
+                    /**
+                     * Documentation for omega
+                     */
+                    val omega = nt4.getNumber("ARES/Input/omega", 0.0)
+
+                    robot.driveFieldCentric(vx, vy, omega)
+                    
+                    // Parse commands
+                    /**
+                     * Documentation for cmdStr
+                     */
+                    val cmdStr = nt4.getString("ARES/Input/command", "")
+                    if (cmdStr.isNotEmpty()) {
+                        nt4.putString("ARES/Input/command", "") // Clear command immediately
+                        /**
+                         * Documentation for parts
+                         */
+                        val parts = cmdStr.split(' ')
+                        /**
+                         * Documentation for cmdName
+                         */
+                        val cmdName = parts.getOrNull(0)
+                        when (cmdName) {
+                            "reset" -> {
+                                /**
+                                 * Documentation for x
+                                 */
+                                val x = parts.getOrNull(1)?.toDoubleOrNull() ?: 0.0
+                                /**
+                                 * Documentation for y
+                                 */
+                                val y = parts.getOrNull(2)?.toDoubleOrNull() ?: 0.0
+                                /**
+                                 * Documentation for h
+                                 */
+                                val h = parts.getOrNull(3)?.toDoubleOrNull() ?: 0.0
+                                println("[RemoteDrive] Resetting EKF pose to: ($x, $y) at $h rad")
+                                robot.base.store.dispatch(RobotAction.PoseUpdate(
+                                    xMeters = x,
+                                    yMeters = y,
+                                    headingRadians = h,
+                                    timestampMs = now
+                                ))
+                            }
+                        }
+                    }
+
+                    robot.addTelemetry("Status", "DRIVING")
+                    robot.addTelemetry("vx", vx)
+                    robot.addTelemetry("vy", vy)
+                    robot.addTelemetry("omega", omega)
+                } else {
+                    robot.base.mecanumDrive.fieldRelativeDrive(0.0, 0.0, 0.0, false)
+                    robot.addTelemetry("Status", "DISCONNECTED / STALE HEARTBEAT")
+                }
+            } catch (e: Exception) {
                 robot.base.mecanumDrive.fieldRelativeDrive(0.0, 0.0, 0.0, false)
-                robot.addTelemetry("Status", "DISCONNECTED / STALE HEARTBEAT")
+                robot.addTelemetry("Status", "WATCHDOG ERROR: ${e.message}")
             }
         }
     }
