@@ -1,4 +1,7 @@
 package org.firstinspires.ftc.teamcode.config
+/**
+ * Documentation for HardwareConstants
+ */
 
 object HardwareConstants {
     // Drive Motors

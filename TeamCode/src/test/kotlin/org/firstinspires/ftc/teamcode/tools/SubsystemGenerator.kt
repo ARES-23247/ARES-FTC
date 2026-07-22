@@ -10,31 +10,55 @@ import java.util.Scanner
  * To run: Use the "Run" button in Android Studio next to the `main` function.
  */
 fun main() {
+    /**
+     * Documentation for scanner
+     */
     val scanner = Scanner(System.`in`)
     print("Enter subsystem name (e.g., Climber, Intake, Shooter): ")
+    /**
+     * Documentation for name
+     */
     val name = scanner.nextLine().trim()
     
     if (name.isEmpty()) {
         println("Error: Name cannot be empty.")
         return
     }
+    /**
+     * Documentation for lowerName
+     */
     
     val lowerName = name.replaceFirstChar { it.lowercase() }
     
     // Define the base package and output directory
+    /**
+     * Documentation for basePackage
+     */
     val basePackage = "org.firstinspires.ftc.teamcode"
     
     // Note: When running from Android Studio, the working directory is usually the root project.
     // We will resolve relative to TeamCode.
+    /**
+     * Documentation for teamCodeDir
+     */
     val teamCodeDir = File("TeamCode/src/main/java/org/firstinspires/ftc/teamcode")
     if (!teamCodeDir.exists()) {
         println("Error: Could not find TeamCode directory at ${teamCodeDir.absolutePath}")
         println("Please ensure you are running this from the project root.")
         return
     }
+    /**
+     * Documentation for stateDir
+     */
     
     val stateDir = File(teamCodeDir, "state")
+    /**
+     * Documentation for hardwareDir
+     */
     val hardwareDir = File(teamCodeDir, "hardware")
+    /**
+     * Documentation for controlDir
+     */
     val controlDir = File(teamCodeDir, "control")
     
     listOf(stateDir, hardwareDir, controlDir).forEach { it.mkdirs() }
@@ -42,6 +66,9 @@ fun main() {
     println("Generating subsystem: $name")
 
     // 1. State
+    /**
+     * Documentation for stateFile
+     */
     val stateFile = File(stateDir, "${name}State.kt")
     stateFile.writeText("""
         package $basePackage.state
@@ -52,13 +79,22 @@ fun main() {
          * Immutable Redux state for the $name subsystem.
          */
         data class ${name}State(
+            /**
+             * Documentation for targetPosition
+             */
             val targetPosition: Double = 0.0,
+            /**
+             * Documentation for currentPosition
+             */
             val currentPosition: Double = 0.0
         ) : SubsystemState
     """.trimIndent() + "\n")
     println("Created: ${stateFile.path}")
 
     // 2. Action
+    /**
+     * Documentation for actionFile
+     */
     val actionFile = File(stateDir, "${name}Action.kt")
     actionFile.writeText("""
         package $basePackage.state
@@ -76,6 +112,9 @@ fun main() {
     println("Created: ${actionFile.path}")
 
     // 3. Reducer
+    /**
+     * Documentation for reducerFile
+     */
     val reducerFile = File(stateDir, "${name}Reducer.kt")
     reducerFile.writeText("""
         package $basePackage.state
@@ -84,6 +123,9 @@ fun main() {
          * Pure reducer for the $name subsystem.
          */
         object ${name}Reducer {
+            /**
+             * Documentation for reduce
+             */
             fun reduce(state: ${name}State, action: ${name}Action): ${name}State {
                 return when (action) {
                     is ${name}Action.SetTarget -> state.copy(targetPosition = action.position)
@@ -95,6 +137,9 @@ fun main() {
     println("Created: ${reducerFile.path}")
 
     // 4. IO Interface
+    /**
+     * Documentation for ioInterfaceFile
+     */
     val ioInterfaceFile = File(hardwareDir, "${name}IO.kt")
     ioInterfaceFile.writeText("""
         package $basePackage.hardware
@@ -105,8 +150,17 @@ fun main() {
          * Abstract hardware interface for $name.
          */
         interface ${name}IO : SubsystemIO, AutoCloseable {
+            /**
+             * Documentation for position
+             */
             val position: Double
+            /**
+             * Documentation for currentAmps
+             */
             val currentAmps: Double
+            /**
+             * Documentation for setVoltage
+             */
             
             fun setVoltage(voltage: Double)
         }
@@ -114,12 +168,18 @@ fun main() {
     println("Created: ${ioInterfaceFile.path}")
 
     // 5. FTC Hardware IO
+    /**
+     * Documentation for ftcIoFile
+     */
     val ftcIoFile = File(hardwareDir, "Ftc${name}IO.kt")
     ftcIoFile.writeText("""
         package $basePackage.hardware
 
         import com.qualcomm.robotcore.hardware.HardwareMap
         import com.qualcomm.robotcore.hardware.DcMotorEx
+        /**
+         * Documentation for Ftc
+         */
 
         class Ftc${name}IO(hardwareMap: HardwareMap) : ${name}IO {
             private val motor: DcMotorEx = hardwareMap.get(DcMotorEx::class.java, "$lowerName")
@@ -167,9 +227,15 @@ fun main() {
     println("Created: ${ftcIoFile.path}")
 
     // 6. Mock Hardware IO
+    /**
+     * Documentation for mockIoFile
+     */
     val mockIoFile = File(hardwareDir, "Mock${name}IO.kt")
     mockIoFile.writeText("""
         package $basePackage.hardware
+        /**
+         * Documentation for Mock
+         */
 
         class Mock${name}IO : ${name}IO {
             override var position: Double = 0.0
@@ -201,6 +267,9 @@ fun main() {
     println("Created: ${mockIoFile.path}")
 
     // 7. Controller
+    /**
+     * Documentation for controllerFile
+     */
     val controllerFile = File(controlDir, "${name}Controller.kt")
     controllerFile.writeText("""
         package $basePackage.control
@@ -209,14 +278,26 @@ fun main() {
         import $basePackage.hardware.${name}IO
 
         class ${name}Controller(private val io: ${name}IO) {
+            /**
+             * Documentation for update
+             */
             
             fun update(state: ${name}State, dtSeconds: Double) {
                 // Read hardware into state
                 // This would typically dispatch an UpdateSensors action in the main loop
                 
                 // Closed-loop control
+                /**
+                 * Documentation for error
+                 */
                 val error = state.targetPosition - state.currentPosition
+                /**
+                 * Documentation for kP
+                 */
                 val kP = 0.5
+                /**
+                 * Documentation for voltage
+                 */
                 val voltage = (error * kP).coerceIn(-12.0, 12.0)
                 
                 io.setVoltage(voltage)

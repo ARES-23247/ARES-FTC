@@ -35,7 +35,13 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             }
 
             // --- Cycle indicator light color with dpad ---
+            /**
+             * Documentation for indicatorColors
+             */
             val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
+            /**
+             * Documentation for indicatorIndex
+             */
             var indicatorIndex = 0
 
             driver.dpadUp.onPress("Indicator Next Color") {
@@ -53,6 +59,9 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = false)
 
             // 2. Read state from store for telemetry print
+            /**
+             * Documentation for state
+             */
             val state = robot.base.store.state
             robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
             robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")

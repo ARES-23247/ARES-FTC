@@ -5,14 +5,29 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.junit.Assert.*
 import org.junit.Test
 import org.mockito.Mockito
+/**
+ * Documentation for FtcHardwareTest
+ */
 
 class FtcHardwareTest {
+    /**
+     * Documentation for testFtcFlywheelIO
+     */
 
     @Test
     fun testFtcFlywheelIO() {
+        /**
+         * Documentation for mockMotor
+         */
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        /**
+         * Documentation for hardwareMap
+         */
         val hardwareMap = Mockito.mock(HardwareMap::class.java)
         Mockito.`when`(hardwareMap.get(DcMotorEx::class.java, "shooter")).thenReturn(mockMotor)
+        /**
+         * Documentation for io
+         */
 
         val io = FtcFlywheelIO(hardwareMap)
         io.setVelocityRpm(3000.0)
@@ -32,12 +47,24 @@ class FtcHardwareTest {
         io.close()
         Mockito.verify(mockMotor, Mockito.atLeastOnce()).power = 0.0
     }
+    /**
+     * Documentation for testFtcIntakeIO
+     */
 
     @Test
     fun testFtcIntakeIO() {
+        /**
+         * Documentation for mockMotor
+         */
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        /**
+         * Documentation for hardwareMap
+         */
         val hardwareMap = Mockito.mock(HardwareMap::class.java)
         Mockito.`when`(hardwareMap.get(DcMotorEx::class.java, "intake")).thenReturn(mockMotor)
+        /**
+         * Documentation for io
+         */
 
         val io = FtcIntakeIO(hardwareMap)
         io.setRollerVoltage(6.0)

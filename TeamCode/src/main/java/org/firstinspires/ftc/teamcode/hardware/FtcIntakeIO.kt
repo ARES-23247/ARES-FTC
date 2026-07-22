@@ -7,6 +7,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
 import com.areslib.hardware.SyncPolledDevice
+/**
+ * Documentation for FtcIntakeIO
+ */
 
 class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, SyncPolledDevice, AutoCloseable {
     @Volatile private var supportsCurrentSensing = true
@@ -38,6 +41,9 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, SyncPolledDevice, AutoCl
     override fun setPivotVoltage(volts: Double) {}
 
     override fun setRollerVoltage(volts: Double) {
+        /**
+         * Documentation for power
+         */
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
             try {

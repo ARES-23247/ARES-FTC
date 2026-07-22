@@ -6,6 +6,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
 import com.areslib.hardware.SyncPolledDevice
+/**
+ * Documentation for FtcFlywheelIO
+ */
 
 class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, AutoCloseable {
     private var supportsVelocityControl = true
@@ -41,6 +44,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
         // RPM to ticks per second: (RPM / 60) * ticksPerRev
+        /**
+         * Documentation for ticksPerSec
+         */
         val ticksPerSec = (rpm / 60.0) * ticksPerRev
         when {
             supportsVelocityControl -> {
@@ -48,6 +54,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
                     motor.velocity = ticksPerSec
                 } catch (_: Exception) {
                     supportsVelocityControl = false
+                    /**
+                     * Documentation for power
+                     */
                     val power = if (rpm > 0.0) 1.0 else 0.0
                     if (kotlin.math.abs(lastPower - power) > 1e-4) {
                         motor.power = power
@@ -56,6 +65,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
                 }
             }
             else -> {
+                /**
+                 * Documentation for power
+                 */
                 val power = if (rpm > 0.0) 1.0 else 0.0
                 if (kotlin.math.abs(lastPower - power) > 1e-4) {
                     motor.power = power
@@ -66,6 +78,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
     }
 
     override fun setAppliedVoltage(volts: Double) {
+        /**
+         * Documentation for power
+         */
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
         try {
             motor?.power = power
@@ -84,6 +99,9 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
     override fun refresh() {
         if (motor != null) {
             try {
+                /**
+                 * Documentation for ticksPerSec
+                 */
                 val ticksPerSec = motor.velocity
                 cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
             } catch (_: Exception) {}

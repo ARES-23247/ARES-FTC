@@ -32,6 +32,9 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
 
             robot.addTelemetry("Alliance", robot.base.store.state.drive.alliance.name)
+            /**
+             * Documentation for estPose
+             */
             val estPose = robot.base.store.state.drive.poseEstimator.estimatedPose
             robot.addTelemetry("EKF Pose (X, Y, Deg)", String.format("(%.2f, %.2f) %.1f°",
                 estPose.x,

@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotorEx
+/**
+ * Documentation for ARESMecanumDiagnostic
+ */
 
 @TeleOp(name = "ARES Drivetrain Diagnostic", group = "ARES")
 class ARESMecanumDiagnostic : LinearOpMode() {
@@ -10,10 +13,22 @@ class ARESMecanumDiagnostic : LinearOpMode() {
     override fun runOpMode() {
         telemetry.addData("Status", "Initializing raw motors...")
         telemetry.update()
+        /**
+         * Documentation for fl
+         */
 
         val fl = try { hardwareMap.get(DcMotorEx::class.java, "fl") } catch (_: Exception) { null }
+        /**
+         * Documentation for fr
+         */
         val fr = try { hardwareMap.get(DcMotorEx::class.java, "fr") } catch (_: Exception) { null }
+        /**
+         * Documentation for rl
+         */
         val rl = try { hardwareMap.get(DcMotorEx::class.java, "rl") } catch (_: Exception) { null }
+        /**
+         * Documentation for rr
+         */
         val rr = try { hardwareMap.get(DcMotorEx::class.java, "rr") } catch (_: Exception) { null }
 
         telemetry.addData("Status", "Ready. Press Play.")
@@ -27,9 +42,21 @@ class ARESMecanumDiagnostic : LinearOpMode() {
 
         try {
             while (opModeIsActive()) {
+                /**
+                 * Documentation for flPower
+                 */
                 val flPower = if (gamepad1.a) 0.4 else 0.0  // Cross / A
+                /**
+                 * Documentation for frPower
+                 */
                 val frPower = if (gamepad1.b) 0.4 else 0.0  // Circle / B
+                /**
+                 * Documentation for rlPower
+                 */
                 val rlPower = if (gamepad1.x) 0.4 else 0.0  // Square / X
+                /**
+                 * Documentation for rrPower
+                 */
                 val rrPower = if (gamepad1.y) 0.4 else 0.0  // Triangle / Y
 
                 fl?.power = flPower

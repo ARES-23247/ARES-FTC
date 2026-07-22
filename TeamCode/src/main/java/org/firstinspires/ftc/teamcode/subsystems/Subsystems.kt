@@ -16,7 +16,13 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
+        /**
+         * Documentation for active
+         */
         val active = state.superstructure.season.intakeActive
+        /**
+         * Documentation for voltage
+         */
         val voltage = if (active) state.tuning.intakeNominalVoltage * scale else 0.0
         io.setRollerVoltage(voltage)
     }
@@ -32,11 +38,20 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
 
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
+        /**
+         * Documentation for currentRpm
+         */
         
         val currentRpm = io.velocityRpm
+        /**
+         * Documentation for timeSinceLastDispatch
+         */
         val timeSinceLastDispatch = timestampMs - lastDispatchTime
         
         if (timeSinceLastDispatch >= 50 && kotlin.math.abs(currentRpm - lastDispatchedRpm) >= 20.0) {
+            /**
+             * Documentation for seasonState
+             */
             val seasonState = store.state.superstructure.season
             store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = currentRpm)))
             lastDispatchedRpm = currentRpm
@@ -45,6 +60,9 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
+        /**
+         * Documentation for active
+         */
         val active = state.superstructure.season.flywheelActive
         io.setVelocityRpm(if (active) state.superstructure.season.flywheelTargetRPM else 0.0)
     }

@@ -25,9 +25,18 @@ import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
  * - Zero-GC Allocations in the hot teleop `update()` loop.
  */
 class AresRobot(
+    /**
+     * Documentation for hardwareMap
+     */
     val hardwareMap: HardwareMap,
+    /**
+     * Documentation for localTelemetry
+     */
     val localTelemetry: Telemetry? = null
 ) {
+    /**
+     * Documentation for base
+     */
     val base = FtcMecanumRobot(
         hardwareMap = hardwareMap,
         rlName = "rl",
@@ -43,6 +52,9 @@ class AresRobot(
 
     init {
         try {
+            /**
+             * Documentation for intakeIO
+             */
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO))
         } catch (e: Exception) {
@@ -50,6 +62,9 @@ class AresRobot(
         }
 
         try {
+            /**
+             * Documentation for flywheelIO
+             */
             val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO))
         } catch (e: Exception) {
@@ -58,6 +73,9 @@ class AresRobot(
 
         // --- Indicator Light ---
         try {
+            /**
+             * Documentation for indicatorIO
+             */
             val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
             
@@ -76,6 +94,9 @@ class AresRobot(
     private val driveController = AresDriveController(base)
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
+    /**
+     * Documentation for addTelemetry
+     */
 
     fun addTelemetry(key: String, value: Any) = telemetryHelper.addTelemetry(key, value)
 
@@ -92,6 +113,9 @@ class AresRobot(
         gamepad2: com.areslib.telemetry.GamepadState? = null
     ) {
         // 1. Poll subsystem sensors (e.g. flywheel encoder) before drivebase update
+        /**
+         * Documentation for timestamp
+         */
         val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
         base.readAllSensors(timestamp)
 
@@ -101,16 +125,40 @@ class AresRobot(
         // 3. Command subsystem actuators with brownout-adjusted power scale
         base.writeAllOutputs(base.powerManager.powerScale)
     }
+    /**
+     * Documentation for driveFieldCentric
+     */
 
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) = driveController.driveFieldCentric(x, y, rotation)
+    /**
+     * Documentation for driveRobotCentric
+     */
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) = driveController.driveRobotCentric(x, y, rotation)
+    /**
+     * Documentation for resetPoseForAlliance
+     */
     fun resetPoseForAlliance() = driveController.resetPoseForAlliance()
+    /**
+     * Documentation for toggleIntake
+     */
 
     fun toggleIntake() = superstructureController.toggleIntake()
+    /**
+     * Documentation for toggleShooter
+     */
     fun toggleShooter() = superstructureController.toggleShooter()
+    /**
+     * Documentation for toggleAlliance
+     */
     fun toggleAlliance() = superstructureController.toggleAlliance()
+    /**
+     * Documentation for setIndicatorColor
+     */
 
     fun setIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(color)
+    /**
+     * Documentation for close
+     */
 
     fun close() {
         base.close()

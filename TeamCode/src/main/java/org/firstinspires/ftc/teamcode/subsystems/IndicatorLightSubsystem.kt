@@ -27,6 +27,9 @@ class IndicatorLightSubsystem(
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
+        /**
+         * Documentation for targetPosition
+         */
         val targetPosition = state.superstructure.indicatorLights[name]
         if (targetPosition != null) {
             io.setPosition(targetPosition)

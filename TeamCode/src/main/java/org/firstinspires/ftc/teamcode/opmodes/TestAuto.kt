@@ -10,6 +10,9 @@ abstract class TestAutoBase(private val alliance: Alliance) : FtcMecanumAutoBase
     override val pathName: String = "TestAuto"
     
     override fun buildRobot(): AresRobot {
+        /**
+         * Documentation for robot
+         */
         val robot = AresRobot(hardwareMap, telemetry)
         robot.base.store.dispatch(RobotAction.SetAlliance(alliance))
         return robot
@@ -27,9 +30,15 @@ abstract class TestAutoBase(private val alliance: Alliance) : FtcMecanumAutoBase
         robot.close()
     }
 }
+/**
+ * Documentation for TestAutoRed
+ */
 
 @Autonomous(name = "TestAuto - RED", group = "ARES")
 class TestAutoRed : TestAutoBase(Alliance.RED)
+/**
+ * Documentation for TestAutoBlue
+ */
 
 @Autonomous(name = "TestAuto - BLUE", group = "ARES")
 class TestAutoBlue : TestAutoBase(Alliance.BLUE)

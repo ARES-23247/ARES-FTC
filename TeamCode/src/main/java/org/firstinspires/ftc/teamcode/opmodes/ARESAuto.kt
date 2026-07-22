@@ -7,6 +7,9 @@ import com.areslib.action.RobotAction
 import com.areslib.state.Alliance
 
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
+/**
+ * Documentation for ARESAuto
+ */
 
 @Autonomous(name = "ARES Mecanum Auto", group = "ARES")
 class ARESAuto : AresAutoBase() {

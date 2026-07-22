@@ -27,6 +27,9 @@ abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>() {
      * Entrypoint for the DSL configuration block, typed to AresRobot.
      */
     fun aresTeleOp(block: FtcTeleOpBuilder<AresRobot>.() -> Unit): FtcTeleOpBuilder<AresRobot> {
+        /**
+         * Documentation for builder
+         */
         val builder = FtcTeleOpBuilder<AresRobot>()
         builder.block()
         return builder
