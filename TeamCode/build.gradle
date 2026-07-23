@@ -35,7 +35,11 @@ android {
 }
 
 configurations {
-    simRun
+    simRun {
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+        }
+    }
 }
 
 dependencies {

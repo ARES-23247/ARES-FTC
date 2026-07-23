@@ -50,11 +50,12 @@ class AresRobot(
         localTelemetry = localTelemetry
     )
 
+    private val driveController = AresDriveController(base)
+    private val superstructureController = AresSuperstructureController(base)
+    private val telemetryHelper = AresTelemetryHelper(base)
+
     init {
         try {
-            /**
-             * Documentation for intakeIO
-             */
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO))
         } catch (e: Exception) {
@@ -62,9 +63,6 @@ class AresRobot(
         }
 
         try {
-            /**
-             * Documentation for flywheelIO
-             */
             val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO))
         } catch (e: Exception) {
@@ -73,9 +71,6 @@ class AresRobot(
 
         // --- Indicator Light ---
         try {
-            /**
-             * Documentation for indicatorIO
-             */
             val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
             setIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
@@ -92,13 +87,11 @@ class AresRobot(
         }
     }
 
-    private val driveController = AresDriveController(base)
-    private val superstructureController = AresSuperstructureController(base)
-    private val telemetryHelper = AresTelemetryHelper(base)
     /**
-     * Documentation for addTelemetry
+     * Safely adds a key-value pair to the robot telemetry stream.
+     * @param key The telemetry category label.
+     * @param value The telemetry data value.
      */
-
     fun addTelemetry(key: String, value: Any) = telemetryHelper.addTelemetry(key, value)
 
     /**
