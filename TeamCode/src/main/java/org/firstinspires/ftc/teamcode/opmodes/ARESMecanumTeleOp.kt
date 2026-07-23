@@ -25,9 +25,6 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
 
         onInit { robot, _ ->
             robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
-            
-            // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
-            robot.resetPoseForAlliance()
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }

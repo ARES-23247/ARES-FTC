@@ -19,9 +19,6 @@ class IntakeShootTeleOp : AresTeleOpBase() {
         onInit { robot, telemetry ->
             robot.addTelemetry("Status", "Intake & Shoot TeleOp Ready!")
             robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
-            
-            // Auto-initialize pose with alliance starting orientation so field-centric is correct on start
-            robot.resetPoseForAlliance()
         }
 
         onConfigure { robot, driver ->

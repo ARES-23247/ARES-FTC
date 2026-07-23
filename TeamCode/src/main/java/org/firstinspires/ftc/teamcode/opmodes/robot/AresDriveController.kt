@@ -28,4 +28,8 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     fun resetPoseForAlliance() {
         base.resetPoseForAlliance()
     }
+
+    fun resetPose(pose: com.areslib.math.geometry.Pose2d = com.areslib.math.geometry.Pose2d()) {
+        base.resetPose(pose)
+    }
 }
