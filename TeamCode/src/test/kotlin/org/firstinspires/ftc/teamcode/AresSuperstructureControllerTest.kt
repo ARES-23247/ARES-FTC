@@ -1,0 +1,146 @@
+package org.firstinspires.ftc.teamcode
+
+import com.areslib.Store
+import com.areslib.action.RobotAction
+import com.areslib.ftc.FtcMecanumRobot
+import com.areslib.reducer.rootReducer
+import com.areslib.state.Alliance
+import com.areslib.state.DriveState
+import com.areslib.state.RobotState
+import com.areslib.state.SuperstructureState
+import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
+import org.firstinspires.ftc.teamcode.dsl.season
+import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
+import org.junit.Assert.*
+import org.junit.Test
+import org.mockito.Mockito
+
+/**
+ * Tests for AresSuperstructureController verifying toggle dispatches and state transitions.
+ * Uses a real Store with real reducers to avoid Mockito deep-stub property chain issues.
+ */
+class AresSuperstructureControllerTest {
+
+    private fun createRobotWithStore(
+        alliance: Alliance = Alliance.RED,
+        flywheelActive: Boolean = false,
+        intakeActive: Boolean = false
+    ): FtcMecanumRobot {
+        val initialState = RobotState(
+            drive = DriveState(alliance = alliance),
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = flywheelActive,
+                    intakeActive = intakeActive
+                )
+            )
+        )
+        val store = Store(initialState, ::rootReducer)
+        val robot = Mockito.mock(FtcMecanumRobot::class.java, Mockito.RETURNS_DEEP_STUBS)
+        Mockito.`when`(robot.store).thenReturn(store)
+        return robot
+    }
+
+    @Test
+    fun testToggleIntakeTurnsIntakeOn() {
+        val robot = createRobotWithStore(intakeActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleIntake()
+
+        val season = robot.store.state.superstructure.season
+        assertTrue("Intake should be turned on", season.intakeActive)
+    }
+
+    @Test
+    fun testToggleIntakeTurnsIntakeOff() {
+        val robot = createRobotWithStore(intakeActive = true)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleIntake()
+
+        val season = robot.store.state.superstructure.season
+        assertFalse("Intake should be turned off", season.intakeActive)
+    }
+
+    @Test
+    fun testToggleShooterTurnsShooterOn() {
+        val robot = createRobotWithStore(flywheelActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+
+        val season = robot.store.state.superstructure.season
+        assertTrue("Shooter should be turned on", season.flywheelActive)
+    }
+
+    @Test
+    fun testToggleShooterTurnsShooterOff() {
+        val robot = createRobotWithStore(flywheelActive = true)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+
+        val season = robot.store.state.superstructure.season
+        assertFalse("Shooter should be turned off", season.flywheelActive)
+        assertEquals("Target RPM should be 0.0 when off", 0.0, season.flywheelTargetRPM, 1e-4)
+    }
+
+    @Test
+    fun testToggleAllianceRedToBlue() {
+        val robot = createRobotWithStore(alliance = Alliance.RED)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleAlliance()
+
+        assertEquals("Alliance should be toggled to Blue", Alliance.BLUE, robot.store.state.drive.alliance)
+    }
+
+    @Test
+    fun testToggleAllianceBlueToRed() {
+        val robot = createRobotWithStore(alliance = Alliance.BLUE)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleAlliance()
+
+        assertEquals("Alliance should be toggled to Red", Alliance.RED, robot.store.state.drive.alliance)
+    }
+
+    @Test
+    fun testZeroDefaultStateProducesZeroOutputs() {
+        val robot = createRobotWithStore(flywheelActive = false, intakeActive = false)
+
+        val season = robot.store.state.superstructure.season
+        assertFalse(season.intakeActive)
+        assertFalse(season.flywheelActive)
+        assertEquals(0.0, season.flywheelTargetRPM, 1e-4)
+    }
+
+    @Test
+    fun testMotorVoltageOutputsBounded() {
+        val robot = createRobotWithStore(flywheelActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+
+        val season = robot.store.state.superstructure.season
+        assertTrue("RPM should not exceed physical limits", season.flywheelTargetRPM <= 6000.0)
+    }
+
+    @Test
+    fun testStateMachineTransitions() {
+        val robot = createRobotWithStore(flywheelActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        // From idle to active
+        controller.toggleShooter()
+        val state1 = robot.store.state.superstructure.season
+        assertTrue(state1.flywheelActive)
+
+        // From active back to idle
+        controller.toggleShooter()
+        val state2 = robot.store.state.superstructure.season
+        assertFalse(state2.flywheelActive)
+        assertEquals(0.0, state2.flywheelTargetRPM, 1e-4)
+    }
+}
