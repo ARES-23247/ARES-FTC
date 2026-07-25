@@ -6,6 +6,7 @@ import com.areslib.state.Alliance
 import org.firstinspires.ftc.teamcode.dsl.*
 
 class AresSuperstructureController(private val base: FtcMecanumRobot) {
+    // TODO: Create ToggleIntake and ToggleFlywheel actions in ARESLib-Kotlin RobotAction
     /**
      * Documentation for toggleIntake
      */

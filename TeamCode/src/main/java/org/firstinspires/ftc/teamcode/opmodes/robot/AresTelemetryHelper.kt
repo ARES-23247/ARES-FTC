@@ -22,11 +22,9 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         val alliance = base.store.state.drive.alliance.name
         val estPose = base.store.state.drive.poseEstimator.estimatedPose
         addTelemetry("Alliance", alliance)
-        addTelemetry("EKF Pose (X, Y, Deg)", String.format("(%.2f, %.2f) %.1f°",
-            estPose.x,
-            estPose.y,
-            Math.toDegrees(estPose.heading.radians)
-        ))
+        addTelemetry("EKF Pose X", estPose.x.toString())
+        addTelemetry("EKF Pose Y", estPose.y.toString())
+        addTelemetry("EKF Pose Deg", Math.toDegrees(estPose.heading.radians).toString())
     }
 
     companion object {

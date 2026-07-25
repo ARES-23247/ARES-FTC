@@ -82,9 +82,12 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
          * Documentation for power
          */
         val power = (volts / 12.0).coerceIn(-1.0, 1.0)
-        try {
-            motor?.power = power
-        } catch (_: Exception) {}
+        if (kotlin.math.abs(lastPower - power) > 1e-4) {
+            try {
+                motor?.power = power
+                lastPower = power
+            } catch (_: Exception) {}
+        }
     }
 
     override val velocityRpm: Double
