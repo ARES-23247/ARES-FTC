@@ -253,6 +253,9 @@ class AresRobot(
     fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
     fun setPrismPulseWidth(pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth("prism", pulseWidthUs)
     fun setPrismPulseWidth(name: String, pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth(name, pulseWidthUs)
+    fun setPrismMaxBrightness(percent: Int) {
+        prismIO?.maxBrightnessPercent = percent.coerceIn(0, 100)
+    }
     /**
      * Documentation for close
      */
