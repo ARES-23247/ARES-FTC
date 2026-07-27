@@ -27,11 +27,20 @@ class IndicatorLightSubsystem(
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        /**
-         * Documentation for targetPosition
-         */
-        val targetPosition = state.superstructure.indicatorLights[name]
-        if (targetPosition != null) {
+        val targetPosition = state.superstructure.indicatorLights[name] ?: return
+        if (targetPosition < 0.0) {
+            // Rainbow Mode: Smoothly cycle across the RGB color spectrum (RED 0.279 to PURPLE 0.722)
+            val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
+            // Offset 2nd indicator light by 500ms so the two lights cycle in a dynamic wave
+            val offset = if (name.contains("2")) 500L else 0L
+            val cycleTimeMs = 2500.0
+            val progress = ((nowMs + offset) % cycleTimeMs.toLong()) / cycleTimeMs
+            val minPos = com.areslib.hardware.actuator.IndicatorLightColor.RED.position
+            val maxPos = com.areslib.hardware.actuator.IndicatorLightColor.PURPLE.position
+            val sweep = if (progress < 0.5) progress * 2.0 else 2.0 * (1.0 - progress)
+            val rainbowPos = minPos + (maxPos - minPos) * sweep
+            io.setPosition(rainbowPos)
+        } else {
             io.setPosition(targetPosition)
         }
     }

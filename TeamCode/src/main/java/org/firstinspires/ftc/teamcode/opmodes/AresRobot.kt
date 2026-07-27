@@ -69,21 +69,114 @@ class AresRobot(
             addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
 
-        // --- Indicator Light ---
-        try {
-            val indicatorIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(indicatorIO, "indicator"))
-            setIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
+        // --- Primary Indicator Light ("indicator") ---
+        var primaryName: String? = null
+        var primaryIO: com.areslib.ftc.hardware.FtcIndicatorLightIO? = null
+        val primaryCandidates = listOf("indicator", "indicator1", "indicator_1", "light1", "light_1", "led1")
+        for (candidateName in primaryCandidates) {
+            try {
+                primaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
+                primaryName = candidateName
+                break
+            } catch (_: Exception) {}
+        }
+        if (primaryIO != null && primaryName != null) {
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(primaryIO, "indicator"))
+            setIndicatorColor("indicator", com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
             
-            // Register PathPlanner named commands for each color
             com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
                 com.areslib.pathing.NamedCommands.registerCommand(
                     "SetIndicatorColor_${color.name}",
                     com.areslib.sequencer.tasks.SetIndicatorColorTask("indicator", color)
                 )
             }
-        } catch (e: Exception) {
-            addTelemetry("Subsystem", "Indicator light failed to load: ${e.message}")
+        } else {
+            addTelemetry("Subsystem", "Primary indicator light not found in Hardware Map")
+        }
+
+        // --- Secondary Indicator Light ("indicator2") ---
+        var secondaryIO: com.areslib.ftc.hardware.FtcIndicatorLightIO? = null
+        var loadedSecondaryName: String? = null
+        val secondaryCandidates = listOf("indicator2", "indicator_2", "second_indicator", "indicatorLight2", "light2", "light_2", "led2", "led_2")
+        for (candidateName in secondaryCandidates) {
+            try {
+                if (candidateName != primaryName) {
+                    secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
+                    loadedSecondaryName = candidateName
+                    break
+                }
+            } catch (_: Exception) {}
+        }
+
+        // Auto-discover any 2nd servo in hardwareMap that isn't the primary indicator light
+        if (secondaryIO == null) {
+            try {
+                for (entry in hardwareMap.servo.entrySet()) {
+                    val deviceName = entry.key
+                    if (deviceName != primaryName && !deviceName.equals("floodgate", ignoreCase = true)) {
+                        try {
+                            secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, deviceName)
+                            loadedSecondaryName = deviceName
+                            break
+                        } catch (_: Exception) {}
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        if (secondaryIO != null && loadedSecondaryName != null) {
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(secondaryIO, "indicator2"))
+            setSecondIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.BLUE)
+
+            com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
+                com.areslib.pathing.NamedCommands.registerCommand(
+                    "SetSecondIndicatorColor_${color.name}",
+                    com.areslib.sequencer.tasks.SetIndicatorColorTask("indicator2", color)
+                )
+            }
+            addTelemetry("Subsystem", "Secondary indicator light loaded as: $loadedSecondaryName")
+        } else {
+            addTelemetry("Subsystem", "Secondary indicator light (indicator2) not configured in Hardware Map")
+        }
+
+        // --- goBILDA Prism RGB LED Driver ("prism") ---
+        val prismCandidates = listOf("prism", "prism_driver", "gobilda_prism", "prism_led")
+        var loadedPrismName: String? = null
+        var prismIOInstance: com.areslib.hardware.actuator.PrismDriverIO? = null
+
+        // 1. Try I2C Device initialization first (Address 0x38)
+        for (candidateName in prismCandidates) {
+            try {
+                prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, candidateName)
+                loadedPrismName = "$candidateName (I2C 0x38)"
+                break
+            } catch (_: Exception) {}
+        }
+
+        // 2. Fall back to PWM Servo initialization if I2C device is not configured
+        if (prismIOInstance == null) {
+            for (candidateName in prismCandidates) {
+                try {
+                    prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, candidateName)
+                    loadedPrismName = "$candidateName (PWM Servo)"
+                    break
+                } catch (_: Exception) {}
+            }
+        }
+
+        if (prismIOInstance != null && loadedPrismName != null) {
+            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem(prismIOInstance, "prism"))
+            setPrismPreset(com.areslib.hardware.actuator.PrismPwmPreset.RAINBOW_FULL_COLOR)
+
+            com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
+                com.areslib.pathing.NamedCommands.registerCommand(
+                    "SetPrismPreset_${preset.name}",
+                    com.areslib.sequencer.Task.fromAction(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
+                )
+            }
+            addTelemetry("Subsystem", "Prism RGB Driver loaded as: $loadedPrismName")
+        } else {
+            addTelemetry("Subsystem", "Prism RGB Driver (prism) optional")
         }
     }
 
@@ -153,6 +246,13 @@ class AresRobot(
      */
 
     fun setIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(color)
+    fun setSecondIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setSecondIndicatorColor(color)
+    fun setIndicatorColor(name: String, color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(name, color)
+
+    fun setPrismPreset(preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset("prism", preset)
+    fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
+    fun setPrismPulseWidth(pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth("prism", pulseWidthUs)
+    fun setPrismPulseWidth(name: String, pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth(name, pulseWidthUs)
     /**
      * Documentation for close
      */

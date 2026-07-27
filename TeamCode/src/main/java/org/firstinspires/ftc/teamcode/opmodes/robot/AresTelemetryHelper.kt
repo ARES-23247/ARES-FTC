@@ -31,8 +31,24 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         private const val TELEMETRY_PERIOD_MS = 100L
     }
 
+    fun setIndicatorColor(name: String = "indicator", color: IndicatorLightColor) {
+        base.store.dispatch(RobotAction.SetIndicatorLight(name, color.position))
+    }
+
     fun setIndicatorColor(color: IndicatorLightColor) {
-        base.store.dispatch(RobotAction.SetIndicatorLight("indicator", color.position))
+        setIndicatorColor("indicator", color)
+    }
+
+    fun setSecondIndicatorColor(color: IndicatorLightColor) {
+        setIndicatorColor("indicator2", color)
+    }
+
+    fun setPrismPreset(name: String = "prism", preset: com.areslib.hardware.actuator.PrismPwmPreset) {
+        base.store.dispatch(RobotAction.SetPrismDriver(name, preset.pulseWidthUs))
+    }
+
+    fun setPrismPulseWidth(name: String = "prism", pulseWidthUs: Int) {
+        base.store.dispatch(RobotAction.SetPrismDriver(name, pulseWidthUs))
     }
 }
 
