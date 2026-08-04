@@ -53,6 +53,7 @@ class AresRobot(
     private val driveController = AresDriveController(base)
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
+    var prismIO: com.areslib.hardware.actuator.PrismDriverIO? = null
 
     init {
         try {
@@ -165,13 +166,19 @@ class AresRobot(
         }
 
         if (prismIOInstance != null && loadedPrismName != null) {
+            prismIO = prismIOInstance
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem(prismIOInstance, "prism"))
             setPrismPreset(com.areslib.hardware.actuator.PrismPwmPreset.RAINBOW_FULL_COLOR)
 
             com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
                 com.areslib.pathing.NamedCommands.registerCommand(
                     "SetPrismPreset_${preset.name}",
-                    com.areslib.sequencer.Task.fromAction(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
+                    object : com.areslib.sequencer.Task {
+                        override val name = "SetPrismPreset_${preset.name}"
+                        override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
+                        override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
+                            listOf(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
+                    }
                 )
             }
             addTelemetry("Subsystem", "Prism RGB Driver loaded as: $loadedPrismName")

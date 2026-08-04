@@ -20,18 +20,6 @@
                     "data": {
                         "name": "SetIndicatorColor_GREEN"
                     }
-                },
-                {
-                    "type": "path",
-                    "data": {
-                        "pathName": "TestPath2"
-                    }
-                },
-                {
-                    "type": "named",
-                    "data": {
-                        "name": "SetIndicatorColor_PURPLE"
-                    }
                 }
             ]
         }
