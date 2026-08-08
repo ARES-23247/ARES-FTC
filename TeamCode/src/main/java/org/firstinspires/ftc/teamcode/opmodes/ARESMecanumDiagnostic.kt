@@ -25,11 +25,11 @@ class ARESMecanumDiagnostic : LinearOpMode() {
         /**
          * Documentation for rl
          */
-        val rl = try { hardwareMap.get(DcMotorEx::class.java, "rl") } catch (_: Exception) { null }
+        val rl = try { hardwareMap.get(DcMotorEx::class.java, "rl") } catch (_: Exception) { try { hardwareMap.get(DcMotorEx::class.java, "bl") } catch (_: Exception) { null } }
         /**
          * Documentation for rr
          */
-        val rr = try { hardwareMap.get(DcMotorEx::class.java, "rr") } catch (_: Exception) { null }
+        val rr = try { hardwareMap.get(DcMotorEx::class.java, "rr") } catch (_: Exception) { try { hardwareMap.get(DcMotorEx::class.java, "br") } catch (_: Exception) { null } }
 
         telemetry.addData("Status", "Ready. Press Play.")
         telemetry.addData("FL Motor (\"fl\")", if (fl != null) "FOUND" else "MISSING")

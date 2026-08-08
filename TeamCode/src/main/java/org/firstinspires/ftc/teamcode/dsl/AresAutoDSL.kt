@@ -20,6 +20,7 @@ abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>() {
         // Set a default alliance. Typically Auto sets this based on which auto runs,
         // but can be default RED, or overridden by child.
         robot.base.store.dispatch(RobotAction.SetAlliance(Alliance.BLUE))
+        robot.resetPoseForAlliance()
         return robot
     }
 

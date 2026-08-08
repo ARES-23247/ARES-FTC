@@ -41,7 +41,7 @@ class IndicatorLightSubsystem(
             val rainbowPos = minPos + (maxPos - minPos) * sweep
             io.setPosition(rainbowPos)
         } else {
-            io.setPosition(targetPosition)
+            io.setPosition(targetPosition.coerceIn(0.0, 1.0))
         }
     }
 

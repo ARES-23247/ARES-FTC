@@ -10,14 +10,10 @@ import com.areslib.hardware.SyncPolledDevice
  * Documentation for FtcFlywheelIO
  */
 
-class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, AutoCloseable {
+class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private var supportsVelocityControl = true
     @Volatile private var supportsCurrentSensing = true
-    private val motor: DcMotorEx? = try {
-        com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
-    } catch (_: Exception) {
-        null
-    }
+    private val motor: DcMotorEx? = com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
 
     // Gearing / Encoder conversion: GoBilda motor has 28 ticks per motor shaft revolution.
     // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
@@ -27,18 +23,10 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
     @Volatile private var cachedAmps = 0.0
     private var lastPower = -999.0
 
-    init {
-        HardwareRegistry.registerRoundRobinDevice(this)
-    }
+    private val maxRpm = 6000.0
 
-    override fun pollSync() {
-        if (motor != null && supportsCurrentSensing) {
-            try {
-                cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
-            } catch (_: Exception) {
-                supportsCurrentSensing = false
-            }
-        }
+    init {
+        motor?.mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER
     }
 
     override fun setVelocityRpm(rpm: Double) {
@@ -57,7 +45,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
                     /**
                      * Documentation for power
                      */
-                    val power = if (rpm > 0.0) 1.0 else 0.0
+                    val power = (rpm / maxRpm).coerceIn(-1.0, 1.0)
                     if (kotlin.math.abs(lastPower - power) > 1e-4) {
                         motor.power = power
                         lastPower = power
@@ -68,7 +56,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
                 /**
                  * Documentation for power
                  */
-                val power = if (rpm > 0.0) 1.0 else 0.0
+                val power = (rpm / maxRpm).coerceIn(-1.0, 1.0)
                 if (kotlin.math.abs(lastPower - power) > 1e-4) {
                     motor.power = power
                     lastPower = power
@@ -108,6 +96,14 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, SyncPolledDevice, Au
                 val ticksPerSec = motor.velocity
                 cachedVelocityRpm = (ticksPerSec / ticksPerRev) * 60.0
             } catch (_: Exception) {}
+            
+            if (supportsCurrentSensing) {
+                try {
+                    cachedAmps = motor.getCurrent(CurrentUnit.AMPS)
+                } catch (_: Exception) {
+                    supportsCurrentSensing = false
+                }
+            }
         }
     }
 

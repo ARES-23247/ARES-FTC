@@ -53,7 +53,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onLoop { robot, driver, telemetry ->
             // 1. Drivetrain Control (Standard Field Centric)
-            robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = false)
+            robot.driveWithGamepad(driver, useHeadingLock = false)
 
             // 2. Read state from store for telemetry print
             /**

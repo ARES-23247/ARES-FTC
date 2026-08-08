@@ -22,9 +22,18 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         val alliance = base.store.state.drive.alliance.name
         val estPose = base.store.state.drive.poseEstimator.estimatedPose
         addTelemetry("Alliance", alliance)
-        addTelemetry("EKF Pose X", estPose.x.toString())
-        addTelemetry("EKF Pose Y", estPose.y.toString())
-        addTelemetry("EKF Pose Deg", Math.toDegrees(estPose.heading.radians).toString())
+        addTelemetry("EKF Pose X", estPose.x)
+        addTelemetry("EKF Pose Y", estPose.y)
+        addTelemetry("EKF Pose Deg", Math.toDegrees(estPose.heading.radians))
+        
+        val voltage = base.powerManager.batteryVoltage
+        if (voltage < 11.5) {
+            addTelemetry("Battery V", "<font color='red'><b>%.1fV (LOW)</b></font>".format(voltage))
+        } else {
+            addTelemetry("Battery V", voltage)
+        }
+        
+        addTelemetry("Power Scale", base.powerManager.powerScale)
     }
 
     companion object {
@@ -49,6 +58,10 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
 
     fun setPrismPulseWidth(name: String = "prism", pulseWidthUs: Int) {
         base.store.dispatch(RobotAction.SetPrismDriver(name, pulseWidthUs))
+    }
+
+    fun rumbleDriver(gamepad: com.qualcomm.robotcore.hardware.Gamepad, durationMs: Int) {
+        gamepad.rumble(1.0, 1.0, durationMs.coerceAtMost(1000))
     }
 }
 

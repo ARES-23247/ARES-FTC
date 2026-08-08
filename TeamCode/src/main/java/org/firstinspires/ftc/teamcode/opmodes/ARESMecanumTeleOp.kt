@@ -13,9 +13,22 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
 
     override fun define() = aresTeleOp {
         
+        var isHeadingLockEnabled = true
+        
         onConfigure { robot, driver ->
+            driver.leftStickButton.onPress("Toggle Heading Lock") {
+                isHeadingLockEnabled = !isHeadingLockEnabled
+            }
+
             driver.y.onPress("Reset Field Centric Pose") {
-                robot.resetPoseForAlliance()
+                val currentPose = robot.base.store.state.drive.poseEstimator.estimatedPose
+                val currentAlliance = robot.base.store.state.drive.alliance
+                val newHeading = if (currentAlliance == com.areslib.state.Alliance.BLUE) {
+                    com.areslib.math.geometry.Rotation2d(Math.PI / 2)
+                } else {
+                    com.areslib.math.geometry.Rotation2d(-Math.PI / 2)
+                }
+                robot.base.resetPose(com.areslib.math.geometry.Pose2d(currentPose.x, currentPose.y, newHeading))
             }
             driver.x.onPress("Toggle Alliance") {
                 robot.toggleAlliance()
@@ -48,7 +61,12 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         }
 
         onInit { robot, _ ->
-            robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
+            if (com.areslib.util.PoseStorage.hasValidPose) {
+                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.util.PoseStorage.alliance))
+                robot.base.resetPose(com.areslib.util.PoseStorage.currentPose)
+            } else {
+                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
+            }
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }
@@ -56,7 +74,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         onLoop { robot, driver, _ ->
 
             // 2. Drive the robot (Field-Centric Perspective)
-            robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = true)
+            robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
         }
     }
 }

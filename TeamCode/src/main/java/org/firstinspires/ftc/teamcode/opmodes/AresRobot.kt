@@ -231,6 +231,9 @@ class AresRobot(
      * Documentation for driveRobotCentric
      */
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) = driveController.driveRobotCentric(x, y, rotation)
+    
+    fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) = driveController.driveWithGamepad(driver, useHeadingLock)
+    fun alignToTag(tagId: Int) = driveController.alignToTag(tagId)
     /**
      * Documentation for resetPoseForAlliance
      */

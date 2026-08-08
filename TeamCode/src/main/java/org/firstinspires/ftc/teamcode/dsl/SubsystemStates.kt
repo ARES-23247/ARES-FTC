@@ -16,10 +16,10 @@ data class SeasonSuperstructureState(
      * Documentation for flywheelTargetRPM
      */
     val flywheelTargetRPM: Double = 0.0,
-    /**
-     * Documentation for flywheelCurrentRPM
-     */
-    val flywheelCurrentRPM: Double = 0.0
+    val flywheelCurrentRPM: Double = 0.0,
+    
+    val liftTargetHeight: Double = 0.0,
+    val liftHeight: Double = 0.0
 ) : SubsystemState
 /**
  * Documentation for DEFAULT_SEASON_STATE

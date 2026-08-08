@@ -31,7 +31,7 @@ class ARESTuningTeleOp : AresTeleOpBase() {
         }
         
         onLoop { robot, driver, _ ->
-            robot.base.mecanumDrive.driveWithGamepad(driver, useHeadingLock = true)
+            robot.driveWithGamepad(driver, useHeadingLock = true)
         }
     }
 }

@@ -21,6 +21,14 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {
         base.driveRobotCentric(x, y, rotation)
     }
+
+    fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
+        base.mecanumDrive.driveWithGamepad(driver, useHeadingLock)
+    }
+
+    fun alignToTag(tagId: Int) {
+        base.alignToTag(tagId)
+    }
     /**
      * Documentation for resetPoseForAlliance
      */
