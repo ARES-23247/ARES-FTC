@@ -14,6 +14,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private var supportsVelocityControl = true
     @Volatile private var supportsCurrentSensing = true
     private val motor: DcMotorEx? = com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
+    private val voltageSensor = hardwareMap.voltageSensor.iterator().next()
 
     // Gearing / Encoder conversion: GoBilda motor has 28 ticks per motor shaft revolution.
     // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
@@ -41,13 +42,15 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                 try {
                     motor.velocity = ticksPerSec
                 } catch (_: Exception) {
+                    motor?.mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER
                     supportsVelocityControl = false
                     /**
                      * Documentation for power
                      */
-                    val power = (rpm / maxRpm).coerceIn(-1.0, 1.0)
+                    val vBattery = voltageSensor.voltage
+                    val power = ((rpm / maxRpm) * (12.0 / vBattery)).coerceIn(-1.0, 1.0)
                     if (kotlin.math.abs(lastPower - power) > 1e-4) {
-                        motor.power = power
+                        motor?.power = power
                         lastPower = power
                     }
                 }
@@ -56,7 +59,8 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                 /**
                  * Documentation for power
                  */
-                val power = (rpm / maxRpm).coerceIn(-1.0, 1.0)
+                val vBattery = voltageSensor.voltage
+                val power = ((rpm / maxRpm) * (12.0 / vBattery)).coerceIn(-1.0, 1.0)
                 if (kotlin.math.abs(lastPower - power) > 1e-4) {
                     motor.power = power
                     lastPower = power

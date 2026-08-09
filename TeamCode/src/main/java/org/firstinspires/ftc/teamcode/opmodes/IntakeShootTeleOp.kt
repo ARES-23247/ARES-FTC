@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.dsl.*
  */
 @TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
 class IntakeShootTeleOp : AresTeleOpBase() {
+    private var prevTriggerState = false
 
     override fun define() = aresTeleOp {
 
@@ -64,9 +65,11 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
 
             // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
-            if (driver.rightTrigger.value > state.tuning.driverTriggerThreshold) {
+            val currentTriggerState = driver.rightTrigger.value > state.tuning.driverTriggerThreshold
+            if (currentTriggerState && !prevTriggerState) {
                 robot.addTelemetry("Feed", "PUSHING BALL")
             }
+            prevTriggerState = currentTriggerState
 
             robot.addTelemetry("Inventory", "Check the ARES-Analytics Sim UI")
         }

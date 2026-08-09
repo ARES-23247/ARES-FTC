@@ -48,7 +48,8 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
          */
         val timeSinceLastDispatch = timestampMs - lastDispatchTime
         
-        if (timeSinceLastDispatch >= 50 && kotlin.math.abs(currentRpm - lastDispatchedRpm) >= 20.0) {
+        val rpmDiff = kotlin.math.abs(currentRpm - lastDispatchedRpm)
+        if ((timeSinceLastDispatch >= 50 && rpmDiff >= 20.0) || timeSinceLastDispatch >= 250) {
             /**
              * Documentation for seasonState
              */

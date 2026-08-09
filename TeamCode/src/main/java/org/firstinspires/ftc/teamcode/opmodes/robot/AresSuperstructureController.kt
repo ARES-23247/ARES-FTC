@@ -16,7 +16,7 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
          */
         val season = base.store.state.superstructure.season
         val MIN_CLEARANCE_HEIGHT = 0.1
-        if (season.liftHeight < MIN_CLEARANCE_HEIGHT) return
+        if (season.liftHeight < MIN_CLEARANCE_HEIGHT && !season.intakeActive) return
 
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(intakeActive = !season.intakeActive)

@@ -14,7 +14,12 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         base.telemetryManager.customDriverStationText[key] = value.toString()
     }
 
+    fun clearTelemetry() {
+        base.telemetryManager.customDriverStationText.clear()
+    }
+
     fun updateTelemetry() {
+        clearTelemetry()
         val now = com.areslib.util.RobotClock.currentTimeMillis()
         if (now - lastTelemetryUpdateMs < TELEMETRY_PERIOD_MS) return
         lastTelemetryUpdateMs = now
@@ -60,8 +65,14 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         base.store.dispatch(RobotAction.SetPrismDriver(name, pulseWidthUs))
     }
 
+    private var lastRumbleTimeMs = 0L
+
     fun rumbleDriver(gamepad: com.qualcomm.robotcore.hardware.Gamepad, durationMs: Int) {
-        gamepad.rumble(1.0, 1.0, durationMs.coerceAtMost(1000))
+        val now = com.areslib.util.RobotClock.currentTimeMillis()
+        if (now - lastRumbleTimeMs >= 1000L) {
+            gamepad.rumble(1.0, 1.0, durationMs.coerceAtMost(1000))
+            lastRumbleTimeMs = now
+        }
     }
 }
 

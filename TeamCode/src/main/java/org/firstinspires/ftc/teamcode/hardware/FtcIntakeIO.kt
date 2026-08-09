@@ -56,7 +56,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     override fun refresh() {
         if (motor != null) {
             // Velocity is part of REV bulk cache — zero additional I2C cost
-            cachedRollerVelocity = motor.velocity
+            try { cachedRollerVelocity = motor.velocity } catch (_: Exception) { cachedRollerVelocity = 0.0 }
 
             if (supportsCurrentSensing) {
                 try {
