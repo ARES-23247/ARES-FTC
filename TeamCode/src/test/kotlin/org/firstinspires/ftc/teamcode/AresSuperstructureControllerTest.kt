@@ -31,7 +31,8 @@ class AresSuperstructureControllerTest {
             superstructure = SuperstructureState(
                 custom = SeasonSuperstructureState(
                     flywheelActive = flywheelActive,
-                    intakeActive = intakeActive
+                    intakeActive = intakeActive,
+                    liftHeight = 0.2
                 )
             )
         )
@@ -136,6 +137,8 @@ class AresSuperstructureControllerTest {
         controller.toggleShooter()
         val state1 = robot.store.state.superstructure.season
         assertTrue(state1.flywheelActive)
+
+        Thread.sleep(250)
 
         // From active back to idle
         controller.toggleShooter()

@@ -58,6 +58,11 @@ if (file('../ARESLib-Kotlin').exists()) {
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware') using project(':ftc-hardware')
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:simulator') using project(':simulator')
             substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-mocks') using project(':ftc-mocks')
+
+            substitute module('com.areslib:core') using project(':core')
+            substitute module('com.areslib:ftc-hardware') using project(':ftc-hardware')
+            substitute module('com.areslib:simulator') using project(':simulator')
+            substitute module('com.areslib:ftc-mocks') using project(':ftc-mocks')
         }
     }
 }

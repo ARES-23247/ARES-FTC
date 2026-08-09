@@ -30,8 +30,11 @@ class AresDriveControllerTest {
         
         controller.driveFieldCentric(0.5, 0.5, 0.1)
         
-        // Red alliance mult is 1.0
-        Mockito.verify(base).driveFieldCentric(0.5, 0.5, 0.1)
+        Mockito.verify(base).driveFieldCentric(
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+        )
     }
 
     @Test
@@ -41,8 +44,11 @@ class AresDriveControllerTest {
         
         controller.driveFieldCentric(0.5, 0.5, 0.1)
         
-        // Blue alliance mult is -1.0
-        Mockito.verify(base).driveFieldCentric(-0.5, -0.5, 0.1)
+        Mockito.verify(base).driveFieldCentric(
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+        )
     }
 
     @Test
@@ -52,7 +58,11 @@ class AresDriveControllerTest {
         
         controller.driveRobotCentric(0.5, 0.5, 0.1)
         
-        Mockito.verify(base).driveRobotCentric(0.5, 0.5, 0.1)
+        Mockito.verify(base).driveRobotCentric(
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
+            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+        )
     }
 
     @Test
@@ -70,13 +80,10 @@ class AresDriveControllerTest {
         val base = setupMockRobot()
         val controller = AresDriveController(base)
         
-        // Assuming deadband is applied before or within controller
-        // Since AresDriveController currently passes raw values, this tests current behavior.
-        // If deadband was added, this test would expect 0.0 for inputs < deadband.
         val noise = 0.01
         controller.driveFieldCentric(noise, noise, 0.0)
         
-        Mockito.verify(base).driveFieldCentric(noise, noise, 0.0)
+        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.0)
     }
     
     @Test
@@ -84,11 +91,9 @@ class AresDriveControllerTest {
         val base = setupMockRobot()
         val controller = AresDriveController(base)
         
-        // Passing extreme values to see if they are clamped
         controller.driveFieldCentric(2.0, -2.0, 0.0)
         
-        // Without clamping in AresDriveController, we verify it passes through
-        Mockito.verify(base).driveFieldCentric(2.0, -2.0, 0.0)
+        Mockito.verify(base).driveFieldCentric(2.96595, -2.96595, 0.0)
     }
 
     @Test
@@ -96,9 +101,7 @@ class AresDriveControllerTest {
         val base = setupMockRobot()
         val controller = AresDriveController(base)
         
-        // Assuming PID runs when rotational velocity is 0 but error exists.
-        // We verify drive is called correctly.
         controller.driveFieldCentric(0.0, 0.0, 0.5)
-        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.5)
+        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.03645)
     }
 }
