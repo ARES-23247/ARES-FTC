@@ -17,6 +17,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     @Volatile private var cachedRollerAmps = 0.0
     @Volatile private var cachedRollerVelocity = 0.0
+    private var cachedVoltage = 12.0
     private var lastPower = -999.0
     private val voltageSensor = hardwareMap.voltageSensor.firstOrNull()
 
@@ -28,10 +29,9 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     override fun setPivotAngle(degrees: Double) {
         if (servo == null) return
-        val targetPos = degrees
+        val targetPos = (degrees / 270.0).coerceIn(0.0, 1.0)
         val maxDelta = 0.02
-        val clamped = targetPos.coerceIn(0.1, 0.9)
-        currentPos += (clamped - currentPos).coerceIn(-maxDelta, maxDelta)
+        currentPos += (targetPos - currentPos).coerceIn(-maxDelta, maxDelta)
         servo.position = currentPos
     }
 
@@ -41,7 +41,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         /**
          * Documentation for power
          */
-        val vBattery = voltageSensor?.voltage ?: 12.0
+        val vBattery = cachedVoltage
         val power = (volts / vBattery).coerceIn(-1.0, 1.0)
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
             try {
@@ -52,7 +52,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     }
 
     override val pivotAngleDegrees: Double
-        get() = 0.0
+        get() = (servo?.position ?: 0.5) * 270.0
 
     override val pivotCurrentAmps: Double
         get() = 0.0
@@ -75,6 +75,11 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
                     supportsCurrentSensing = false
                 }
             }
+        }
+        try {
+            cachedVoltage = voltageSensor?.voltage ?: 12.0
+        } catch (_: Exception) {
+            cachedVoltage = 12.0
         }
     }
 

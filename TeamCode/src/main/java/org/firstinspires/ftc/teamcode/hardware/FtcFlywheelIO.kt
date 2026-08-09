@@ -22,6 +22,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
 
     @Volatile private var cachedVelocityRpm = 0.0
     @Volatile private var cachedAmps = 0.0
+    private var cachedVoltage = 12.0
     private var lastPower = -999.0
 
     private val maxRpm = 6000.0
@@ -47,7 +48,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                     /**
                      * Documentation for power
                      */
-                    val vBattery = try { voltageSensor.voltage.coerceAtLeast(8.0) } catch (e: Exception) { 12.0 }
+                    val vBattery = cachedVoltage
                     val power = ((rpm / maxRpm) * (12.0 / vBattery)).coerceIn(-1.0, 1.0)
                     if (kotlin.math.abs(lastPower - power) > 1e-4) {
                         motor?.power = power
@@ -59,7 +60,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                 /**
                  * Documentation for power
                  */
-                val vBattery = try { voltageSensor.voltage.coerceAtLeast(8.0) } catch (e: Exception) { 12.0 }
+                val vBattery = cachedVoltage
                 val power = ((rpm / maxRpm) * (12.0 / vBattery)).coerceIn(-1.0, 1.0)
                 if (kotlin.math.abs(lastPower - power) > 1e-4) {
                     motor.power = power
@@ -108,6 +109,11 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
                     supportsCurrentSensing = false
                 }
             }
+        }
+        try {
+            cachedVoltage = voltageSensor.voltage.coerceAtLeast(8.0)
+        } catch (e: Exception) {
+            cachedVoltage = 12.0
         }
     }
 

@@ -12,11 +12,15 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private var lastRot = 0.0
 
     private fun processAxis(input: Double): Double {
-        val deadzoned = if (kotlin.math.abs(input) < 0.05) 0.0 else input - kotlin.math.sign(input) * 0.05
+        val deadzoned = if (kotlin.math.abs(input) < 0.05) 0.0 else (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
         return kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(3)
     }
 
-    private fun smoothTransition(x: Double, y: Double, rot: Double): Triple<Double, Double, Double> {
+    private var smoothX = 0.0
+    private var smoothY = 0.0
+    private var smoothRot = 0.0
+
+    private fun smoothTransition(x: Double, y: Double, rot: Double) {
         if (transitionFrames > 0) {
             transitionFrames--
         }
@@ -24,7 +28,10 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         lastX = lastX * 0.6 + x * alpha
         lastY = lastY * 0.6 + y * alpha
         lastRot = lastRot * 0.6 + rot * alpha
-        return Triple(lastX, lastY, lastRot)
+        
+        smoothX = lastX
+        smoothY = lastY
+        smoothRot = lastRot
     }
 
     /**
@@ -38,9 +45,9 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val px = processAxis(x)
         val py = processAxis(y)
         val prot = processAxis(rotation)
-        val (sx, sy, srot) = smoothTransition(px, py, prot)
+        smoothTransition(px, py, prot)
 
-        base.driveFieldCentric(sx, sy, srot)
+        base.driveFieldCentric(smoothX, smoothY, smoothRot)
     }
     /**
      * Documentation for driveRobotCentric
@@ -54,9 +61,9 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val px = processAxis(x)
         val py = processAxis(y)
         val prot = processAxis(rotation)
-        val (sx, sy, srot) = smoothTransition(px, py, prot)
+        smoothTransition(px, py, prot)
 
-        base.driveRobotCentric(sx, sy, srot)
+        base.driveRobotCentric(smoothX, smoothY, smoothRot)
     }
 
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {

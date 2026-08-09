@@ -8,15 +8,17 @@ import org.firstinspires.ftc.teamcode.dsl.*
 import com.areslib.util.RobotClock
 
 class AresSuperstructureController(private val base: FtcMecanumRobot) {
-    private var lastToggleTimeMs = 0L
+    private var lastIntakeToggleTimeMs = 0L
+    private var lastShooterToggleTimeMs = 0L
+    private var lastAllianceToggleTimeMs = 0L
 
     // TODO: Create ToggleIntake and ToggleFlywheel actions in ARESLib-Kotlin RobotAction
     /**
      * Documentation for toggleIntake
      */
     fun toggleIntake() {
-        if (RobotClock.currentTimeMillis() - lastToggleTimeMs < 200) return
-        lastToggleTimeMs = RobotClock.currentTimeMillis()
+        if (RobotClock.currentTimeMillis() - lastIntakeToggleTimeMs < 200) return
+        lastIntakeToggleTimeMs = RobotClock.currentTimeMillis()
         /**
          * Documentation for season
          */
@@ -33,8 +35,8 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
      */
 
     fun toggleShooter() {
-        if (RobotClock.currentTimeMillis() - lastToggleTimeMs < 200) return
-        lastToggleTimeMs = RobotClock.currentTimeMillis()
+        if (RobotClock.currentTimeMillis() - lastShooterToggleTimeMs < 200) return
+        lastShooterToggleTimeMs = RobotClock.currentTimeMillis()
         /**
          * Documentation for season
          */
@@ -56,8 +58,8 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
      */
 
     fun toggleAlliance() {
-        if (RobotClock.currentTimeMillis() - lastToggleTimeMs < 200) return
-        lastToggleTimeMs = RobotClock.currentTimeMillis()
+        if (RobotClock.currentTimeMillis() - lastAllianceToggleTimeMs < 200) return
+        lastAllianceToggleTimeMs = RobotClock.currentTimeMillis()
         /**
          * Documentation for currentAlliance
          */

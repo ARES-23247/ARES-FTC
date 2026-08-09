@@ -19,13 +19,15 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
         if (currentAmps > 8.0) {
             if (stallStartTime == null) stallStartTime = timestampMs
             if (timestampMs - stallStartTime!! > 250) {
-                val seasonState = store.state.superstructure.season
-                store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
+                stalled = true
             }
         } else {
             stallStartTime = null
+            stalled = false
         }
     }
+
+    var stalled = false
 
     override fun writeOutputs(state: RobotState, scale: Double) {
         /**
@@ -64,15 +66,13 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
         
         val rpmDiff = kotlin.math.abs(currentRpm - lastDispatchedRpm)
         if ((timeSinceLastDispatch >= 50 && rpmDiff >= 20.0) || timeSinceLastDispatch >= 250) {
-            /**
-             * Documentation for seasonState
-             */
-            val seasonState = store.state.superstructure.season
-            store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = currentRpm)))
+            this.currentRpm = currentRpm
             lastDispatchedRpm = currentRpm
             lastDispatchTime = timestampMs
         }
     }
+
+    var currentRpm: Double = 0.0
 
     /**
      * Flywheel target RPM must NOT be scaled down during brownouts because projectile launch velocity

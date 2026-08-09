@@ -22,12 +22,14 @@ class IndicatorLightSubsystem(
     private val name: String
 ) : Subsystem {
 
+    private var cachedPosition: Double? = null
+
     override fun readSensors(store: Store, timestampMs: Long) {
-        // Write-only device — nothing to read
+        cachedPosition = store.state.superstructure.indicatorLights[name]
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        val targetPosition = state.superstructure.indicatorLights[name] ?: return
+        val targetPosition = cachedPosition ?: return
         if (targetPosition < 0.0) {
             // Rainbow Mode: Smoothly cycle across the RGB color spectrum (RED 0.279 to PURPLE 0.722)
             val nowMs = com.areslib.util.RobotClock.currentTimeMillis()

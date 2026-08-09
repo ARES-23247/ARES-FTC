@@ -17,11 +17,12 @@ abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>() {
          * Documentation for robot
          */
         val robot = AresRobot(hardwareMap, telemetry)
-        // Set a default alliance. Typically Auto sets this based on which auto runs,
-        // but can be default RED, or overridden by child.
-        robot.base.store.dispatch(RobotAction.SetAlliance(Alliance.BLUE))
-        robot.resetPoseForAlliance()
         return robot
+    }
+
+    protected fun configureAlliance(robot: AresRobot, alliance: Alliance) {
+        robot.base.store.dispatch(RobotAction.SetAlliance(alliance))
+        robot.resetPoseForAlliance()
     }
 
     override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot {

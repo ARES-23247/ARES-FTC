@@ -20,10 +20,10 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
     }
 
     fun updateTelemetry() {
-        clearTelemetry()
         val now = com.areslib.util.RobotClock.currentTimeMillis()
         if (now - lastTelemetryUpdateMs < TELEMETRY_PERIOD_MS) return
         lastTelemetryUpdateMs = now
+        clearTelemetry()
 
         val alliance = base.store.state.drive.alliance.name
         val estPose = base.store.state.drive.poseEstimator.estimatedPose

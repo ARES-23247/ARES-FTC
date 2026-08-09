@@ -16,7 +16,7 @@ class TestAutoRed : org.firstinspires.ftc.teamcode.dsl.AresAutoBase() {
     override val pathName: String = "TestAuto"
     override fun buildRobot(): AresRobot {
         val robot = super.buildRobot()
-        robot.base.store.dispatch(RobotAction.SetAlliance(Alliance.RED))
+        configureAlliance(robot, Alliance.RED)
         return robot
     }
 }
@@ -29,7 +29,7 @@ class TestAutoBlue : org.firstinspires.ftc.teamcode.dsl.AresAutoBase() {
     override val pathName: String = "TestAuto"
     override fun buildRobot(): AresRobot {
         val robot = super.buildRobot()
-        robot.base.store.dispatch(RobotAction.SetAlliance(Alliance.BLUE))
+        configureAlliance(robot, Alliance.BLUE)
         return robot
     }
 }

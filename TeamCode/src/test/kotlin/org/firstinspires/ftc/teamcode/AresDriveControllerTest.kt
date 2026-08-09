@@ -10,6 +10,7 @@ import org.junit.Test
 import org.junit.Assert.*
 import org.mockito.Mockito
 import org.mockito.ArgumentMatchers.anyDouble
+import kotlin.math.pow
 
 class AresDriveControllerTest {
 
@@ -23,6 +24,16 @@ class AresDriveControllerTest {
         return base
     }
 
+    // Helper: recompute expected output for the new deadband formula
+    // processAxis(input) = sign(d) * |d|^3  where d = (|input| - 0.05) / 0.95 * sign(input)
+    // smoothTransition on first call (lastX=0): smoothed = 0.0 * 0.6 + processed * 0.4
+    private fun expectedSmoothed(input: Double): Double {
+        if (kotlin.math.abs(input) < 0.05) return 0.0
+        val deadzoned = (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
+        val processed = kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(3)
+        return processed * 0.4 // first-frame smoothing: lastX starts at 0
+    }
+
     @Test
     fun testFieldCentricDriveRedAlliance() {
         val base = setupMockRobot(Alliance.RED)
@@ -31,9 +42,9 @@ class AresDriveControllerTest {
         controller.driveFieldCentric(0.5, 0.5, 0.1)
         
         Mockito.verify(base).driveFieldCentric(
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
 
@@ -45,9 +56,9 @@ class AresDriveControllerTest {
         controller.driveFieldCentric(0.5, 0.5, 0.1)
         
         Mockito.verify(base).driveFieldCentric(
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
 
@@ -59,9 +70,9 @@ class AresDriveControllerTest {
         controller.driveRobotCentric(0.5, 0.5, 0.1)
         
         Mockito.verify(base).driveRobotCentric(
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.03645, 1e-4),
-            org.mockito.AdditionalMatchers.eq(0.00005, 1e-6)
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
 
@@ -93,7 +104,11 @@ class AresDriveControllerTest {
         
         controller.driveFieldCentric(2.0, -2.0, 0.0)
         
-        Mockito.verify(base).driveFieldCentric(2.96595, -2.96595, 0.0)
+        Mockito.verify(base).driveFieldCentric(
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(2.0), 1e-3),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(-2.0), 1e-3),
+            org.mockito.AdditionalMatchers.eq(0.0, 1e-6)
+        )
     }
 
     @Test
@@ -102,6 +117,11 @@ class AresDriveControllerTest {
         val controller = AresDriveController(base)
         
         controller.driveFieldCentric(0.0, 0.0, 0.5)
-        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.03645)
+        Mockito.verify(base).driveFieldCentric(
+            org.mockito.AdditionalMatchers.eq(0.0, 1e-6),
+            org.mockito.AdditionalMatchers.eq(0.0, 1e-6),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4)
+        )
     }
 }
+

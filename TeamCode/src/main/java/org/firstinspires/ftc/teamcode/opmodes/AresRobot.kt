@@ -54,18 +54,22 @@ class AresRobot(
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
     var prismIO: com.areslib.hardware.actuator.PrismDriverIO? = null
+    var intakeSubsystem: org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem? = null
+    var flywheelSubsystem: org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem? = null
 
     init {
         try {
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO))
+            intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO)
+            base.registerSubsystem(intakeSubsystem!!)
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Intake failed to load: ${e.message}")
         }
 
         try {
             val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO))
+            flywheelSubsystem = org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO)
+            base.registerSubsystem(flywheelSubsystem!!)
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
@@ -212,6 +216,22 @@ class AresRobot(
          */
         val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
         base.readAllSensors(timestamp)
+        
+        intakeSubsystem?.let {
+            if (it.stalled) {
+                val seasonState = base.store.state.superstructure.season
+                if (seasonState.intakeActive) {
+                    base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
+                }
+            }
+        }
+        
+        flywheelSubsystem?.let {
+            val seasonState = base.store.state.superstructure.season
+            if (kotlin.math.abs(it.currentRpm - seasonState.flywheelCurrentRPM) > 1e-4) {
+                base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = it.currentRpm)))
+            }
+        }
 
         // 2. Update drivebase sensors, EKF, and kinematics
         base.update(gamepad1, gamepad2)
