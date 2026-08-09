@@ -24,27 +24,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     init {
     }
 
-    private val servo = try { hardwareMap.servo.get("intake_pivot") } catch (e: Exception) { null }
-    private var currentPos = 0.5
-    private var lastTimeMs = -1L
-    private val MAX_SERVO_SPEED = 1.0
-
-    override fun setPivotAngle(degrees: Double) {
-        if (servo == null) return
-        val targetPos = (degrees / 270.0).coerceIn(0.0, 1.0)
-        val now = com.areslib.util.RobotClock.currentTimeMillis()
-        if (lastTimeMs < 0) {
-            currentPos = servo.position
-            lastTimeMs = now
-        }
-        val dt = (now - lastTimeMs) / 1000.0
-        lastTimeMs = now
-
-        val maxDelta = MAX_SERVO_SPEED * dt
-        currentPos += (targetPos - currentPos).coerceIn(-maxDelta, maxDelta)
-        servo.position = currentPos
-    }
-
+    override fun setPivotAngle(degrees: Double) {}
     override fun setPivotVoltage(volts: Double) {}
 
     override fun setRollerVoltage(volts: Double) {
@@ -60,14 +40,6 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
             } catch (_: Exception) {}
         }
     }
-
-    private var cachedServoPosition = 0.5
-
-    override val pivotAngleDegrees: Double
-        get() = cachedServoPosition * 270.0
-
-    override val pivotCurrentAmps: Double
-        get() = 0.0
 
     override val rollerCurrentAmps: Double
         get() = cachedRollerAmps
@@ -92,11 +64,6 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
             cachedVoltage = voltageSensor?.voltage ?: 12.0
         } catch (_: Exception) {
             cachedVoltage = 12.0
-        }
-        try {
-            cachedServoPosition = servo?.position ?: 0.5
-        } catch (_: Exception) {
-            // Keep last cached position on read failure
         }
     }
 

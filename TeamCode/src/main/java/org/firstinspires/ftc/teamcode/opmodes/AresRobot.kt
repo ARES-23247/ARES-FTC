@@ -282,13 +282,8 @@ class AresRobot(
      */
 
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) = driveController.driveFieldCentric(x, y, rotation)
-    /**
-     * Documentation for driveRobotCentric
-     */
-    fun driveRobotCentric(x: Double, y: Double, rotation: Double) = driveController.driveRobotCentric(x, y, rotation)
     
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) = driveController.driveWithGamepad(driver, useHeadingLock)
-    fun alignToTag(tagId: Int) = driveController.alignToTag(tagId)
     /**
      * Documentation for resetPoseForAlliance
      */
@@ -316,11 +311,6 @@ class AresRobot(
 
     fun setPrismPreset(preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset("prism", preset)
     fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
-    fun setPrismPulseWidth(pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth("prism", pulseWidthUs)
-    fun setPrismPulseWidth(name: String, pulseWidthUs: Int) = telemetryHelper.setPrismPulseWidth(name, pulseWidthUs)
-    fun setPrismMaxBrightness(percent: Int) {
-        prismIO?.maxBrightnessPercent = percent.coerceIn(0, 100)
-    }
     /**
      * Documentation for close
      */
