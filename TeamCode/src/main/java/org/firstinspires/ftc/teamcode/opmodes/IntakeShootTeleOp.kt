@@ -19,7 +19,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
         onInit { robot, telemetry ->
             robot.addTelemetry("Status", "Intake & Shoot TeleOp Ready!")
-            robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=Shoot")
+            robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=(feed not wired)")
         }
 
         onConfigure { robot, driver ->
@@ -64,10 +64,10 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
             robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
 
-            // 3. Feed mechanism (handled by sim InteractionModel on trigger press)
+            // 3. Feed mechanism is not wired to hardware; right trigger only reports state.
             val currentTriggerState = driver.rightTrigger.value > state.tuning.driverTriggerThreshold
             if (currentTriggerState && !prevTriggerState) {
-                robot.addTelemetry("Feed", "PUSHING BALL")
+                robot.addTelemetry("Feed", "RT held (feed not wired)")
             }
             prevTriggerState = currentTriggerState
 

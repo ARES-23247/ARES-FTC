@@ -95,7 +95,9 @@ class AresRobot(
                     primaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
                     primaryName = candidateName
                     break
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    addTelemetry("Init", "Indicator '$candidateName' failed: ${e.message}")
+                }
             }
         }
         if (primaryIO != null && primaryName != null) {
@@ -169,7 +171,9 @@ class AresRobot(
                     prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, candidateName)
                     loadedPrismName = "$candidateName (I2C 0x38)"
                     break
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    addTelemetry("Init", "Prism I2C '$candidateName' failed: ${e.message}")
+                }
             }
         }
 
@@ -181,7 +185,9 @@ class AresRobot(
                         prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, candidateName)
                         loadedPrismName = "$candidateName (PWM Servo)"
                         break
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        addTelemetry("Init", "Prism PWM '$candidateName' failed: ${e.message}")
+                    }
                 }
             }
         }
@@ -190,21 +196,24 @@ class AresRobot(
             prismIO = prismIOInstance
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem(prismIOInstance, "prism"))
             setPrismPreset(com.areslib.hardware.actuator.PrismPwmPreset.RAINBOW_FULL_COLOR)
-
-            com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
-                com.areslib.pathing.NamedCommands.registerCommand(
-                    "SetPrismPreset_${preset.name}",
-                    object : com.areslib.sequencer.Task {
-                        override val name = "SetPrismPreset_${preset.name}"
-                        override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
-                        override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
-                            listOf(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
-                    }
-                )
-            }
             addTelemetry("Subsystem", "Prism RGB Driver loaded as: $loadedPrismName")
         } else {
             addTelemetry("Subsystem", "Prism RGB Driver (prism) optional")
+        }
+
+        // Always register prism preset commands so an auto that references them does not
+        // crash when the Prism I2C/PWM device failed to init; the task no-ops if absent.
+        com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
+            com.areslib.pathing.NamedCommands.registerCommand(
+                "SetPrismPreset_${preset.name}",
+                object : com.areslib.sequencer.Task {
+                    override val name = "SetPrismPreset_${preset.name}"
+                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
+                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
+                        if (prismIO != null) listOf(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
+                        else emptyList()
+                }
+            )
         }
     }
 
