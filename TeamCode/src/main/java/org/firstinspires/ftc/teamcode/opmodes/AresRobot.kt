@@ -74,16 +74,23 @@ class AresRobot(
             addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
 
+        val allDeviceNames = mutableSetOf<String>()
+        for (device in hardwareMap) {
+            allDeviceNames.addAll(hardwareMap.getNamesOf(device))
+        }
+
         // --- Primary Indicator Light ("indicator") ---
         var primaryName: String? = null
         var primaryIO: com.areslib.ftc.hardware.FtcIndicatorLightIO? = null
         val primaryCandidates = listOf("indicator", "indicator1", "indicator_1", "light1", "light_1", "led1")
         for (candidateName in primaryCandidates) {
-            try {
-                primaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
-                primaryName = candidateName
-                break
-            } catch (_: Exception) {}
+            if (candidateName in allDeviceNames) {
+                try {
+                    primaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
+                    primaryName = candidateName
+                    break
+                } catch (_: Exception) {}
+            }
         }
         if (primaryIO != null && primaryName != null) {
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(primaryIO, "indicator"))
@@ -104,13 +111,13 @@ class AresRobot(
         var loadedSecondaryName: String? = null
         val secondaryCandidates = listOf("indicator2", "indicator_2", "second_indicator", "indicatorLight2", "light2", "light_2", "led2", "led_2")
         for (candidateName in secondaryCandidates) {
-            try {
-                if (candidateName != primaryName) {
+            if (candidateName != primaryName && candidateName in allDeviceNames) {
+                try {
                     secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
                     loadedSecondaryName = candidateName
                     break
-                }
-            } catch (_: Exception) {}
+                } catch (_: Exception) {}
+            }
         }
 
         // Auto-discover any 2nd servo in hardwareMap that isn't the primary indicator light
@@ -151,21 +158,25 @@ class AresRobot(
 
         // 1. Try I2C Device initialization first (Address 0x38)
         for (candidateName in prismCandidates) {
-            try {
-                prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, candidateName)
-                loadedPrismName = "$candidateName (I2C 0x38)"
-                break
-            } catch (_: Exception) {}
+            if (candidateName in allDeviceNames) {
+                try {
+                    prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, candidateName)
+                    loadedPrismName = "$candidateName (I2C 0x38)"
+                    break
+                } catch (_: Exception) {}
+            }
         }
 
         // 2. Fall back to PWM Servo initialization if I2C device is not configured
         if (prismIOInstance == null) {
             for (candidateName in prismCandidates) {
-                try {
-                    prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, candidateName)
-                    loadedPrismName = "$candidateName (PWM Servo)"
-                    break
-                } catch (_: Exception) {}
+                if (candidateName in allDeviceNames) {
+                    try {
+                        prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, candidateName)
+                        loadedPrismName = "$candidateName (PWM Servo)"
+                        break
+                    } catch (_: Exception) {}
+                }
             }
         }
 
@@ -226,12 +237,7 @@ class AresRobot(
             }
         }
         
-        flywheelSubsystem?.let {
-            val seasonState = base.store.state.superstructure.season
-            if (kotlin.math.abs(it.currentRpm - seasonState.flywheelCurrentRPM) > 1e-4) {
-                base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = it.currentRpm)))
-            }
-        }
+
 
         // 2. Update drivebase sensors, EKF, and kinematics
         base.update(gamepad1, gamepad2)

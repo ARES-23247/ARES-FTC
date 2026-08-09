@@ -64,28 +64,18 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                     val cmdStr = nt4.getString("ARES/Input/command", "")
                     if (cmdStr.isNotEmpty()) {
                         nt4.putString("ARES/Input/command", "") // Clear command immediately
-                        /**
-                         * Documentation for parts
-                         */
-                        val parts = cmdStr.split(' ')
-                        /**
-                         * Documentation for cmdName
-                         */
-                        val cmdName = parts.getOrNull(0)
+                        val spaceIdx = cmdStr.indexOf(' ')
+                        val cmdName = if (spaceIdx > 0) cmdStr.substring(0, spaceIdx) else cmdStr
                         when (cmdName) {
                             "reset" -> {
-                                /**
-                                 * Documentation for x
-                                 */
-                                val x = parts.getOrNull(1)?.toDoubleOrNull() ?: 0.0
-                                /**
-                                 * Documentation for y
-                                 */
-                                val y = parts.getOrNull(2)?.toDoubleOrNull() ?: 0.0
-                                /**
-                                 * Documentation for h
-                                 */
-                                val h = parts.getOrNull(3)?.toDoubleOrNull() ?: 0.0
+                                var parseStr = if (spaceIdx > 0) cmdStr.substring(spaceIdx + 1) else ""
+                                var idx1 = parseStr.indexOf(' ')
+                                val x = if (idx1 > 0) parseStr.substring(0, idx1).toDoubleOrNull() ?: 0.0 else parseStr.toDoubleOrNull() ?: 0.0
+                                parseStr = if (idx1 > 0) parseStr.substring(idx1 + 1) else ""
+                                var idx2 = parseStr.indexOf(' ')
+                                val y = if (idx2 > 0) parseStr.substring(0, idx2).toDoubleOrNull() ?: 0.0 else parseStr.toDoubleOrNull() ?: 0.0
+                                parseStr = if (idx2 > 0) parseStr.substring(idx2 + 1) else ""
+                                val h = parseStr.toDoubleOrNull() ?: 0.0
                                 println("[RemoteDrive] Resetting EKF pose to: ($x, $y) at $h rad")
                                 robot.base.store.dispatch(RobotAction.PoseUpdate(
                                     xMeters = x,

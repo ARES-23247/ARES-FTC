@@ -14,7 +14,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
     private var supportsVelocityControl = true
     @Volatile private var supportsCurrentSensing = true
     private val motor: DcMotorEx? = com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
-    private val voltageSensor = hardwareMap.voltageSensor.iterator().next()
+    private val voltageSensor = hardwareMap.voltageSensor.firstOrNull()
 
     // Gearing / Encoder conversion: GoBilda motor has 28 ticks per motor shaft revolution.
     // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
@@ -111,7 +111,7 @@ class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
             }
         }
         try {
-            cachedVoltage = voltageSensor.voltage.coerceAtLeast(8.0)
+            cachedVoltage = voltageSensor?.voltage?.coerceAtLeast(8.0) ?: 12.0
         } catch (e: Exception) {
             cachedVoltage = 12.0
         }

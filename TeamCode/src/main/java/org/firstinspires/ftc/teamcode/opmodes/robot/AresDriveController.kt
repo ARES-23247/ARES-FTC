@@ -67,7 +67,16 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     }
 
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
-        base.mecanumDrive.driveWithGamepad(driver, useHeadingLock)
+        if (!wasFieldCentric) {
+            wasFieldCentric = true
+            transitionFrames = 5
+        }
+        val px = processAxis(driver.left_stick_x.toDouble())
+        val py = processAxis(-driver.left_stick_y.toDouble())
+        val prot = processAxis(driver.right_stick_x.toDouble())
+        smoothTransition(px, py, prot)
+        
+        base.mecanumDrive.fieldRelativeDrive(smoothX, smoothY, smoothRot, useHeadingLock)
     }
 
     fun alignToTag(tagId: Int) {

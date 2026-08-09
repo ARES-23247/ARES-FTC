@@ -23,14 +23,15 @@ class PrismSubsystem(
     var configuredMaxBrightness: Int = 75
 ) : Subsystem {
 
-    private var cachedPulseWidthUs: Int? = null
+    private var cachedPulseWidthUs: Int = -1
 
     override fun readSensors(store: Store, timestampMs: Long) {
-        cachedPulseWidthUs = store.state.superstructure.prismDrivers[name]
+        cachedPulseWidthUs = store.state.superstructure.prismDrivers[name] ?: -1
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        val targetPulseWidthUs = cachedPulseWidthUs ?: return
+        val targetPulseWidthUs = cachedPulseWidthUs
+        if (targetPulseWidthUs < 0) return
 
         // Dynamically scale LED brightness down during high current draw or battery dips (scale < 1.0)
         val currentPowerScale = scale.coerceIn(0.0, 1.0)

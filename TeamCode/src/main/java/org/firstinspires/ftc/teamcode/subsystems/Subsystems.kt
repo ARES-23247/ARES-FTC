@@ -11,18 +11,18 @@ import com.areslib.action.RobotAction
 import org.firstinspires.ftc.teamcode.dsl.season
 
 class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
-    private var stallStartTime: Long? = null
+    private var stallStartTime: Long = -1L
 
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
         val currentAmps = io.rollerCurrentAmps
         if (currentAmps > 8.0) {
-            if (stallStartTime == null) stallStartTime = timestampMs
-            if (timestampMs - stallStartTime!! > 250) {
+            if (stallStartTime < 0L) stallStartTime = timestampMs
+            if (timestampMs - stallStartTime > 250) {
                 stalled = true
             }
         } else {
-            stallStartTime = null
+            stallStartTime = -1L
             stalled = false
         }
     }
@@ -69,6 +69,9 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
             this.currentRpm = currentRpm
             lastDispatchedRpm = currentRpm
             lastDispatchTime = timestampMs
+            
+            val seasonState = store.state.superstructure.season
+            store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = currentRpm)))
         }
     }
 
