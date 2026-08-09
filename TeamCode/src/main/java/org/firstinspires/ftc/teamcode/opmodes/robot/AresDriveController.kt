@@ -19,16 +19,12 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private fun smoothTransition(x: Double, y: Double, rot: Double): Triple<Double, Double, Double> {
         if (transitionFrames > 0) {
             transitionFrames--
-            val alpha = 0.2
-            lastX = lastX * (1 - alpha) + x * alpha
-            lastY = lastY * (1 - alpha) + y * alpha
-            lastRot = lastRot * (1 - alpha) + rot * alpha
-            return Triple(lastX, lastY, lastRot)
         }
-        lastX = x
-        lastY = y
-        lastRot = rot
-        return Triple(x, y, rot)
+        val alpha = 0.4
+        lastX = lastX * 0.6 + x * alpha
+        lastY = lastY * 0.6 + y * alpha
+        lastRot = lastRot * 0.6 + rot * alpha
+        return Triple(lastX, lastY, lastRot)
     }
 
     /**

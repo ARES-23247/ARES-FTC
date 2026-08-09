@@ -23,7 +23,17 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     init {
     }
 
-    override fun setPivotAngle(degrees: Double) {}
+    private val servo = try { hardwareMap.servo.get("intake_pivot") } catch (e: Exception) { hardwareMap.servo.firstOrNull() }
+    private var currentPos = 0.5
+
+    override fun setPivotAngle(degrees: Double) {
+        if (servo == null) return
+        val targetPos = degrees
+        val maxDelta = 0.02
+        val clamped = targetPos.coerceIn(0.1, 0.9)
+        currentPos += (clamped - currentPos).coerceIn(-maxDelta, maxDelta)
+        servo.position = currentPos
+    }
 
     override fun setPivotVoltage(volts: Double) {}
 

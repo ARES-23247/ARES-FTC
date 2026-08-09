@@ -11,7 +11,8 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
      * Documentation for addTelemetry
      */
     fun addTelemetry(key: String, value: Any) {
-        base.telemetryManager.customDriverStationText[key] = value.toString()
+        val truncated = value.toString().take(150)
+        base.telemetryManager.customDriverStationText[key] = truncated
     }
 
     fun clearTelemetry() {

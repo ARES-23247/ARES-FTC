@@ -11,8 +11,20 @@ import com.areslib.action.RobotAction
 import org.firstinspires.ftc.teamcode.dsl.season
 
 class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
+    private var stallStartTime: Long? = null
+
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
+        val currentAmps = io.currentAmps
+        if (currentAmps > 8.0) {
+            if (stallStartTime == null) stallStartTime = timestampMs
+            if (timestampMs - stallStartTime!! > 250) {
+                val seasonState = store.state.superstructure.season
+                store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
+            }
+        } else {
+            stallStartTime = null
+        }
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
@@ -23,7 +35,9 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
         /**
          * Documentation for voltage
          */
-        val voltage = if (active) state.tuning.intakeNominalVoltage * scale else 0.0
+        val flywheelSpooling = state.superstructure.season.flywheelActive && state.superstructure.season.flywheelTargetRPM > state.superstructure.season.flywheelCurrentRPM
+        val intakePowerScale = if (flywheelSpooling) 0.6 else 1.0
+        val voltage = if (active) state.tuning.intakeNominalVoltage * scale * intakePowerScale else 0.0
         io.setRollerVoltage(voltage)
     }
 

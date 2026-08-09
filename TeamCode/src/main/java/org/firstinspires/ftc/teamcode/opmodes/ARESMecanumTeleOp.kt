@@ -21,14 +21,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
 
             driver.y.onPress("Reset Field Centric Pose") {
-                val currentPose = robot.base.store.state.drive.poseEstimator.estimatedPose
-                val currentAlliance = robot.base.store.state.drive.alliance
-                val newHeading = if (currentAlliance == com.areslib.state.Alliance.BLUE) {
-                    com.areslib.math.geometry.Rotation2d(Math.PI / 2)
-                } else {
-                    com.areslib.math.geometry.Rotation2d(-Math.PI / 2)
-                }
-                robot.base.resetPose(com.areslib.math.geometry.Pose2d(currentPose.x, currentPose.y, newHeading))
+                robot.resetPoseForAlliance()
             }
             driver.x.onPress("Toggle Alliance") {
                 robot.toggleAlliance()
@@ -67,6 +60,9 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             } else {
                 robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             }
+
+            val seasonState = robot.base.store.state.superstructure.season.copy(liftHeight = org.firstinspires.ftc.teamcode.opmodes.TeamStateStorage.liftHeight)
+            robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState))
 
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }
