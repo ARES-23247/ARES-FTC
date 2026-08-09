@@ -40,11 +40,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val prot = processAxis(rotation)
         val (sx, sy, srot) = smoothTransition(px, py, prot)
 
-        /**
-         * Documentation for mult
-         */
-        val mult = if (base.store.state.drive.alliance == Alliance.BLUE) -1.0 else 1.0
-        base.driveFieldCentric(sx * mult, sy * mult, srot)
+        base.driveFieldCentric(sx, sy, srot)
     }
     /**
      * Documentation for driveRobotCentric
