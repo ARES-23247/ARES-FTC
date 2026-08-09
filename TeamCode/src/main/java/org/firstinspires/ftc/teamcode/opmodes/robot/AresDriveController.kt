@@ -71,9 +71,9 @@ class AresDriveController(private val base: FtcMecanumRobot) {
             wasFieldCentric = true
             transitionFrames = 5
         }
-        val px = processAxis(driver.left_stick_x.toDouble())
-        val py = processAxis(-driver.left_stick_y.toDouble())
-        val prot = processAxis(driver.right_stick_x.toDouble())
+        val px = processAxis(driver.leftStickX.value.toDouble())
+        val py = processAxis(-driver.leftStickY.value.toDouble())
+        val prot = processAxis(driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
         
         base.mecanumDrive.fieldRelativeDrive(smoothX, smoothY, smoothRot, useHeadingLock)
