@@ -24,13 +24,14 @@ class AresDriveControllerTest {
         return base
     }
 
-    // Helper: recompute expected output for the new deadband formula
-    // processAxis(input) = sign(d) * |d|^3  where d = (|input| - 0.05) / 0.95 * sign(input)
+    // Helper: recompute expected output for the deadband formula.
+    // processAxis(input) = sign(d) * |d|^exp  where d = (|input| - 0.05) / 0.95 * sign(input),
+    // and exp comes from store.state.tuning.driverDeadbandExponent (default TuningState = 1.0).
     // smoothTransition on first call (lastX=0): smoothed = 0.0 * 0.6 + processed * 0.4
-    private fun expectedSmoothed(input: Double): Double {
+    private fun expectedSmoothed(input: Double, exponent: Double = 1.0): Double {
         if (kotlin.math.abs(input) < 0.05) return 0.0
         val deadzoned = (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
-        val processed = kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(3)
+        val processed = kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
         return processed * 0.4 // first-frame smoothing: lastX starts at 0
     }
 

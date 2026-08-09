@@ -10,8 +10,12 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private var lastRot = 0.0
 
     private fun processAxis(input: Double): Double {
-        val deadzoned = if (kotlin.math.abs(input) < 0.05) 0.0 else (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
-        return kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(3)
+        val magnitude = kotlin.math.abs(input)
+        val deadzoned = if (magnitude < DEFAULT_DEADZONE) 0.0
+            else (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(input)
+        val exponent = base.store.state.tuning.driverDeadbandExponent
+            .let { if (it > 0.0) it else DEFAULT_CURVE_EXPONENT }
+        return kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
     }
 
     private var smoothX = 0.0
@@ -86,5 +90,12 @@ class AresDriveController(private val base: FtcMecanumRobot) {
 
     fun resetPose(pose: com.areslib.math.geometry.Pose2d = com.areslib.math.geometry.Pose2d()) {
         base.resetPose(pose)
+    }
+
+    companion object {
+        /** Joystick deadband threshold; values below this are treated as zero. */
+        const val DEFAULT_DEADZONE = 0.05
+        /** Fallback response-curve exponent when live tuning provides no valid value. */
+        const val DEFAULT_CURVE_EXPONENT = 3.0
     }
 }

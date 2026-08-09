@@ -3,6 +3,10 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.areslib.ftc.FtcMecanumRobot
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_LEFT
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_RIGHT
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_LEFT
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_RIGHT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT
 import org.firstinspires.ftc.teamcode.dsl.*
@@ -39,8 +43,10 @@ class AresRobot(
      */
     val base = FtcMecanumRobot(
         hardwareMap = hardwareMap,
-        rlName = "rl",
-        rrName = "rr",
+        flName = MOTOR_FRONT_LEFT,
+        frName = MOTOR_FRONT_RIGHT,
+        rlName = MOTOR_BACK_LEFT,
+        rrName = MOTOR_BACK_RIGHT,
         flDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
         frDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
         rlDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD,
