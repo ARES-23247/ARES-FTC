@@ -47,7 +47,11 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val prot = processAxis(rotation)
         smoothTransition(px, py, prot)
 
-        base.driveFieldCentric(smoothX, smoothY, smoothRot)
+        // CCW-positive convention: blue alliance mirrors forward/left intents.
+        val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
+        val outX = if (blueAlliance) -smoothX else smoothX
+        val outY = if (blueAlliance) -smoothY else smoothY
+        base.driveFieldCentric(outX, outY, smoothRot)
     }
     /**
      * Documentation for driveRobotCentric
@@ -75,8 +79,12 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val py = processAxis(-driver.leftStickY.value.toDouble())
         val prot = processAxis(driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
-        
-        base.mecanumDrive.fieldRelativeDrive(smoothX, smoothY, smoothRot, useHeadingLock)
+
+        // CCW-positive convention: blue alliance mirrors forward/left intents.
+        val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
+        val outX = if (blueAlliance) -smoothX else smoothX
+        val outY = if (blueAlliance) -smoothY else smoothY
+        base.mecanumDrive.fieldRelativeDrive(outX, outY, smoothRot, useHeadingLock)
     }
 
     fun alignToTag(tagId: Int) {

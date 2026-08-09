@@ -55,9 +55,11 @@ class AresDriveControllerTest {
         
         controller.driveFieldCentric(0.5, 0.5, 0.1)
         
+        // CCW-positive convention: blue alliance negates both translation axes;
+        // rotation is intentionally NOT mirrored.
         Mockito.verify(base).driveFieldCentric(
-            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
-            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
             org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
