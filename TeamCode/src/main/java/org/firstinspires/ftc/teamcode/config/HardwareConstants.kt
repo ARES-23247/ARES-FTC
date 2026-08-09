@@ -16,4 +16,8 @@ object HardwareConstants {
     // Telemetry / Sensors
     const val IMU_BNO055 = "imu"
     const val VISION_LIMELIGHT = "limelight"
+
+    // Flywheel motor (GoBilda bare motor)
+    const val FLYWHEEL_TICKS_PER_REV = 28.0
+    const val FLYWHEEL_MAX_RPM = 6000.0
 }

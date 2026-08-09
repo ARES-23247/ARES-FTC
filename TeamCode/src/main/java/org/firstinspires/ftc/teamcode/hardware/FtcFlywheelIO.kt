@@ -10,22 +10,20 @@ import com.areslib.hardware.SyncPolledDevice
  * Documentation for FtcFlywheelIO
  */
 
-class FtcFlywheelIO(hardwareMap: HardwareMap) : FlywheelIO, AutoCloseable {
+class FtcFlywheelIO(
+    hardwareMap: HardwareMap,
+    private val ticksPerRev: Double = 28.0,
+    private val maxRpm: Double = 6000.0
+) : FlywheelIO, AutoCloseable {
     private var supportsVelocityControl = true
     @Volatile private var supportsCurrentSensing = true
     private val motor: DcMotorEx? = com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "shooter"))
     private val voltageSensor = hardwareMap.voltageSensor.firstOrNull()
 
-    // Gearing / Encoder conversion: GoBilda motor has 28 ticks per motor shaft revolution.
-    // If it's a bare motor (like for a flywheel), ticksPerRev is 28.0.
-    private val ticksPerRev = 28.0
-
     @Volatile private var cachedVelocityRpm = 0.0
     @Volatile private var cachedAmps = 0.0
     private var cachedVoltage = 12.0
     private var lastPower = -999.0
-
-    private val maxRpm = 6000.0
 
     init {
         motor?.mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER

@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.areslib.ftc.FtcMecanumRobot
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_TICKS_PER_REV
+import org.firstinspires.ftc.teamcode.config.HardwareConstants.IMU_BNO055
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_LEFT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_RIGHT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_LEFT
@@ -53,6 +56,7 @@ class AresRobot(
         rrDirection = com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE,
         pinpointName = ODOMETRY_PINPOINT,
         limelightName = VISION_LIMELIGHT,
+        imuName = IMU_BNO055,
         localTelemetry = localTelemetry
     )
 
@@ -73,7 +77,11 @@ class AresRobot(
         }
 
         try {
-            val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(hardwareMap)
+            val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(
+                hardwareMap,
+                ticksPerRev = FLYWHEEL_TICKS_PER_REV,
+                maxRpm = FLYWHEEL_MAX_RPM
+            )
             flywheelSubsystem = org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO)
             base.registerSubsystem(flywheelSubsystem!!)
         } catch (e: Exception) {
