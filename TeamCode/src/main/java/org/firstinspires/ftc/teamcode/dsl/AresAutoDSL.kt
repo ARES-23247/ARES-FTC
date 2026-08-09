@@ -35,6 +35,7 @@ abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>() {
 
     override fun closeRobot(robot: AresRobot) {
         org.firstinspires.ftc.teamcode.opmodes.TeamStateStorage.liftHeight = robot.base.store.state.superstructure.season.liftHeight
+        com.areslib.util.PoseStorage.alliance = robot.base.store.state.drive.alliance
         robot.close()
     }
 }
