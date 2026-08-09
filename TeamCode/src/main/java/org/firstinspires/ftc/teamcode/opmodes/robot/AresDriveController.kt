@@ -5,8 +5,6 @@ import com.areslib.state.Alliance
 import kotlin.math.pow
 
 class AresDriveController(private val base: FtcMecanumRobot) {
-    private var wasFieldCentric = true
-    private var transitionFrames = 0
     private var lastX = 0.0
     private var lastY = 0.0
     private var lastRot = 0.0
@@ -21,9 +19,9 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private var smoothRot = 0.0
 
     private fun smoothTransition(x: Double, y: Double, rot: Double) {
-        if (transitionFrames > 0) {
-            transitionFrames--
-        }
+        // Constant first-order EMA (alpha = 0.4) over the processed joystick input.
+        // Intentional: this is the actual input smoothing in effect; the former
+        // transitionFrames/wasFieldCentric bookkeeping was never read and is removed.
         val alpha = 0.4
         lastX = lastX * 0.6 + x * alpha
         lastY = lastY * 0.6 + y * alpha
@@ -38,10 +36,6 @@ class AresDriveController(private val base: FtcMecanumRobot) {
      * Documentation for driveFieldCentric
      */
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) {
-        if (!wasFieldCentric) {
-            wasFieldCentric = true
-            transitionFrames = 5
-        }
         val px = processAxis(x)
         val py = processAxis(y)
         val prot = processAxis(rotation)
@@ -58,10 +52,6 @@ class AresDriveController(private val base: FtcMecanumRobot) {
      */
 
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {
-        if (wasFieldCentric) {
-            wasFieldCentric = false
-            transitionFrames = 5
-        }
         val px = processAxis(x)
         val py = processAxis(y)
         val prot = processAxis(rotation)
@@ -71,10 +61,6 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     }
 
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
-        if (!wasFieldCentric) {
-            wasFieldCentric = true
-            transitionFrames = 5
-        }
         val px = processAxis(driver.leftStickX.value.toDouble())
         val py = processAxis(-driver.leftStickY.value.toDouble())
         val prot = processAxis(driver.rightStickX.value.toDouble())
