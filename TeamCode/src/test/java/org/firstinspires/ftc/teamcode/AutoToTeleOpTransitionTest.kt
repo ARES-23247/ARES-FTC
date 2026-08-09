@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode
 
 import com.areslib.math.geometry.Pose2d
 import com.areslib.math.geometry.Rotation2d
+import com.areslib.state.Alliance
 import com.areslib.util.PoseStorage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +16,7 @@ class AutoToTeleOpTransitionTest {
     fun setUp() {
         PoseStorage.hasValidPose = false
         PoseStorage.currentPose = Pose2d(0.0, 0.0, Rotation2d(0.0))
+        PoseStorage.alliance = Alliance.RED
     }
 
     @Test
@@ -45,26 +47,20 @@ class AutoToTeleOpTransitionTest {
     }
 
     @Test
-    fun testAllianceFieldRelativeTransformations() {
-        val rawVx = 1.0  // Pushing forward on joystick
-        val rawVy = 0.0
+    fun testAlliancePersistenceAcrossAutoTeleOpBoundary() {
+        // Simulate what AresAutoBase.closeRobot writes at auto end:
+        //   PoseStorage.alliance = robot.base.store.state.drive.alliance
+        PoseStorage.alliance = Alliance.BLUE
+        PoseStorage.hasValidPose = true
 
-        // RED Alliance (default: Facing +Y, Driver station at -Y)
-        val isRedAlliance = true
-        val redVx = if (isRedAlliance) rawVx else -rawVx
-        val redVy = if (isRedAlliance) rawVy else -rawVy
+        // Simulate what ARESMecanumTeleOp.onInit reads:
+        //   if (PoseStorage.hasValidPose) dispatch(SetAlliance(PoseStorage.alliance))
+        val restoredAlliance = if (PoseStorage.hasValidPose) PoseStorage.alliance else Alliance.RED
 
-        assertEquals(1.0, redVx, 1e-4)
-        assertEquals(0.0, redVy, 1e-4)
-
-        // BLUE Alliance (Facing -Y, Driver station at +Y)
-        val isBlueAlliance = false
-        val blueVx = if (isBlueAlliance) rawVx else -rawVx
-        val blueVy = if (isBlueAlliance) rawVy else -rawVy
-
-        assertEquals(-1.0, blueVx, 1e-4)
-        assertEquals(0.0, blueVy, 1e-4)
-
-        println("[Match Transition Test] Auto-to-TeleOp pose handoff and Alliance transformation guards PASSED.")
+        assertEquals(
+            "TeleOp should restore the alliance persisted by Autonomous",
+            Alliance.BLUE, restoredAlliance
+        )
     }
 }
+
