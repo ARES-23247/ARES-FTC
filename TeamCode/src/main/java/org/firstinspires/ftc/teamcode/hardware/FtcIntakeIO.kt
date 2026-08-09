@@ -51,8 +51,10 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         }
     }
 
+    private var cachedServoPosition = 0.5
+
     override val pivotAngleDegrees: Double
-        get() = (servo?.position ?: 0.5) * 270.0
+        get() = cachedServoPosition * 270.0
 
     override val pivotCurrentAmps: Double
         get() = 0.0
@@ -80,6 +82,11 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
             cachedVoltage = voltageSensor?.voltage ?: 12.0
         } catch (_: Exception) {
             cachedVoltage = 12.0
+        }
+        try {
+            cachedServoPosition = servo?.position ?: 0.5
+        } catch (_: Exception) {
+            // Keep last cached position on read failure
         }
     }
 
