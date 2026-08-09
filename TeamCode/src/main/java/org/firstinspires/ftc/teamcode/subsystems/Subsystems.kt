@@ -15,7 +15,7 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 
     override fun readSensors(store: Store, timestampMs: Long) {
         io.refresh()
-        val currentAmps = io.currentAmps
+        val currentAmps = io.rollerCurrentAmps
         if (currentAmps > 8.0) {
             if (stallStartTime == null) stallStartTime = timestampMs
             if (timestampMs - stallStartTime!! > 250) {

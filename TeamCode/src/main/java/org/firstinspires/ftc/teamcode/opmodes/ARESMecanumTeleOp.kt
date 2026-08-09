@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
+import org.firstinspires.ftc.teamcode.dsl.season
 
 /**
  * A highly optimized, modern FTC TeleOp demonstrating the new beginner-friendly DSL layout.
