@@ -103,13 +103,6 @@ class AresRobot(
         if (primaryIO != null && primaryName != null) {
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(primaryIO, "indicator"))
             setIndicatorColor("indicator", com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
-            
-            com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
-                com.areslib.pathing.NamedCommands.registerCommand(
-                    "SetIndicatorColor_${color.name}",
-                    com.areslib.sequencer.tasks.SetIndicatorColorTask("indicator", color)
-                )
-            }
         } else {
             addTelemetry("Subsystem", "Primary indicator light not found in Hardware Map")
         }
@@ -128,12 +121,15 @@ class AresRobot(
             }
         }
 
-        // Auto-discover any 2nd servo in hardwareMap that isn't the primary indicator light
+        // Fall back to any remaining servo whose name looks like an indicator light.
         if (secondaryIO == null) {
             try {
                 for (entry in hardwareMap.servo.entrySet()) {
                     val deviceName = entry.key
-                    if (deviceName != primaryName && !deviceName.equals("floodgate", ignoreCase = true)) {
+                    if (deviceName != primaryName && (
+                            deviceName.contains("indicator", ignoreCase = true) ||
+                            deviceName.contains("light", ignoreCase = true) ||
+                            deviceName.contains("led", ignoreCase = true))) {
                         try {
                             secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, deviceName)
                             loadedSecondaryName = deviceName
@@ -147,16 +143,34 @@ class AresRobot(
         if (secondaryIO != null && loadedSecondaryName != null) {
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(secondaryIO, "indicator2"))
             setSecondIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.BLUE)
-
-            com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
-                com.areslib.pathing.NamedCommands.registerCommand(
-                    "SetSecondIndicatorColor_${color.name}",
-                    com.areslib.sequencer.tasks.SetIndicatorColorTask("indicator2", color)
-                )
-            }
             addTelemetry("Subsystem", "Secondary indicator light loaded as: $loadedSecondaryName")
         } else {
             addTelemetry("Subsystem", "Secondary indicator light (indicator2) not configured in Hardware Map")
+        }
+
+        // Always register indicator color commands so an auto that references them does not
+        // crash when the indicator IO failed to init; the task no-ops if absent.
+        com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
+            com.areslib.pathing.NamedCommands.registerCommand(
+                "SetIndicatorColor_${color.name}",
+                object : com.areslib.sequencer.Task {
+                    override val name = "SetIndicatorColor_${color.name}"
+                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
+                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
+                        if (primaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator", color.position))
+                        else emptyList()
+                }
+            )
+            com.areslib.pathing.NamedCommands.registerCommand(
+                "SetSecondIndicatorColor_${color.name}",
+                object : com.areslib.sequencer.Task {
+                    override val name = "SetSecondIndicatorColor_${color.name}"
+                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
+                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
+                        if (secondaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator2", color.position))
+                        else emptyList()
+                }
+            )
         }
 
         // --- goBILDA Prism RGB LED Driver ("prism") ---
