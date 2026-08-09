@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
-import com.areslib.action.RobotAction
 /**
  * Documentation for ARESRemoteDriveOpMode
  */
@@ -77,12 +76,12 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                                 parseStr = if (idx2 > 0) parseStr.substring(idx2 + 1) else ""
                                 val h = parseStr.toDoubleOrNull() ?: 0.0
                                 println("[RemoteDrive] Resetting EKF pose to: ($x, $y) at $h rad")
-                                robot.base.store.dispatch(RobotAction.PoseUpdate(
-                                    xMeters = x,
-                                    yMeters = y,
-                                    headingRadians = h,
-                                    timestampMs = now
-                                ))
+                                robot.base.resetPose(
+                                    com.areslib.math.geometry.Pose2d(
+                                        x, y,
+                                        com.areslib.math.geometry.Rotation2d(h)
+                                    )
+                                )
                             }
                         }
                     }
