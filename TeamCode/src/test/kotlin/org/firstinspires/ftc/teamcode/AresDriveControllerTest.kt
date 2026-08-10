@@ -54,13 +54,13 @@ class AresDriveControllerTest {
         val base = setupMockRobot(Alliance.BLUE)
         val controller = AresDriveController(base)
         
-        controller.driveFieldCentric(0.5, 0.5, 0.1)
+        controller.driveFieldCentric(0.7, -0.35, 0.1)
         
-        // CCW-positive convention: blue alliance negates both translation axes;
-        // rotation is intentionally NOT mirrored.
+        // Asymmetric, opposite-sign axes prevent an implementation that mirrors or
+        // swaps only one translation component from passing accidentally.
         Mockito.verify(base).driveFieldCentric(
-            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
-            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.7), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(-0.35), 1e-4),
             org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
@@ -127,4 +127,3 @@ class AresDriveControllerTest {
         )
     }
 }
-

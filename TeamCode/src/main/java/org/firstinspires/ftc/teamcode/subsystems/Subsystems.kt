@@ -14,9 +14,8 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
     private var stallStartTime: Long = -1L
 
     override fun readSensors(store: Store, timestampMs: Long) {
-        io.refresh()
         val currentAmps = io.rollerCurrentAmps
-        if (currentAmps > 8.0) {
+        if (io.rollerCurrentValid && currentAmps > 8.0) {
             if (stallStartTime < 0L) stallStartTime = timestampMs
             if (timestampMs - stallStartTime > 250) {
                 stalled = true
@@ -53,7 +52,6 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     private var lastDispatchTime = 0L
 
     override fun readSensors(store: Store, timestampMs: Long) {
-        io.refresh()
         /**
          * Documentation for currentRpm
          */
@@ -86,7 +84,10 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
          * Documentation for active
          */
         val active = state.superstructure.season.flywheelActive
-        io.setVelocityRpm(if (active) state.superstructure.season.flywheelTargetRPM else 0.0)
+        // Brownout scaling must not change launch velocity, but zero is the
+        // lifecycle emergency-stop signal and must always stop the motor.
+        val targetRpm = if (active && scale > 0.0) state.superstructure.season.flywheelTargetRPM else 0.0
+        io.setVelocityRpm(targetRpm)
     }
 
     override fun close() {

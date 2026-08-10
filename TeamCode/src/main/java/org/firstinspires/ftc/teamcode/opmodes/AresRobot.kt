@@ -258,32 +258,41 @@ class AresRobot(
         gamepad1: com.areslib.telemetry.GamepadState? = null,
         gamepad2: com.areslib.telemetry.GamepadState? = null
     ) {
-        // 1. Poll subsystem sensors (e.g. flywheel encoder) before drivebase update
-        /**
-         * Documentation for timestamp
-         */
-        val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
-        base.readAllSensors(timestamp)
+        try {
+            // Clear REV bulk caches and refresh registered IO before consuming season sensors.
+            base.readSensors()
+
+            // Poll subsystem state from the freshly cached IO values.
+            val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
+            base.readAllSensors(timestamp)
         
-        intakeSubsystem?.let {
-            if (it.stalled) {
-                val seasonState = base.store.state.superstructure.season
-                if (seasonState.intakeActive) {
-                    base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
+            intakeSubsystem?.let {
+                if (it.stalled) {
+                    val seasonState = base.store.state.superstructure.season
+                    if (seasonState.intakeActive) {
+                        base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
+                    }
                 }
             }
-        }
         
 
 
-        // 2. Update drivebase sensors, EKF, and kinematics
-        base.update(gamepad1, gamepad2)
+            // Command season actuators before entering the base update. If the base
+            // catches a fatal drivetrain/update failure, its final action remains the
+            // HardwareRegistry safety stop instead of this wrapper re-enabling motors.
+            base.writeAllOutputs(base.powerManager.powerScale)
 
-        // 3. Command subsystem actuators with brownout-adjusted power scale
-        base.writeAllOutputs(base.powerManager.powerScale)
+            // Update drivebase sensors, EKF, kinematics, and the next power scale.
+            base.update(gamepad1, gamepad2)
 
-        // 4. Continuously update core Driver Station telemetry
-        telemetryHelper.updateTelemetry()
+            // Continuously update core Driver Station telemetry.
+            telemetryHelper.updateTelemetry()
+        } catch (t: Throwable) {
+            // Season work happens outside FtcBaseRobot.update's catch block.
+            base.safeAll()
+            base.safeHardware()
+            throw t
+        }
     }
     /**
      * Documentation for driveFieldCentric
@@ -324,6 +333,11 @@ class AresRobot(
      */
 
     fun close() {
-        base.close()
+        try {
+            base.safeAll()
+            base.closeSubsystems()
+        } finally {
+            base.close()
+        }
     }
 }
