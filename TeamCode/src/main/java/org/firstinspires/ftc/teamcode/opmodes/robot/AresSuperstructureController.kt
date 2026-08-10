@@ -7,45 +7,41 @@ import org.firstinspires.ftc.teamcode.dsl.*
 
 import com.areslib.util.RobotClock
 
+/**
+ * Dispatches debounced DECODE mechanism and alliance intents into the Redux store.
+ *
+ * This controller never writes hardware. Shooter start is interlocked while intake is active;
+ * shooter stop always clears target RPM. Debounce timestamps use [RobotClock] for deterministic
+ * simulation and tests.
+ */
 class AresSuperstructureController(private val base: FtcMecanumRobot) {
     private var lastIntakeToggleTimeMs = 0L
     private var lastShooterToggleTimeMs = 0L
     private var lastAllianceToggleTimeMs = 0L
 
-    // TODO: Create ToggleIntake and ToggleFlywheel actions in ARESLib-Kotlin RobotAction
-    /**
-     * Documentation for toggleIntake
-     */
+    /** Toggles intake intent after the 200 ms edge debounce. */
     fun toggleIntake() {
-        if (RobotClock.currentTimeMillis() - lastIntakeToggleTimeMs < 200) return
-        lastIntakeToggleTimeMs = RobotClock.currentTimeMillis()
-        /**
-         * Documentation for season
-         */
+        val now = RobotClock.currentTimeMillis()
+        if (now - lastIntakeToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
+        lastIntakeToggleTimeMs = now
         val season = base.store.state.superstructure.season
-        val MIN_CLEARANCE_HEIGHT = 0.1
-        if (season.liftHeight < MIN_CLEARANCE_HEIGHT && !season.intakeActive) return
-
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(intakeActive = !season.intakeActive)
         ))
     }
-    /**
-     * Documentation for toggleShooter
-     */
-
+    /** Toggles flywheel intent unless debounce or the intake interlock rejects the request. */
     fun toggleShooter() {
-        if (RobotClock.currentTimeMillis() - lastShooterToggleTimeMs < 200) return
-        lastShooterToggleTimeMs = RobotClock.currentTimeMillis()
-        /**
-         * Documentation for season
-         */
+        val now = RobotClock.currentTimeMillis()
+        if (now - lastShooterToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
+        lastShooterToggleTimeMs = now
         val season = base.store.state.superstructure.season
         if (season.intakeActive) return
-        /**
-         * Documentation for currentTarget
-         */
-        val currentTarget = if (!season.flywheelActive) base.store.state.tuning.flywheelTargetRpmPreset else 0.0
+        val configuredTarget = base.store.state.tuning.flywheelTargetRpmPreset
+        val currentTarget = if (!season.flywheelActive) {
+            configuredTarget.takeIf { it.isFinite() }?.coerceIn(0.0, MAX_FLYWHEEL_RPM) ?: 0.0
+        } else {
+            0.0
+        }
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(
                 flywheelActive = !season.flywheelActive,
@@ -53,24 +49,21 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
             )
         ))
     }
-    /**
-     * Documentation for toggleAlliance
-     */
-
+    /** Toggles the Redux alliance; callers reset field pose separately when appropriate. */
     fun toggleAlliance() {
-        if (RobotClock.currentTimeMillis() - lastAllianceToggleTimeMs < 200) return
-        lastAllianceToggleTimeMs = RobotClock.currentTimeMillis()
-        /**
-         * Documentation for currentAlliance
-         */
+        val now = RobotClock.currentTimeMillis()
+        if (now - lastAllianceToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
+        lastAllianceToggleTimeMs = now
         val currentAlliance = base.store.state.drive.alliance
-        /**
-         * Documentation for newAlliance
-         */
         val newAlliance = when (currentAlliance) {
             Alliance.RED -> Alliance.BLUE
             Alliance.BLUE -> Alliance.RED
         }
         base.store.dispatch(RobotAction.SetAlliance(newAlliance))
+    }
+
+    private companion object {
+        const val TOGGLE_DEBOUNCE_MS = 200L
+        const val MAX_FLYWHEEL_RPM = 6000.0
     }
 }

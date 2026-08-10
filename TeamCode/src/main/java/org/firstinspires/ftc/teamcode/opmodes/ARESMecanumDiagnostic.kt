@@ -3,33 +3,27 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotorEx
-/**
- * Documentation for ARESMecanumDiagnostic
- */
+import com.areslib.ftc.photon.PhotonEnabledOpMode
 
+/**
+ * Restrained-hardware drivetrain wiring diagnostic.
+ *
+ * Each face button commands exactly one raw motor at 40% output. Hardware names are the canonical
+ * `fl`, `fr`, `rl`, and `rr`. The `finally` block zeros every discovered motor on stop or failure.
+ */
 @TeleOp(name = "ARES Drivetrain Diagnostic", group = "ARES")
-class ARESMecanumDiagnostic : LinearOpMode() {
+class ARESMecanumDiagnostic : LinearOpMode(), PhotonEnabledOpMode {
+
+    private fun findMotor(name: String): DcMotorEx? =
+        runCatching { hardwareMap.get(DcMotorEx::class.java, name) }.getOrNull()
 
     override fun runOpMode() {
         telemetry.addData("Status", "Initializing raw motors...")
         telemetry.update()
-        /**
-         * Documentation for fl
-         */
-
-        val fl = try { hardwareMap.get(DcMotorEx::class.java, "fl") } catch (_: Exception) { null }
-        /**
-         * Documentation for fr
-         */
-        val fr = try { hardwareMap.get(DcMotorEx::class.java, "fr") } catch (_: Exception) { null }
-        /**
-         * Documentation for rl
-         */
-        val rl = try { hardwareMap.get(DcMotorEx::class.java, "rl") } catch (_: Exception) { try { hardwareMap.get(DcMotorEx::class.java, "bl") } catch (_: Exception) { null } }
-        /**
-         * Documentation for rr
-         */
-        val rr = try { hardwareMap.get(DcMotorEx::class.java, "rr") } catch (_: Exception) { try { hardwareMap.get(DcMotorEx::class.java, "br") } catch (_: Exception) { null } }
+        val fl = findMotor("fl")
+        val fr = findMotor("fr")
+        val rl = findMotor("rl")
+        val rr = findMotor("rr")
 
         telemetry.addData("Status", "Ready. Press Play.")
         telemetry.addData("FL Motor (\"fl\")", if (fl != null) "FOUND" else "MISSING")
@@ -42,22 +36,10 @@ class ARESMecanumDiagnostic : LinearOpMode() {
 
         try {
             while (opModeIsActive()) {
-                /**
-                 * Documentation for flPower
-                 */
-                val flPower = if (gamepad1.a) 0.4 else 0.0  // Cross / A
-                /**
-                 * Documentation for frPower
-                 */
-                val frPower = if (gamepad1.b) 0.4 else 0.0  // Circle / B
-                /**
-                 * Documentation for rlPower
-                 */
-                val rlPower = if (gamepad1.x) 0.4 else 0.0  // Square / X
-                /**
-                 * Documentation for rrPower
-                 */
-                val rrPower = if (gamepad1.y) 0.4 else 0.0  // Triangle / Y
+                val flPower = if (gamepad1.a) 0.4 else 0.0 // Cross / A
+                val frPower = if (gamepad1.b) 0.4 else 0.0 // Circle / B
+                val rlPower = if (gamepad1.x) 0.4 else 0.0 // Square / X
+                val rrPower = if (gamepad1.y) 0.4 else 0.0 // Triangle / Y
 
                 fl?.power = flPower
                 fr?.power = frPower

@@ -29,8 +29,9 @@ class AresDriveControllerTest {
     // and exp comes from store.state.tuning.driverDeadbandExponent (default TuningState = 1.0).
     // smoothTransition on first call (lastX=0): smoothed = 0.0 * 0.6 + processed * 0.4
     private fun expectedSmoothed(input: Double, exponent: Double = 1.0): Double {
-        if (kotlin.math.abs(input) < 0.05) return 0.0
-        val deadzoned = (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
+        val bounded = if (input.isFinite()) input.coerceIn(-1.0, 1.0) else 0.0
+        if (kotlin.math.abs(bounded) < 0.05) return 0.0
+        val deadzoned = (kotlin.math.abs(bounded) - 0.05) / 0.95 * kotlin.math.sign(bounded)
         val processed = kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
         return processed * 0.4 // first-frame smoothing: lastX starts at 0
     }
@@ -54,13 +55,13 @@ class AresDriveControllerTest {
         val base = setupMockRobot(Alliance.BLUE)
         val controller = AresDriveController(base)
         
-        controller.driveFieldCentric(0.5, 0.5, 0.1)
+        controller.driveFieldCentric(0.7, -0.35, 0.1)
         
-        // CCW-positive convention: blue alliance negates both translation axes;
-        // rotation is intentionally NOT mirrored.
+        // Asymmetric, opposite-sign axes prevent an implementation that mirrors or
+        // swaps only one translation component from passing accidentally.
         Mockito.verify(base).driveFieldCentric(
-            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
-            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(0.7), 1e-4),
+            org.mockito.AdditionalMatchers.eq(-expectedSmoothed(-0.35), 1e-4),
             org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
         )
     }
@@ -115,6 +116,16 @@ class AresDriveControllerTest {
     }
 
     @Test
+    fun `non-finite joystick values fail closed`() {
+        val base = setupMockRobot()
+        val controller = AresDriveController(base)
+
+        controller.driveFieldCentric(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)
+
+        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.0)
+    }
+
+    @Test
     fun testClosedLoopHeadingPID() {
         val base = setupMockRobot()
         val controller = AresDriveController(base)
@@ -127,4 +138,3 @@ class AresDriveControllerTest {
         )
     }
 }
-

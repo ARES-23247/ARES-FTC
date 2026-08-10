@@ -5,14 +5,12 @@ import com.areslib.state.Alliance
 
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 
+/** Red-alliance competition entry point for the native `test-path` ARES auto. */
 @Autonomous(name = "ARES Mecanum Auto", group = "ARES")
 class ARESAuto : AresAutoBase() {
-    override val pathName: String = "TestPath"
-
-    override fun buildRobot(): AresRobot {
-        val robot = super.buildRobot()
-        configureAlliance(robot, Alliance.RED)
-        return robot
+    override fun defineAuto() = auto {
+        aresAuto("test-path")
+        alliance(Alliance.RED)
     }
 }
 

@@ -1,35 +1,26 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.areslib.ftc.dsl.FtcMecanumAutoBase
-import com.areslib.ftc.FtcMecanumRobot
 import com.areslib.state.Alliance
-import com.areslib.action.RobotAction
+import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 
 
-/**
- * Documentation for TestAutoRed
- */
-
+/** Red-alliance validation entry point for the shared native `test-auto` asset. */
 @Autonomous(name = "TestAuto - RED", group = "ARES")
-class TestAutoRed : org.firstinspires.ftc.teamcode.dsl.AresAutoBase() {
-    override val pathName: String = "TestAuto"
-    override fun buildRobot(): AresRobot {
-        val robot = super.buildRobot()
-        configureAlliance(robot, Alliance.RED)
-        return robot
+class TestAutoRed : AresAutoBase() {
+    override fun defineAuto() = auto {
+        aresAuto("test-auto")
+        alliance(Alliance.RED)
     }
 }
-/**
- * Documentation for TestAutoBlue
- */
 
+/**
+ * Blue-alliance validation entry point for `test-auto`; the base transforms goals and start pose.
+ */
 @Autonomous(name = "TestAuto - BLUE", group = "ARES")
-class TestAutoBlue : org.firstinspires.ftc.teamcode.dsl.AresAutoBase() {
-    override val pathName: String = "TestAuto"
-    override fun buildRobot(): AresRobot {
-        val robot = super.buildRobot()
-        configureAlliance(robot, Alliance.BLUE)
-        return robot
+class TestAutoBlue : AresAutoBase() {
+    override fun defineAuto() = auto {
+        aresAuto("test-auto")
+        alliance(Alliance.BLUE)
     }
 }

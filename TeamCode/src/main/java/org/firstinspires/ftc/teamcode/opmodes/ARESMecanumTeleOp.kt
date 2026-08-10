@@ -5,18 +5,20 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 import org.firstinspires.ftc.teamcode.dsl.season
 
 /**
- * A highly optimized, modern FTC TeleOp demonstrating the new beginner-friendly DSL layout.
- * Optimized specifically for a 4-motor mecanum drivetrain, with a GoBilda Pinpoint 
- * connected to native I2C 1, and a GoBilda Floodgate connected to native Analog Port 1.
+ * Primary field-centric driver OpMode for the four-motor DECODE robot.
+ *
+ * Restores a valid Auto pose/alliance from process-local storage, otherwise starts red. Both
+ * translation axes are alliance-mirrored by [org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController];
+ * heading remains CCW-positive radians. Optional indicator bindings safely no-op when hardware is absent.
  */
 @TeleOp(name = "Direct Mecanum Drivetrain", group = "ARES")
 class ARESMecanumTeleOp : AresTeleOpBase() {
 
-    override fun define() = aresTeleOp {
+    override fun define() = teleOp {
         
         var isHeadingLockEnabled = true
         
-        onConfigure { robot, driver ->
+        controls {
             driver.leftStickButton.onPress("Toggle Heading Lock") {
                 isHeadingLockEnabled = !isHeadingLockEnabled
             }
@@ -29,7 +31,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
                 robot.resetPoseForAlliance()
             }
 
-            // --- Cycle Indicator Light 1 ("indicator") with D-Pad Up / Down ---
+            // Primary indicator: D-pad up/down. Secondary indicator: left/right.
             val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
             var light1Index = 0
             var light2Index = 0
@@ -43,7 +45,6 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
                 robot.setIndicatorColor(indicatorColors[light1Index])
             }
 
-            // --- Cycle Indicator Light 2 ("indicator2") with D-Pad Left / Right ---
             driver.dpadRight.onPress("Light 2 Next Color") {
                 light2Index = (light2Index + 1) % indicatorColors.size
                 robot.setSecondIndicatorColor(indicatorColors[light2Index])
@@ -54,10 +55,10 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
         }
 
-        onInit { robot, _ ->
+        setup {
+            // PoseStorage survives OpMode changes in one RC process, not a reboot.
             if (com.areslib.util.PoseStorage.hasValidPose) {
                 robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.util.PoseStorage.alliance))
-                robot.base.resetPose(com.areslib.util.PoseStorage.currentPose)
             } else {
                 robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             }
@@ -68,9 +69,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }
         
-        onLoop { robot, driver, _ ->
-
-            // 2. Drive the robot (Field-Centric Perspective)
+        everyLoop {
             robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
         }
     }

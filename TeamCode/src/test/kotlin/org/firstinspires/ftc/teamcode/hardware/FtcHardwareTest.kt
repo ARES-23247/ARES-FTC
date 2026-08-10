@@ -4,18 +4,42 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.hardware.VoltageSensor
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import com.areslib.hardware.HardwareRegistry
+import com.areslib.state.RobotState
+import com.areslib.state.SuperstructureState
+import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
+import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.AdditionalMatchers
 import org.mockito.Mockito
 
 class FtcHardwareTest {
 
-    private fun createMockHardwareMap(motorName: String, mockMotor: DcMotorEx): HardwareMap {
+    @After
+    fun tearDown() {
+        HardwareRegistry.clear()
+    }
+
+    private data class HardwareFixture(
+        val hardwareMap: HardwareMap,
+        val voltageSensor: VoltageSensor
+    )
+
+    private fun createMockHardwareMap(
+        motorName: String,
+        mockMotor: DcMotorEx,
+        voltage: Double = 12.0
+    ): HardwareFixture {
         val hardwareMap = Mockito.mock(HardwareMap::class.java)
         Mockito.`when`(hardwareMap.get(DcMotorEx::class.java, motorName)).thenReturn(mockMotor)
 
         val mockVoltageSensor = Mockito.mock(VoltageSensor::class.java)
-        Mockito.`when`(mockVoltageSensor.voltage).thenReturn(12.0)
+        Mockito.`when`(mockVoltageSensor.voltage).thenReturn(voltage)
 
         @Suppress("UNCHECKED_CAST")
         val deviceMapping = Mockito.mock(HardwareMap.DeviceMapping::class.java) as HardwareMap.DeviceMapping<VoltageSensor>
@@ -31,13 +55,13 @@ class FtcHardwareTest {
             HardwareMap::class.java.getField("servo").set(hardwareMap, servoMapping)
         }
 
-        return hardwareMap
+        return HardwareFixture(hardwareMap, mockVoltageSensor)
     }
 
     @Test
     fun testFtcFlywheelIO() {
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
-        val hardwareMap = createMockHardwareMap("shooter", mockMotor)
+        val hardwareMap = createMockHardwareMap("shooter", mockMotor).hardwareMap
         Mockito.`when`(mockMotor.velocity).thenReturn(1400.0)
 
         val io = FtcFlywheelIO(hardwareMap)
@@ -47,7 +71,8 @@ class FtcHardwareTest {
         io.setAppliedVoltage(6.0)
         Mockito.verify(mockMotor).power = 0.5
 
-        io.refresh()
+        // The base calls this immediately after clearing the REV bulk cache.
+        HardwareRegistry.refreshAll()
         assertEquals(3000.0, io.velocityRpm, 1e-6)
 
         assertEquals(0.0, io.currentAmps, 1e-6)
@@ -60,13 +85,148 @@ class FtcHardwareTest {
     @Test
     fun testFtcIntakeIO() {
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
-        val hardwareMap = createMockHardwareMap("intake", mockMotor)
+        val hardwareMap = createMockHardwareMap("intake", mockMotor).hardwareMap
 
         val io = FtcIntakeIO(hardwareMap)
         io.setRollerVoltage(12.0)
         Mockito.verify(mockMotor).power = 1.0
 
+        HardwareRegistry.refreshAll()
+        Mockito.verify(mockMotor, Mockito.atLeastOnce()).velocity
+
+        // A drivetrain crash invokes HardwareRegistry.safeAll(). Season motors
+        // must be registered so that crash safety stops them too.
+        HardwareRegistry.safeAll()
+        Mockito.verify(mockMotor, Mockito.atLeastOnce()).power = 0.0
+
         io.close()
         Mockito.verify(mockMotor, Mockito.atLeastOnce()).power = 0.0
+    }
+
+    @Test
+    fun intakeCurrentValidityRecoversAfterTransientReadFailure() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("intake", mockMotor).hardwareMap
+        Mockito.`when`(mockMotor.getCurrent(CurrentUnit.AMPS))
+            .thenThrow(RuntimeException("transient read failure"))
+            .thenReturn(9.0)
+
+        val io = FtcIntakeIO(hardwareMap)
+        io.refresh()
+        assertFalse(io.rollerCurrentValid)
+        assertEquals(0.0, io.rollerCurrentAmps, 1e-6)
+
+        io.refresh()
+        assertTrue(io.rollerCurrentValid)
+        assertEquals(9.0, io.rollerCurrentAmps, 1e-6)
+    }
+
+    @Test
+    fun intakeRejectsNonFiniteCurrentAndRecoversOnNextRefresh() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("intake", mockMotor).hardwareMap
+        Mockito.`when`(mockMotor.getCurrent(CurrentUnit.AMPS))
+            .thenReturn(Double.NaN)
+            .thenReturn(6.5)
+
+        val io = FtcIntakeIO(hardwareMap)
+        io.refresh()
+        assertFalse("NaN current must not be treated as a trustworthy sample", io.rollerCurrentValid)
+        assertEquals(0.0, io.rollerCurrentAmps, 1e-6)
+
+        io.refresh()
+        assertTrue("A bad sample must not permanently disable current sensing", io.rollerCurrentValid)
+        assertEquals(6.5, io.rollerCurrentAmps, 1e-6)
+    }
+
+    @Test
+    fun intakeUsesNominalVoltageWhenBatteryReadingIsNotFinite() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val fixture = createMockHardwareMap("intake", mockMotor, voltage = Double.NaN)
+        val io = FtcIntakeIO(fixture.hardwareMap)
+
+        io.refresh()
+        Mockito.verify(fixture.voltageSensor).voltage
+        Mockito.clearInvocations(mockMotor, fixture.voltageSensor)
+        io.setRollerVoltage(6.0)
+
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.5, 1e-9)
+        Mockito.verifyNoInteractions(fixture.voltageSensor)
+        Mockito.verify(mockMotor, Mockito.never()).velocity
+        Mockito.verify(mockMotor, Mockito.never()).getCurrent(Mockito.any(CurrentUnit::class.java))
+    }
+
+    @Test
+    fun flywheelVelocityCacheInvalidatesThenRecoversAfterTransientReadFailure() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("shooter", mockMotor).hardwareMap
+        Mockito.`when`(mockMotor.velocity)
+            .thenReturn(1_400.0)
+            .thenThrow(RuntimeException("transient encoder read failure"))
+            .thenReturn(700.0)
+
+        val io = FtcFlywheelIO(hardwareMap)
+        io.refresh()
+        assertTrue(io.velocityValid)
+        assertEquals(3_000.0, io.velocityRpm, 1e-6)
+
+        io.refresh()
+        assertFalse("A failed refresh must invalidate the sample instead of retaining stale RPM", io.velocityValid)
+        assertEquals(0.0, io.velocityRpm, 1e-6)
+
+        io.refresh()
+        assertTrue("A later successful read must restore velocity validity", io.velocityValid)
+        assertEquals(1_500.0, io.velocityRpm, 1e-6)
+    }
+
+    @Test
+    fun flywheelCurrentSensingRecoversAfterTransientReadFailure() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("shooter", mockMotor).hardwareMap
+        Mockito.`when`(mockMotor.getCurrent(CurrentUnit.AMPS))
+            .thenThrow(RuntimeException("transient current read failure"))
+            .thenReturn(7.25)
+
+        val io = FtcFlywheelIO(hardwareMap)
+        io.refresh()
+        assertEquals(0.0, io.currentAmps, 1e-6)
+
+        io.refresh()
+        assertEquals("One failed hub transaction must not permanently disable sensing", 7.25, io.currentAmps, 1e-6)
+        Mockito.verify(mockMotor, Mockito.times(2)).getCurrent(CurrentUnit.AMPS)
+    }
+
+    @Test
+    fun flywheelOpenLoopFallbackNeverWritesNonFinitePowerForInvalidBatteryVoltage() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val fixture = createMockHardwareMap("shooter", mockMotor, voltage = Double.NaN)
+        Mockito.doThrow(RuntimeException("velocity control unavailable"))
+            .`when`(mockMotor).velocity = Mockito.anyDouble()
+
+        val io = FtcFlywheelIO(fixture.hardwareMap)
+        io.refresh()
+        Mockito.verify(fixture.voltageSensor).voltage
+        io.setVelocityRpm(3_000.0)
+
+        // Invalid bus voltage must fall back to the 12 V nominal value: 3000/6000 = 0.5.
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.5, 1e-9)
+    }
+
+    @Test
+    fun flywheelEmergencyScaleStopsClosedLoopVelocity() {
+        val io = Mockito.mock(FlywheelIO::class.java)
+        val subsystem = FlywheelSubsystem(io)
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = 3_500.0
+                )
+            )
+        )
+
+        subsystem.writeOutputs(state, 0.0)
+
+        Mockito.verify(io).setVelocityRpm(0.0)
     }
 }

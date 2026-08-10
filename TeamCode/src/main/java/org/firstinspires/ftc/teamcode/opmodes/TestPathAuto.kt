@@ -4,25 +4,18 @@ import com.areslib.pathing.DynamicPathLoader
 import com.areslib.pathing.HolonomicPathFollower
 
 /**
- * Auto-generated companion code for the path: TestPath.path
- * Map event callbacks to trigger subsystem commands.
+ * Compatibility helper for loading `TestPath.path` and routing its named markers.
+ * Competition autonomous normally uses `AutoBuilder`; this remains for focused path tests and
+ * tools that need a direct [HolonomicPathFollower].
  */
 object TestPathAuto {
-    /**
-     * Documentation for pathName
-     */
-    val pathName = "TestPath"
-    /**
-     * Documentation for buildPathFollower
-     */
+    const val pathName = "TestPath"
 
+    /** Starts the path and invokes a callback only when the marker name is registered. */
     fun buildPathFollower(
         follower: HolonomicPathFollower,
         eventMap: Map<String, () -> Unit>
     ) {
-        /**
-         * Documentation for path
-         */
         val path = DynamicPathLoader.loadPath(pathName)
         follower.startPath(path)
         follower.onEventTriggered = { eventName ->

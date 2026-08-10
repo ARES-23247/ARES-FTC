@@ -5,70 +5,45 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.VoltageSensor
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver
 import com.qualcomm.hardware.limelightvision.Limelight3A
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
+import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
+import org.firstinspires.ftc.teamcode.opmodes.ARESMecanumDiagnostic
 import com.areslib.ftc.dsl.FtcTeleOpBuilder
+import com.areslib.ftc.photon.PhotonEnabledOpMode
 import com.areslib.ftc.toState
 import com.areslib.ftc.update
 import org.junit.Assert.*
 import org.junit.Test
 import org.mockito.Mockito
-import kotlin.concurrent.thread
 
 import com.areslib.telemetry.GamepadState
 import com.areslib.telemetry.RobotStatusTracker
+
 /**
- * Documentation for AresTeleOpBaseTest
+ * Integration tests for the generic TeleOp lifecycle and FTC gamepad snapshot adapter.
+ * The lifecycle test controls SDK-private start flags because the desktop mock has no Driver Station.
  */
-
 class AresTeleOpBaseTest {
-    /**
-     * Documentation for killFlag
-     */
-
-    @Volatile
-    var killFlag = false
-    /**
-     * Documentation for testAresTeleOpBaseLifecycle
-     */
+    @Test
+    fun `team TeleOp and Auto bases explicitly opt into Photon`() {
+        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresTeleOpBase::class.java))
+        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresAutoBase::class.java))
+        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(ARESMecanumDiagnostic::class.java))
+    }
 
     @Test
     fun testAresTeleOpBaseLifecycle() {
         com.areslib.telemetry.RobotStatusTracker.isEnabled = false
-        /**
-         * Documentation for fl
-         */
         val fl = Mockito.mock(DcMotorEx::class.java)
-        /**
-         * Documentation for fr
-         */
         val fr = Mockito.mock(DcMotorEx::class.java)
-        /**
-         * Documentation for bl
-         */
         val bl = Mockito.mock(DcMotorEx::class.java)
-        /**
-         * Documentation for br
-         */
         val br = Mockito.mock(DcMotorEx::class.java)
-        /**
-         * Documentation for pinpoint
-         */
         val pinpoint = Mockito.mock(GoBildaPinpointDriver::class.java)
-        /**
-         * Documentation for limelight
-         */
         val limelight = Mockito.mock(Limelight3A::class.java)
-        /**
-         * Documentation for voltageSensor
-         */
         val voltageSensor = Mockito.mock(VoltageSensor::class.java)
         Mockito.`when`(voltageSensor.voltage).thenReturn(12.5)
-        /**
-         * Documentation for mockHardwareMap
-         */
 
         val mockHardwareMap = Mockito.mock(HardwareMap::class.java)
         Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "fl")).thenReturn(fl)
@@ -80,14 +55,7 @@ class AresTeleOpBaseTest {
         
         @Suppress("UNCHECKED_CAST")
         Mockito.`when`(mockHardwareMap.getAll(VoltageSensor::class.java)).thenReturn(listOf(voltageSensor))
-        /**
-         * Documentation for mockTelemetry
-         */
-
         val mockTelemetry = Mockito.mock(Telemetry::class.java)
-        /**
-         * Documentation for opMode
-         */
 
         val opMode = object : AresTeleOpBase() {
             init {
@@ -96,121 +64,33 @@ class AresTeleOpBaseTest {
             }
 
             override fun define(): FtcTeleOpBuilder<org.firstinspires.ftc.teamcode.opmodes.AresRobot> {
-                return aresTeleOp {
-                    onInit { _, _ -> }
-                    onLoop { _, _, _ -> }
+                return teleOp {
+                    setup { }
+                    everyLoop { }
                 }
             }
 
-            override fun updateRobot(robot: org.firstinspires.ftc.teamcode.opmodes.AresRobot, g1: GamepadState, g2: GamepadState) {
-                if (killFlag) throw RuntimeException("Kill test thread")
-                super.updateRobot(robot, g1, g2)
-            }
         }
 
         // Configure gamepad inputs to trigger reset branch coverage (gamepad1.y = true)
-        /**
-         * Documentation for gamepad
-         */
         val gamepad = Gamepad()
         gamepad.y = true
         opMode.gamepad1 = gamepad
         opMode.gamepad2 = Gamepad()
 
-        // Get access to LinearOpMode private volatile field for lifecycle control
-        /**
-         * Documentation for linearOpModeClass
-         */
-        val linearOpModeClass = LinearOpMode::class.java
-        /**
-         * Documentation for userMonitoredForStartField
-         */
-        val userMonitoredForStartField = linearOpModeClass.getDeclaredField("userMonitoredForStart")
-        userMonitoredForStartField.isAccessible = true
-
-        userMonitoredForStartField.set(opMode, false)
-
-        // 1. Start thread and let it enter opModeInInit()
-        /**
-         * Documentation for t
-         */
-        val t = thread {
-            try {
-                opMode.runOpMode()
-            } catch (e: RuntimeException) {
-                if (e.message != "Kill test thread") throw e
-            }
-        }
-        Thread.sleep(500)
-
         try {
-            // verify telemetry and state during init
+            opMode.init()
+            opMode.init_loop()
             assertFalse(RobotStatusTracker.isEnabled)
-
-            // 2. Transition to active (setting isStarted to true)
-            try {
-                /**
-                 * Documentation for isStartedField
-                 */
-                val isStartedField = linearOpModeClass.superclass.getDeclaredField("isStarted")
-                isStartedField.isAccessible = true
-                isStartedField.set(opMode, true)
-            } catch (e: Exception) {}
-            Thread.sleep(150)
+            opMode.start()
+            opMode.loop()
         } finally {
-            // 3. Force loop to exit by throwing
-            killFlag = true
-            t.interrupt()
-            t.join(5000)
-            
-            // 4. Force stop the default NT4 Server using reflection to prevent JVM leakage
-            try {
-                /**
-                 * Documentation for instClass
-                 */
-                val instClass = Class.forName("org.frcforftc.networktables.NetworkTablesInstance")
-                /**
-                 * Documentation for getDefaultInstanceMethod
-                 */
-                val getDefaultInstanceMethod = instClass.getMethod("getDefaultInstance")
-                /**
-                 * Documentation for inst
-                 */
-                val inst = getDefaultInstanceMethod.invoke(null)
-                /**
-                 * Documentation for closeServerMethod
-                 */
-                val closeServerMethod = instClass.getMethod("closeServer")
-                closeServerMethod.invoke(inst)
-            } catch (_: Exception) {}
+            opMode.stop()
+            com.areslib.networktables.NT4Instance.defaultInstance.closeServer()
         }
-
-        if (t.isAlive) {
-            System.err.println("Diagnostic: Thread t is still alive! State: ${t.state}")
-            for (ste in t.stackTrace) {
-                System.err.println("   at $ste")
-            }
-            System.err.println("LinearOpMode fields:")
-            for (field in LinearOpMode::class.java.declaredFields) {
-                try {
-                    field.isAccessible = true
-                    System.err.println("  ${field.name} (${field.type}) = ${field.get(opMode)}")
-                } catch (e: Exception) {
-                    System.err.println("  ${field.name} (${field.type}) = <error>")
-                }
-            }
-        }
-        assertFalse("OpMode thread should have stopped and exited cleanly", t.isAlive)
     }
-    /**
-     * Documentation for testGamepadExtensionCoverage
-     */
-
     @Test
     fun testGamepadExtensionCoverage() {
-        /**
-         * Documentation for gamepad
-         */
         val gamepad = Gamepad()
         gamepad.left_stick_x = 0.1f
         gamepad.left_stick_y = 0.2f
@@ -232,10 +112,6 @@ class AresTeleOpBaseTest {
         gamepad.right_stick_button = false
         gamepad.start = true
         gamepad.back = false
-        /**
-         * Documentation for state
-         */
-
         val state = gamepad.toState()
         assertEquals(0.1f, state.leftStickX, 1e-4f)
         assertEquals(0.2f, state.leftStickY, 1e-4f)
@@ -257,10 +133,6 @@ class AresTeleOpBaseTest {
         assertFalse(state.rightStickButton)
         assertTrue(state.start)
         assertFalse(state.back)
-        /**
-         * Documentation for state2
-         */
-
         val state2 = com.areslib.telemetry.GamepadState()
         state2.update(gamepad)
         assertEquals(0.1f, state2.leftStickX, 1e-4f)

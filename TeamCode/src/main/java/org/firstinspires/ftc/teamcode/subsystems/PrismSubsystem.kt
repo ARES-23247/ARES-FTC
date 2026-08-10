@@ -10,8 +10,8 @@ import com.areslib.subsystem.Subsystem
  * Reads target pulse width in microseconds from [RobotState.superstructure.prismDrivers]
  * keyed by [name] and commands the hardware IO layer.
  *
- * Automatically integrates with robot power management: dynamically scales LED brightness
- * down whenever power scale drops below 1.0 during high current draw or battery voltage dips.
+ * [readSensors] snapshots Redux intent; [writeOutputs] applies that cached target. The power scale
+ * changes brightness, not the effect pulse width, and clamps to `[0, 1]` for failure containment.
  *
  * @param io The hardware IO interface implementation.
  * @param name Hardware map name used to look up state in Redux store (default: "prism").
@@ -33,7 +33,7 @@ class PrismSubsystem(
         val targetPulseWidthUs = cachedPulseWidthUs
         if (targetPulseWidthUs < 0) return
 
-        // Dynamically scale LED brightness down during high current draw or battery dips (scale < 1.0)
+        // Preserve the selected effect while shedding nonessential LED power.
         val currentPowerScale = scale.coerceIn(0.0, 1.0)
         val dynamicBrightness = (configuredMaxBrightness * currentPowerScale).toInt()
         io.maxBrightnessPercent = dynamicBrightness

@@ -1,23 +1,25 @@
 package org.firstinspires.ftc.teamcode.config
-/**
- * Documentation for HardwareConstants
- */
 
+/**
+ * Canonical FTC Robot Controller configuration names and season mechanism constants.
+ *
+ * Drive code and diagnostics require rear-motor names `rl` and `rr`. Encoder and RPM values
+ * describe the currently installed bare goBILDA flywheel motor and must be retuned if it changes.
+ */
 object HardwareConstants {
-    // Drive Motors
+    // Drivetrain hardware-map names.
     const val MOTOR_FRONT_LEFT = "fl"
     const val MOTOR_FRONT_RIGHT = "fr"
     const val MOTOR_BACK_LEFT = "rl"
     const val MOTOR_BACK_RIGHT = "rr"
     
-    // Odometry
+    // Localization hardware-map names.
     const val ODOMETRY_PINPOINT = "pinpoint"
     
-    // Telemetry / Sensors
     const val IMU_BNO055 = "imu"
     const val VISION_LIMELIGHT = "limelight"
 
-    // Flywheel motor (GoBilda bare motor)
+    // Encoder ticks per motor revolution and safe open-loop reference speed.
     const val FLYWHEEL_TICKS_PER_REV = 28.0
     const val FLYWHEEL_MAX_RPM = 6000.0
 }

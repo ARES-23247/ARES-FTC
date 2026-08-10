@@ -11,7 +11,10 @@ import com.areslib.state.SuperstructureState
 import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
 import org.firstinspires.ftc.teamcode.dsl.season
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
+import com.areslib.util.RobotClock
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 
@@ -20,6 +23,16 @@ import org.mockito.Mockito
  * Uses a real Store with real reducers to avoid Mockito deep-stub property chain issues.
  */
 class AresSuperstructureControllerTest {
+
+    @Before
+    fun useDeterministicClock() {
+        RobotClock.useMockTime(1_000L)
+    }
+
+    @After
+    fun restoreSystemClock() {
+        RobotClock.useSystemTime()
+    }
 
     private fun createRobotWithStore(
         alliance: Alliance = Alliance.RED,
@@ -32,7 +45,7 @@ class AresSuperstructureControllerTest {
                 custom = SeasonSuperstructureState(
                     flywheelActive = flywheelActive,
                     intakeActive = intakeActive,
-                    liftHeight = 0.2
+                    liftHeight = 0.0
                 )
             )
         )
@@ -50,7 +63,7 @@ class AresSuperstructureControllerTest {
         controller.toggleIntake()
 
         val season = robot.store.state.superstructure.season
-        assertTrue("Intake should be turned on", season.intakeActive)
+        assertTrue("A fresh zero-height state must not be blocked by an orphan lift interlock", season.intakeActive)
     }
 
     @Test
@@ -85,6 +98,33 @@ class AresSuperstructureControllerTest {
         val season = robot.store.state.superstructure.season
         assertFalse("Shooter should be turned off", season.flywheelActive)
         assertEquals("Target RPM should be 0.0 when off", 0.0, season.flywheelTargetRPM, 1e-4)
+    }
+
+    @Test
+    fun shooterCannotStartWhileIntakeIsActive() {
+        val robot = createRobotWithStore(flywheelActive = false, intakeActive = true)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+
+        val season = robot.store.state.superstructure.season
+        assertFalse("Shooter interlock must reject startup while intake is active", season.flywheelActive)
+        assertEquals(0.0, season.flywheelTargetRPM, 1e-9)
+        assertTrue("Rejected shooter intent must not alter the intake", season.intakeActive)
+    }
+
+    @Test
+    fun repeatedShooterToggleInsideDebounceWindowIsIgnored() {
+        val robot = createRobotWithStore(flywheelActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+        assertTrue(robot.store.state.superstructure.season.flywheelActive)
+
+        RobotClock.setMockTimeMs(1_199L)
+        controller.toggleShooter()
+
+        assertTrue("A second edge inside 200 ms must not turn the shooter back off", robot.store.state.superstructure.season.flywheelActive)
     }
 
     @Test
@@ -138,7 +178,7 @@ class AresSuperstructureControllerTest {
         val state1 = robot.store.state.superstructure.season
         assertTrue(state1.flywheelActive)
 
-        Thread.sleep(250)
+        RobotClock.setMockTimeMs(1_250L)
 
         // From active back to idle
         controller.toggleShooter()

@@ -4,15 +4,28 @@ import com.areslib.ftc.FtcMecanumRobot
 import com.areslib.state.Alliance
 import kotlin.math.pow
 
+/**
+ * Converts driver intent into season drivetrain commands without touching hardware directly.
+ *
+ * Each axis is deadband-rescaled, exponent-shaped, and passed through a first-order EMA. Command
+ * parameters follow ARES field axes: +X forward, +Y left, and CCW-positive rotation. The gamepad
+ * adapter maps negated left-stick Y to field X and negated left-stick X to field Y. Blue
+ * alliance negates both field-relative translation axes but never rotation. Robot-relative driving
+ * is not alliance mirrored. Instances retain smoothing history and belong to one robot.
+ */
 class AresDriveController(private val base: FtcMecanumRobot) {
     private var lastX = 0.0
     private var lastY = 0.0
     private var lastRot = 0.0
 
     private fun processAxis(input: Double): Double {
-        val magnitude = kotlin.math.abs(input)
-        val deadzoned = if (magnitude < DEFAULT_DEADZONE) 0.0
-            else (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(input)
+        val boundedInput = if (input.isFinite()) input.coerceIn(-1.0, 1.0) else 0.0
+        val magnitude = kotlin.math.abs(boundedInput)
+        val deadzoned = if (magnitude < DEFAULT_DEADZONE) {
+            0.0
+        } else {
+            (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(boundedInput)
+        }
         val exponent = base.store.state.tuning.driverDeadbandExponent
             .let { if (it > 0.0) it else DEFAULT_CURVE_EXPONENT }
         return kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
@@ -23,9 +36,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private var smoothRot = 0.0
 
     private fun smoothTransition(x: Double, y: Double, rot: Double) {
-        // Constant first-order EMA (alpha = 0.4) over the processed joystick input.
-        // Intentional: this is the actual input smoothing in effect; the former
-        // transitionFrames/wasFieldCentric bookkeeping was never read and is removed.
+        // Fixed EMA coefficient is loop-frequency dependent and intentionally allocation-free.
         val alpha = 0.4
         lastX = lastX * 0.6 + x * alpha
         lastY = lastY * 0.6 + y * alpha
@@ -36,25 +47,20 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         smoothRot = lastRot
     }
 
-    /**
-     * Documentation for driveFieldCentric
-     */
+    /** Drives from normalized field-relative axes after shaping and alliance transformation. */
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) {
         val px = processAxis(x)
         val py = processAxis(y)
         val prot = processAxis(rotation)
         smoothTransition(px, py, prot)
 
-        // CCW-positive convention: blue alliance mirrors forward/left intents.
+        // Blue changes the driver station perspective by 180 degrees: mirror X and Y together.
         val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
         val outX = if (blueAlliance) -smoothX else smoothX
         val outY = if (blueAlliance) -smoothY else smoothY
         base.driveFieldCentric(outX, outY, smoothRot)
     }
-    /**
-     * Documentation for driveRobotCentric
-     */
-
+    /** Drives from normalized robot-relative axes; alliance does not affect this frame. */
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {
         val px = processAxis(x)
         val py = processAxis(y)
@@ -64,30 +70,33 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         base.driveRobotCentric(smoothX, smoothY, smoothRot)
     }
 
+    /**
+     * Reads normalized FTC gamepad axes and commands field-relative motion. FTC stick Y and
+     * right-stick rotation are negative in SDK coordinates, hence those two negations.
+     */
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
-        val px = processAxis(driver.leftStickX.value.toDouble())
-        val py = processAxis(-driver.leftStickY.value.toDouble())
+        val px = processAxis(-driver.leftStickY.value.toDouble())
+        val py = processAxis(-driver.leftStickX.value.toDouble())
         val prot = processAxis(-driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
 
-        // CCW-positive convention: blue alliance mirrors forward/left intents.
+        // Both translation axes must be mirrored for the blue driver perspective.
         val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
         val outX = if (blueAlliance) -smoothX else smoothX
         val outY = if (blueAlliance) -smoothY else smoothY
-        base.mecanumDrive.fieldRelativeDrive(outX, outY, smoothRot, useHeadingLock)
+        base.mecanumDrive.driveFieldRelativeNormalized(outX, outY, smoothRot, useHeadingLock)
     }
 
+    /** Requests ARESLib target-space alignment to a specific AprilTag ID. */
     fun alignToTag(tagId: Int) {
         base.alignToTag(tagId)
     }
-    /**
-     * Documentation for resetPoseForAlliance
-     */
-
+    /** Resets localization to the configured start pose for the current Redux alliance. */
     fun resetPoseForAlliance() {
         base.resetPoseForAlliance()
     }
 
+    /** Resets the EKF pose; heading is CCW-positive radians. */
     fun resetPose(pose: com.areslib.math.geometry.Pose2d = com.areslib.math.geometry.Pose2d()) {
         base.resetPose(pose)
     }
