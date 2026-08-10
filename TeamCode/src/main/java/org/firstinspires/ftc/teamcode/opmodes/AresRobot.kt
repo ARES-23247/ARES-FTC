@@ -164,36 +164,12 @@ class AresRobot(
             addTelemetry("Subsystem", "Secondary indicator light (indicator2) not configured in Hardware Map")
         }
 
-        // Always register indicator color commands so an auto that references them does not
-        // crash when the indicator IO failed to init; the task no-ops if absent.
-        com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
-            com.areslib.pathing.NamedCommands.register(
-                key = com.areslib.pathing.CommandKey("SetIndicatorColor_${color.name}"),
-                description = "Set the primary indicator to ${color.name.lowercase()}",
-                category = "Indicators"
-            ) { _ ->
-                object : com.areslib.sequencer.Task {
-                    override val name = "SetIndicatorColor_${color.name}"
-                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
-                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
-                        if (primaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator", color.position))
-                        else emptyList()
-                }
-            }
-            com.areslib.pathing.NamedCommands.register(
-                key = com.areslib.pathing.CommandKey("SetSecondIndicatorColor_${color.name}"),
-                description = "Set the secondary indicator to ${color.name.lowercase()}",
-                category = "Indicators"
-            ) { _ ->
-                object : com.areslib.sequencer.Task {
-                    override val name = "SetSecondIndicatorColor_${color.name}"
-                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
-                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
-                        if (secondaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator2", color.position))
-                        else emptyList()
-                }
-            }
-        }
+        // Always register indicator commands. Missing optional hardware turns them into safe
+        // no-ops, while the runtime catalog remains identical to the visual editor manifest.
+        FtcAutoCapabilities.registerIndicatorActions(
+            primaryAvailable = primaryIO != null,
+            secondaryAvailable = secondaryIO != null
+        )
 
         // --- goBILDA Prism RGB LED Driver ("prism") ---
         val prismCandidates = listOf("prism", "prism_driver", "gobilda_prism", "prism_led")

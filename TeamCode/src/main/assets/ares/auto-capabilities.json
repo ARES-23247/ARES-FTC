@@ -32,6 +32,12 @@
       "category": "Primary indicator"
     },
     {
+      "key": "SetIndicatorColor_RAINBOW",
+      "displayName": "Primary light: Rainbow",
+      "description": "Sets the primary indicator light to rainbow.",
+      "category": "Primary indicator"
+    },
+    {
       "key": "SetIndicatorColor_RED",
       "displayName": "Primary light: Red",
       "description": "Sets the primary indicator light to red.",
@@ -74,6 +80,12 @@
       "category": "Primary indicator"
     },
     {
+      "key": "SetIndicatorColor_VIOLET",
+      "displayName": "Primary light: Violet",
+      "description": "Sets the primary indicator light to violet.",
+      "category": "Primary indicator"
+    },
+    {
       "key": "SetIndicatorColor_WHITE",
       "displayName": "Primary light: White",
       "description": "Sets the primary indicator light to white.",
@@ -83,6 +95,12 @@
       "key": "SetSecondIndicatorColor_OFF",
       "displayName": "Secondary light: Off",
       "description": "Turns off the secondary indicator light.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_RAINBOW",
+      "displayName": "Secondary light: Rainbow",
+      "description": "Sets the secondary indicator light to rainbow.",
       "category": "Secondary indicator"
     },
     {
@@ -125,6 +143,12 @@
       "key": "SetSecondIndicatorColor_PURPLE",
       "displayName": "Secondary light: Purple",
       "description": "Sets the secondary indicator light to purple.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_VIOLET",
+      "displayName": "Secondary light: Violet",
+      "description": "Sets the secondary indicator light to violet.",
       "category": "Secondary indicator"
     },
     {
