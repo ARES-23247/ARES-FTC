@@ -86,8 +86,14 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
 
     // Calibration command/status/data contract shared with ARES Analytics.
     val calCmdPub = ntInst.getStringTopic("SysId/Command").publish()
-    val calStatusSub = ntInst.getStringTopic("SysId/Status").subscribe("NONE")
-    val calDataSub = ntInst.getDoubleArrayTopic("SysId/Data").subscribe(doubleArrayOf())
+    // WPILib's client-facing topic namespace includes the root slash used in server announcements.
+    // Robot and dashboard code still normalize stored/published keys to no leading slash.
+    val calStatusSub = ntInst.getStringTopic(
+        com.areslib.telemetry.TelemetryTopicNormalizer.toWireTopic("SysId/Status")
+    ).subscribe("NONE")
+    val calDataSub = ntInst.getDoubleArrayTopic(
+        com.areslib.telemetry.TelemetryTopicNormalizer.toWireTopic("SysId/Data")
+    ).subscribe(doubleArrayOf())
 
     fun runCalibrationTest(command: String, expectedStatus: String) {
         println("\n--- Testing: $command (Expecting Status: $expectedStatus) ---")
@@ -103,7 +109,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         }
         println("Current Status: $currentStatus")
         if (currentStatus != expectedStatus) {
-            error("Expected status $expectedStatus, but got $currentStatus")
+            val serverStatus = com.areslib.networktables.NT4Server.getString("SysId/Status", "MISSING")
+            error("Expected status $expectedStatus, but client got $currentStatus (server has $serverStatus)")
         }
 
         // Observe bounded progress; repeated arrays count as streamed samples for this smoke test.
