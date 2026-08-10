@@ -4,8 +4,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 
 /**
- * Hardware-free diagnostic OpMode. 
- * Used to isolate power switch brownouts from I2C bus transaction hangs.
+ * Hardware-free diagnostic that never constructs the ARES robot facade.
+ * If this mode initializes while a normal mode hangs, investigate configured hardware/I2C startup
+ * rather than the Driver Station lifecycle. It commands no actuator.
  */
 @TeleOp(name = "AAA Blank Null OpMode", group = "Diagnostics")
 class NullOpMode : LinearOpMode() {

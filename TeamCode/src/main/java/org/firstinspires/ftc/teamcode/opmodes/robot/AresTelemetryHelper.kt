@@ -4,17 +4,20 @@ import com.areslib.action.RobotAction
 import com.areslib.ftc.FtcMecanumRobot
 import com.areslib.hardware.actuator.IndicatorLightColor
 
+/**
+ * Bridges season convenience calls to Redux-backed telemetry and lighting state.
+ * Driver Station text is capped and rate-limited to avoid dominating the control loop.
+ */
 class AresTelemetryHelper(private val base: FtcMecanumRobot) {
     private var lastTelemetryUpdateMs: Long = 0L
 
-    /**
-     * Documentation for addTelemetry
-     */
+    /** Stores one custom Driver Station value, truncated to 150 display characters. */
     fun addTelemetry(key: String, value: Any) {
         val truncated = value.toString().take(150)
         base.telemetryManager.customDriverStationText[key] = truncated
     }
 
+    /** Publishes the low-rate pose, battery, and power-budget summary. */
     fun updateTelemetry() {
         val now = com.areslib.util.RobotClock.currentTimeMillis()
         if (now - lastTelemetryUpdateMs < TELEMETRY_PERIOD_MS) return
@@ -28,11 +31,10 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         addTelemetry("EKF Pose Deg", Math.toDegrees(estPose.heading.radians))
         
         val voltage = base.powerManager.batteryVoltage
-        if (voltage < 11.5) {
-            addTelemetry("Battery V", "<font color='red'><b>%.1fV (LOW)</b></font>".format(voltage))
-        } else {
-            addTelemetry("Battery V", voltage)
-        }
+        val batteryText = if (voltage < 11.5) {
+            "<font color='red'><b>%.1fV (LOW)</b></font>".format(voltage)
+        } else voltage
+        addTelemetry("Battery V", batteryText)
         
         addTelemetry("Power Scale", base.powerManager.powerScale)
     }
@@ -41,6 +43,7 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         private const val TELEMETRY_PERIOD_MS = 100L
     }
 
+    /** Dispatches an indicator target; absent optional IO leaves the state harmlessly unapplied. */
     fun setIndicatorColor(name: String = "indicator", color: IndicatorLightColor) {
         base.store.dispatch(RobotAction.SetIndicatorLight(name, color.position))
     }
@@ -53,6 +56,7 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         setIndicatorColor("indicator2", color)
     }
 
+    /** Dispatches a Prism pulse-width preset through immutable superstructure state. */
     fun setPrismPreset(name: String = "prism", preset: com.areslib.hardware.actuator.PrismPwmPreset) {
         base.store.dispatch(RobotAction.SetPrismDriver(name, preset.pulseWidthUs))
     }

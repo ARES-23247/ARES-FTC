@@ -11,7 +11,8 @@ import com.areslib.subsystem.Subsystem
  * keyed by [name] and writes the corresponding servo position to hardware.
  *
  * The subsystem is write-only — there are no sensors to read.
- * If no indicator light entry exists in the state map for this [name],
+ * [readSensors] snapshots Redux intent so [writeOutputs] follows the same lifecycle stage as
+ * sensor-backed subsystems. If no indicator light entry exists in state for this [name],
  * the light is left at its current position (no-op).
  *
  * @param io The hardware IO implementation (real FTC or mock).
@@ -32,9 +33,9 @@ class IndicatorLightSubsystem(
         if (cachedPosition.isNaN()) return
         val targetPosition = cachedPosition
         if (targetPosition < 0.0) {
-            // Rainbow Mode: Smoothly cycle across the RGB color spectrum (RED 0.279 to PURPLE 0.722)
+            // Negative is the RAINBOW sentinel; RobotClock keeps replay deterministic.
             val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
-            // Offset 2nd indicator light by 500ms so the two lights cycle in a dynamic wave
+            // Offset the second indicator by 500 ms to produce a visible wave.
             val offset = if (name.contains("2")) 500L else 0L
             val cycleTimeMs = 2500.0
             val progress = ((nowMs + offset) % cycleTimeMs.toLong()) / cycleTimeMs

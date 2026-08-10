@@ -4,9 +4,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 
 /**
- * Dedicated Live Tuning TeleOp OpMode for ARES Robotics.
- * Enables active NetworkTables synchronization with the ARES-Analytics desktop dashboard,
- * allowing live modification of PID gains, drivetrain scale, and EKF filtering parameters.
+ * Field-centric drive mode that enables ARESLib's local NT4 live-tuning synchronizer.
+ * It intentionally starts on red alliance; use the X binding to change alliance and reset pose.
+ * Tuning traffic remains local to the robot network and is disabled in normal competition TeleOp.
  */
 @TeleOp(name = "ARES Live Tuning TeleOp", group = "Tuning")
 class ARESTuningTeleOp : AresTeleOpBase() {

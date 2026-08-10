@@ -18,32 +18,32 @@ import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
 
 /**
- * Team-specific wrapper around the core FtcMecanumRobot.
- * Refactored into a Facade delegating to dedicated single-responsibility controllers.
- * Stripped to drive-only for maximum loop performance.
- * Subsystem IOs (intake, flywheel) can be re-added when physical hardware is present.
+ * Composition root for the FTC season layer over ARESLib's [FtcMecanumRobot].
+ *
+ * Required drivetrain/localization configuration is passed to [base]. Intake, flywheel,
+ * indicators, and Prism are optional: initialization failure is reported without preventing
+ * drivetrain use. Successfully constructed mechanism IO is registered both with ARESLib's
+ * hardware safety registry and this robot's subsystem lifecycle.
  *
  * **Physical Units & Conventions:**
  * - Translational velocities: Meters per second ($m/s$).
  * - Angular velocities: Radians per second ($rad/s$).
  * - Heading: CCW-positive radians ($rad$).
  *
- * **Performance Guarantees:**
- * - Zero-GC Allocations in the hot teleop `update()` loop.
+ * [update] preserves the hot-loop ordering: refresh hardware caches, consume cached season
+ * sensors, apply interlocks, write season outputs, then run the shared drivetrain/power update.
+ * Season outputs are written before the shared update so a fatal shared failure leaves the final
+ * command as `HardwareRegistry.safeAll`, rather than allowing this wrapper to re-enable a motor.
+ * Any exception escaping season work invokes both subsystem and platform safety before rethrowing.
+ *
+ * @param hardwareMap FTC device registry. Production drive names are `fl`, `fr`, `rl`, and `rr`.
+ * @param localTelemetry optional Driver Station telemetry sink.
  */
 class AresRobot(
-    /**
-     * Documentation for hardwareMap
-     */
     val hardwareMap: HardwareMap,
-    /**
-     * Documentation for localTelemetry
-     */
     val localTelemetry: Telemetry? = null
 ) {
-    /**
-     * Documentation for base
-     */
+    /** Shared drivetrain, Redux store, EKF, power, logging, telemetry, and hardware lifecycle. */
     val base = FtcMecanumRobot(
         hardwareMap = hardwareMap,
         flName = MOTOR_FRONT_LEFT,
@@ -63,8 +63,13 @@ class AresRobot(
     private val driveController = AresDriveController(base)
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
+    /** Optional Prism IO, exposed for diagnostics and simulator inspection. */
     var prismIO: com.areslib.hardware.actuator.PrismDriverIO? = null
+
+    /** Optional intake lifecycle controller; null when `intake` hardware failed to initialize. */
     var intakeSubsystem: org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem? = null
+
+    /** Optional flywheel lifecycle controller; null when `shooter` hardware failed to initialize. */
     var flywheelSubsystem: org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem? = null
 
     init {
@@ -247,8 +252,11 @@ class AresRobot(
     fun addTelemetry(key: String, value: Any) = telemetryHelper.addTelemetry(key, value)
 
     /**
-     * Updates the robot state by polling sensors and writing to actuators.
-     * Guaranteed Zero-GC allocations in this hot path loop.
+     * Executes one complete season and shared robot frame.
+     *
+     * Normal sampling/output work preserves the library's zero-allocation hot-path design. Fault
+     * transitions and low-rate telemetry may allocate because they are outside the steady-state
+     * motor-control path.
      *
      * @param gamepad1 The primary gamepad telemetry state.
      * @param gamepad2 The secondary gamepad telemetry state.
@@ -266,17 +274,12 @@ class AresRobot(
             val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
             base.readAllSensors(timestamp)
         
-            intakeSubsystem?.let {
-                if (it.stalled) {
-                    val seasonState = base.store.state.superstructure.season
-                    if (seasonState.intakeActive) {
-                        base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
-                    }
+            if (intakeSubsystem?.stalled == true) {
+                val seasonState = base.store.state.superstructure.season
+                if (seasonState.intakeActive) {
+                    base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
                 }
             }
-        
-
-
             // Command season actuators before entering the base update. If the base
             // catches a fatal drivetrain/update failure, its final action remains the
             // HardwareRegistry safety stop instead of this wrapper re-enabling motors.
@@ -294,44 +297,32 @@ class AresRobot(
             throw t
         }
     }
-    /**
-     * Documentation for driveFieldCentric
-     */
-
+    /** Commands shaped, alliance-aware field-relative translation and CCW-positive rotation. */
     fun driveFieldCentric(x: Double, y: Double, rotation: Double) = driveController.driveFieldCentric(x, y, rotation)
-    
+
+    /** Commands field-relative drive from a cached gamepad snapshot. */
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) = driveController.driveWithGamepad(driver, useHeadingLock)
-    /**
-     * Documentation for resetPoseForAlliance
-     */
+
+    /** Resets localization to the configured origin for the current Redux alliance. */
     fun resetPoseForAlliance() = driveController.resetPoseForAlliance()
-    /**
-     * Documentation for toggleIntake
-     */
 
+    /** Dispatches debounced intake intent. */
     fun toggleIntake() = superstructureController.toggleIntake()
-    /**
-     * Documentation for toggleShooter
-     */
-    fun toggleShooter() = superstructureController.toggleShooter()
-    /**
-     * Documentation for toggleAlliance
-     */
-    fun toggleAlliance() = superstructureController.toggleAlliance()
-    /**
-     * Documentation for setIndicatorColor
-     */
 
+    /** Dispatches debounced shooter intent subject to the intake interlock. */
+    fun toggleShooter() = superstructureController.toggleShooter()
+
+    /** Toggles Redux alliance; the caller decides whether to reset pose. */
+    fun toggleAlliance() = superstructureController.toggleAlliance()
+
+    /** Dispatches the primary optional indicator color. */
     fun setIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(color)
     fun setSecondIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setSecondIndicatorColor(color)
     fun setIndicatorColor(name: String, color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(name, color)
 
     fun setPrismPreset(preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset("prism", preset)
     fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
-    /**
-     * Documentation for close
-     */
-
+    /** Zeroes outputs, closes season subsystems, then always closes shared robot resources. */
     fun close() {
         try {
             base.safeAll()

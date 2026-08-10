@@ -5,6 +5,7 @@ import com.areslib.state.Alliance
 
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 
+/** Red-alliance competition entry point for the `TestPath` PathPlanner auto. */
 @Autonomous(name = "ARES Mecanum Auto", group = "ARES")
 class ARESAuto : AresAutoBase() {
     override val pathName: String = "TestPath"

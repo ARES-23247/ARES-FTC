@@ -1,11 +1,17 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.areslib.util.RobotClock
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
-/**
- * Documentation for ARESRemoteDriveOpMode
- */
 
+/**
+ * Accepts field-relative drive commands from the local ARES NT4 client.
+ *
+ * `ARES/Input/heartbeat` must change at least once per second. A stale heartbeat, parse error,
+ * or networking exception commands zero velocity with heading lock disabled. Topic names are
+ * canonical and omit a leading slash. The optional `reset x y headingRadians` command resets
+ * the EKF pose; malformed/missing numeric fields intentionally default to zero.
+ */
 @TeleOp(name = "ARES Remote Drive (NT4)", group = "ARES")
 class ARESRemoteDriveOpMode : AresTeleOpBase() {
 
@@ -14,52 +20,32 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
 
     override fun define() = aresTeleOp {
         
-        onInit { robot, telemetry ->
-            robot.base.mecanumIO.slewRateLimit = null // Disable slew limits for direct remote tracking
+        onInit { robot, _ ->
+            // Remote commands already arrive as a time series; do not add joystick EMA slew limiting.
+            robot.base.mecanumIO.slewRateLimit = null
             robot.addTelemetry("Status", "Remote NT4 client drive mode initialized.")
         }
         
-        onLoop { robot, driver, telemetry ->
+        onLoop { robot, _, _ ->
             try {
-                /**
-                 * Documentation for nt4
-                 */
                 val nt4 = robot.base.telemetryManager.nt4
-                /**
-                 * Documentation for currentHeartbeat
-                 */
                 val currentHeartbeat = nt4.getNumber("ARES/Input/heartbeat", 0.0).toLong()
-                /**
-                 * Documentation for now
-                 */
-                val now = com.areslib.util.RobotClock.currentTimeMillis()
+                val now = RobotClock.currentTimeMillis()
 
                 if (currentHeartbeat != lastHeartbeatVal) {
                     lastHeartbeatVal = currentHeartbeat
                     lastHeartbeatTime = now
                 }
 
-                // Command watchdog: If heartbeat hasn't changed in 1000ms, stop robot
+                // A frozen publisher value is treated as a disconnected controller.
                 if (now - lastHeartbeatTime < 1000L) {
-                    /**
-                     * Documentation for vx
-                     */
                     val vx = nt4.getNumber("ARES/Input/vx", 0.0)
-                    /**
-                     * Documentation for vy
-                     */
                     val vy = nt4.getNumber("ARES/Input/vy", 0.0)
-                    /**
-                     * Documentation for omega
-                     */
                     val omega = nt4.getNumber("ARES/Input/omega", 0.0)
 
                     robot.driveFieldCentric(vx, vy, omega)
                     
-                    // Parse commands
-                    /**
-                     * Documentation for cmdStr
-                     */
+                    // Commands are single-consumer: clear the topic before executing one.
                     val cmdStr = nt4.getString("ARES/Input/command", "")
                     if (cmdStr.isNotEmpty()) {
                         nt4.putString("ARES/Input/command", "") // Clear command immediately
@@ -68,10 +54,10 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                         when (cmdName) {
                             "reset" -> {
                                 var parseStr = if (spaceIdx > 0) cmdStr.substring(spaceIdx + 1) else ""
-                                var idx1 = parseStr.indexOf(' ')
+                                val idx1 = parseStr.indexOf(' ')
                                 val x = if (idx1 > 0) parseStr.substring(0, idx1).toDoubleOrNull() ?: 0.0 else parseStr.toDoubleOrNull() ?: 0.0
                                 parseStr = if (idx1 > 0) parseStr.substring(idx1 + 1) else ""
-                                var idx2 = parseStr.indexOf(' ')
+                                val idx2 = parseStr.indexOf(' ')
                                 val y = if (idx2 > 0) parseStr.substring(0, idx2).toDoubleOrNull() ?: 0.0 else parseStr.toDoubleOrNull() ?: 0.0
                                 parseStr = if (idx2 > 0) parseStr.substring(idx2 + 1) else ""
                                 val h = parseStr.toDoubleOrNull() ?: 0.0

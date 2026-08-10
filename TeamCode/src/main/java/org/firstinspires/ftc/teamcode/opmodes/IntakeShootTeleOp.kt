@@ -5,11 +5,10 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 import org.firstinspires.ftc.teamcode.dsl.*
 
 /**
- * Full-featured TeleOp with field-centric driving, intake toggle,
- * and shooter toggle. Works on both real hardware and the desktop simulator.
+ * Driver mode for field-centric driving plus the optional intake and flywheel.
  *
- * Uses the standard AresTeleOpBase DSL for consistent lifecycle management,
- * while adding team-specific intake/shooter hardware via hardwareMap.
+ * Button callbacks dispatch immutable superstructure state through the facade. Right trigger is
+ * telemetry-only because no feed actuator is wired; it must never be interpreted as a motor command.
  */
 @TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
 class IntakeShootTeleOp : AresTeleOpBase() {
@@ -17,7 +16,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
     override fun define() = aresTeleOp {
 
-        onInit { robot, telemetry ->
+        onInit { robot, _ ->
             robot.addTelemetry("Status", "Intake & Shoot TeleOp Ready!")
             robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=(feed not wired)")
         }
@@ -27,19 +26,12 @@ class IntakeShootTeleOp : AresTeleOpBase() {
                 robot.toggleIntake()
             }
 
-            // --- Toggle shooter on rising edge of right bumper ---
             driver.rightBumper.onPress("Toggle Shooter") {
                 robot.toggleShooter()
             }
 
-            // --- Cycle indicator light color with dpad ---
-            /**
-             * Documentation for indicatorColors
-             */
+            // Optional primary indicator color selection.
             val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
-            /**
-             * Documentation for indicatorIndex
-             */
             var indicatorIndex = 0
 
             driver.dpadUp.onPress("Indicator Next Color") {
@@ -52,19 +44,15 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             }
         }
 
-        onLoop { robot, driver, telemetry ->
-            // 1. Drivetrain Control (Standard Field Centric)
+        onLoop { robot, driver, _ ->
             robot.driveWithGamepad(driver, useHeadingLock = false)
 
-            // 2. Read state from store for telemetry print
-            /**
-             * Documentation for state
-             */
+            // Read one immutable snapshot so telemetry fields describe the same reducer state.
             val state = robot.base.store.state
             robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
             robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
 
-            // 3. Feed mechanism is not wired to hardware; right trigger only reports state.
+            // Feed is not wired; report only the rising edge to avoid repetitive telemetry churn.
             val currentTriggerState = driver.rightTrigger.value > state.tuning.driverTriggerThreshold
             if (currentTriggerState && !prevTriggerState) {
                 robot.addTelemetry("Feed", "RT held (feed not wired)")

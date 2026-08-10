@@ -6,10 +6,15 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
-/**
- * Documentation for FtcIntakeIO
- */
 
+/**
+ * Cached FTC hardware boundary for the `intake` roller motor.
+ *
+ * The current DECODE robot has no intake pivot, so pivot commands intentionally no-op. [refresh]
+ * performs the sole velocity/current/voltage reads after REV bulk-cache clearing. Getters expose
+ * only cached values, and failed/non-finite current is marked invalid so stall detection cannot
+ * latch stale current. Output voltage uses the last valid battery sample, falling back to 12 V.
+ */
 class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     private val motor: DcMotorEx? = com.areslib.ftc.hardware.CachedDcMotorEx(hardwareMap.get(DcMotorEx::class.java, "intake"))
 
@@ -30,9 +35,6 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     override fun setPivotVoltage(volts: Double) {}
 
     override fun setRollerVoltage(volts: Double) {
-        /**
-         * Documentation for power
-         */
         val vBattery = cachedVoltage
         val power = (volts / vBattery).coerceIn(-1.0, 1.0)
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
@@ -54,7 +56,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
     override fun refresh() {
         if (motor != null) {
-            // Velocity is part of REV bulk cache — zero additional I2C cost
+            // Velocity comes from the already-refreshed REV bulk response.
             try { cachedRollerVelocity = motor.velocity } catch (_: Exception) { cachedRollerVelocity = 0.0 }
 
             try {
@@ -70,11 +72,8 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
         }
         try {
             val measuredVoltage = voltageSensor?.voltage ?: 12.0
-            cachedVoltage = if (measuredVoltage.isFinite() && measuredVoltage >= MIN_VALID_VOLTAGE) {
-                measuredVoltage
-            } else {
-                NOMINAL_VOLTAGE
-            }
+            cachedVoltage = measuredVoltage.takeIf { it.isFinite() && it >= MIN_VALID_VOLTAGE }
+                ?: NOMINAL_VOLTAGE
         } catch (_: Exception) {
             cachedVoltage = NOMINAL_VOLTAGE
         }

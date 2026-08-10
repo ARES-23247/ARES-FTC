@@ -5,10 +5,21 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
-/**
- * Documentation for FtcFlywheelIO
- */
 
+/**
+ * FTC hardware boundary for the `shooter` flywheel motor.
+ *
+ * [refresh] is the only sensor-read path. It snapshots encoder velocity, current, and bus
+ * voltage after REV bulk-cache clearing; getters return only cached values. Velocity validity
+ * is cleared on a failed/non-finite read so stale RPM cannot masquerade as fresh feedback.
+ * If the controller rejects velocity commands, output switches once to voltage-compensated
+ * open-loop control. Invalid commands and electrical observations fail to safe values.
+ *
+ * Registration with [HardwareRegistry] makes drivetrain crash safety reach this season motor.
+ *
+ * @param ticksPerRev encoder ticks per motor revolution.
+ * @param maxRpm motor RPM represented by full open-loop output.
+ */
 class FtcFlywheelIO(
     hardwareMap: HardwareMap,
     private val ticksPerRev: Double = 28.0,
@@ -34,10 +45,7 @@ class FtcFlywheelIO(
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
         val safeRpm = rpm.takeIf { it.isFinite() } ?: 0.0
-        // RPM to ticks per second: (RPM / 60) * ticksPerRev
-        /**
-         * Documentation for ticksPerSec
-         */
+        // FTC velocity control consumes encoder ticks/second, not RPM.
         val ticksPerSec = (safeRpm / 60.0) * ticksPerRev
         when {
             supportsVelocityControl && ticksPerSec.isFinite() -> {
@@ -46,9 +54,6 @@ class FtcFlywheelIO(
                 } catch (_: Exception) {
                     motor.mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER
                     supportsVelocityControl = false
-                    /**
-                     * Documentation for power
-                     */
                     val power = calculateOpenLoopPower(safeRpm)
                     if (kotlin.math.abs(lastPower - power) > 1e-4) {
                         motor.power = power
@@ -57,9 +62,6 @@ class FtcFlywheelIO(
                 }
             }
             else -> {
-                /**
-                 * Documentation for power
-                 */
                 supportsVelocityControl = false
                 val power = calculateOpenLoopPower(safeRpm)
                 if (kotlin.math.abs(lastPower - power) > 1e-4) {
@@ -71,9 +73,6 @@ class FtcFlywheelIO(
     }
 
     override fun setAppliedVoltage(volts: Double) {
-        /**
-         * Documentation for power
-         */
         val power = if (volts.isFinite()) (volts / 12.0).coerceIn(-1.0, 1.0) else 0.0
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
             try {
@@ -98,9 +97,6 @@ class FtcFlywheelIO(
     override fun refresh() {
         if (motor != null) {
             try {
-                /**
-                 * Documentation for ticksPerSec
-                 */
                 val ticksPerSec = motor.velocity
                 val rpm = (ticksPerSec / ticksPerRev) * 60.0
                 cachedVelocityValid = rpm.isFinite()
@@ -127,6 +123,7 @@ class FtcFlywheelIO(
     }
 
     private fun calculateOpenLoopPower(rpm: Double): Double {
+        // Preserve nominal-12-V duty without exceeding the FTC power range.
         val safeMaxRpm = maxRpm.takeIf { it.isFinite() && it > 0.0 } ?: return 0.0
         val safeVoltage = cachedVoltage.takeIf { it.isFinite() && it >= 8.0 } ?: 12.0
         return ((rpm / safeMaxRpm) * (12.0 / safeVoltage)).coerceIn(-1.0, 1.0)
