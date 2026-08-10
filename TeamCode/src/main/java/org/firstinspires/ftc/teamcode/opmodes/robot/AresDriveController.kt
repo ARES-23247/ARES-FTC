@@ -67,7 +67,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
         val px = processAxis(driver.leftStickX.value.toDouble())
         val py = processAxis(-driver.leftStickY.value.toDouble())
-        val prot = processAxis(driver.rightStickX.value.toDouble())
+        val prot = processAxis(-driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
 
         // CCW-positive convention: blue alliance mirrors forward/left intents.
