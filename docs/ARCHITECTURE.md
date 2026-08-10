@@ -166,7 +166,8 @@ For field-centric driving on blue, `AresDriveController` negates both processed 
 | Secondary indicator | `indicator2`, `indicator_2`, `second_indicator`, `indicatorLight2`, `light2`, `light_2`, `led2`, or `led_2`; otherwise another servo whose name resembles an indicator/light/LED |
 | Prism RGB | `prism`, `prism_driver`, `gobilda_prism`, or `prism_led`; initialized as I2C address `0x38` before PWM fallback |
 
-Right-side drive motors (`fr`, `rr`) are reversed in the team facade. Rear motors are canonically `rl`/`rr`; the diagnostic OpMode's `bl`/`br` fallback exists only to help identify legacy configurations and is not the production contract.
+Right-side drive motors (`fr`, `rr`) are reversed in the team facade. Rear motors are named `rl`
+and `rr` in production and diagnostics; alternate rear-motor aliases are not supported.
 
 Flywheel conversion defaults to 28 encoder ticks/revolution and 6000 RPM maximum. Change those physical constants only after confirming the installed motor/encoder, then verify closed-loop and fallback open-loop behavior.
 

@@ -8,9 +8,9 @@ import com.areslib.sim.NoOpInteractionModel
 /**
  * Headless end-to-end smoke runner for FTC calibration and SysId command contracts.
  *
- * It launches the real season TeleOp against FTC mocks, drives its Driver Station lifecycle over
- * local NT4, then verifies each calibration publishes the expected status and a minimum amount of
- * data. Wall-clock time is appropriate here because this executable supervises another simulated
+ * It launches the calibration contract OpMode against FTC mocks, drives its Driver Station lifecycle
+ * over local NT4, then verifies each calibration publishes the expected status and a minimum amount
+ * of data. Wall-clock time is appropriate here because this executable supervises another simulated
  * process; robot control and replay code continue to use `RobotClock`.
  */
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -19,10 +19,10 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     println("=================================================================")
 
     // Launch the simulator first; its NT4 server is the system under test.
-    thread {
+    thread(isDaemon = true, name = "ARES-Calibration-Simulator") {
         try {
             DesktopSimLauncher.launch(
-                args = arrayOf("--opmode", "org.firstinspires.ftc.teamcode.opmodes.ARESMecanumTeleOp", "--headless"),
+                args = arrayOf("--opmode", "org.firstinspires.ftc.teamcode.CalibrationTestOpMode", "--headless"),
                 interactionModel = NoOpInteractionModel()
             )
         } catch (e: Exception) {
@@ -47,8 +47,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     }
 
     if (!connected) {
-        System.err.println("Verification Failed: Could not connect to simulator NT4 server!")
-        System.exit(1)
+        ntInst.close()
+        error("Verification Failed: Could not connect to simulator NT4 server!")
     }
     println("Connected to simulator NT4 server.")
 
@@ -61,7 +61,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
 
     // A changing heartbeat keeps the remote-input watchdog armed during long calibration routines.
     val running = java.util.concurrent.atomic.AtomicBoolean(true)
-    thread {
+    val heartbeatThread = thread(isDaemon = true, name = "ARES-Calibration-Heartbeat") {
         var count = 0L
         while (running.get()) {
             heartbeatPub.set(count++)
@@ -75,7 +75,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     }
 
     // Follow the same INIT then START lifecycle as the desktop Driver Station.
-    selectPub.set("org.firstinspires.ftc.teamcode.opmodes.ARESMecanumTeleOp")
+    selectPub.set("org.firstinspires.ftc.teamcode.CalibrationTestOpMode")
     cmdPub.set("INIT")
     println("Sent INIT command.")
     Thread.sleep(3000)
@@ -92,29 +92,34 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     fun runCalibrationTest(command: String, expectedStatus: String) {
         println("\n--- Testing: $command (Expecting Status: $expectedStatus) ---")
         
-        // Trigger and verify the immediate state transition.
+        // Trigger and allow for NT4 topic announcement plus the robot's next control loop.
         calCmdPub.set(command)
-        Thread.sleep(500)
-
-        val currentStatus = calStatusSub.get()
+        ntInst.flush()
+        val statusDeadline = System.currentTimeMillis() + 2500L
+        var currentStatus = calStatusSub.get()
+        while (currentStatus != expectedStatus && System.currentTimeMillis() < statusDeadline) {
+            Thread.sleep(50L)
+            currentStatus = calStatusSub.get()
+        }
         println("Current Status: $currentStatus")
         if (currentStatus != expectedStatus) {
-            running.set(false)
-            System.err.println("ERROR: Expected status $expectedStatus, but got $currentStatus!")
-            System.exit(1)
+            error("Expected status $expectedStatus, but got $currentStatus")
         }
 
         // Observe bounded progress; repeated arrays count as streamed samples for this smoke test.
         val startWait = System.currentTimeMillis()
         var pointsCount = 0
         var wentBackToNone = false
+        var lastDataChange = calDataSub.lastChange
 
         while (System.currentTimeMillis() - startWait < 8000) {
             val status = calStatusSub.get()
             val data = calDataSub.get()
             
-            if (data.isNotEmpty()) {
+            val dataChange = calDataSub.lastChange
+            if (data.isNotEmpty() && dataChange != 0L && dataChange != lastDataChange) {
                 pointsCount++
+                lastDataChange = dataChange
             }
             if (status == "NONE") {
                 wentBackToNone = true
@@ -126,17 +131,17 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         println("Finished $command. Points collected: $pointsCount, returned to NONE: $wentBackToNone")
         
         if (pointsCount < 5) {
-            running.set(false)
-            System.err.println("ERROR: Insufficient calibration data points streamed! Only got $pointsCount points.")
-            System.exit(1)
+            error("Insufficient fresh calibration samples: received $pointsCount")
         }
 
         // Reset command state before the next routine.
         calCmdPub.set("STOP")
+        ntInst.flush()
         Thread.sleep(300)
     }
 
     // Hardware-affecting routines are deliberately serialized.
+    var succeeded = false
     try {
         runCalibrationTest("START_PINPOINT_SPIN", "PINPOINT_SPIN")
         runCalibrationTest("START_TRACK_WIDTH_SPIN", "TRACK_WIDTH_SPIN")
@@ -156,11 +161,26 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         println("\n=================================================================")
         println("ALL CALIBRATION AND SYSID ROUTINES PASSED HEADLESSLY!")
         println("=================================================================")
+        succeeded = true
     } catch (e: Exception) {
         e.printStackTrace()
-        System.exit(1)
     } finally {
         running.set(false)
-        System.exit(0)
+        heartbeatThread.interrupt()
+        try {
+            heartbeatThread.join(1000L)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        try { cmdPub.set("STOP") } catch (_: Exception) {}
+        calCmdPub.close()
+        calStatusSub.close()
+        calDataSub.close()
+        heartbeatPub.close()
+        teleopPub.close()
+        cmdPub.close()
+        selectPub.close()
+        ntInst.close()
     }
+    kotlin.system.exitProcess(if (succeeded) 0 else 1)
 }

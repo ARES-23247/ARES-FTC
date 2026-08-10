@@ -3,35 +3,27 @@ package org.firstinspires.ftc.teamcode.opmodes
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotorEx
+import com.areslib.ftc.photon.PhotonEnabledOpMode
 
 /**
  * Restrained-hardware drivetrain wiring diagnostic.
  *
- * Each face button commands exactly one raw motor at 40% output. Production names are
- * `fl`, `fr`, `rl`, and `rr`; rear `bl`/`br` aliases are accepted only to diagnose legacy
- * configurations. The `finally` block zeros every discovered motor on stop or failure.
+ * Each face button commands exactly one raw motor at 40% output. Hardware names are the canonical
+ * `fl`, `fr`, `rl`, and `rr`. The `finally` block zeros every discovered motor on stop or failure.
  */
 @TeleOp(name = "ARES Drivetrain Diagnostic", group = "ARES")
-class ARESMecanumDiagnostic : LinearOpMode() {
+class ARESMecanumDiagnostic : LinearOpMode(), PhotonEnabledOpMode {
 
-    private fun findMotor(vararg names: String): DcMotorEx? {
-        for (name in names) {
-            try {
-                return hardwareMap.get(DcMotorEx::class.java, name)
-            } catch (_: Exception) {
-                // Try the next diagnostic alias.
-            }
-        }
-        return null
-    }
+    private fun findMotor(name: String): DcMotorEx? =
+        runCatching { hardwareMap.get(DcMotorEx::class.java, name) }.getOrNull()
 
     override fun runOpMode() {
         telemetry.addData("Status", "Initializing raw motors...")
         telemetry.update()
         val fl = findMotor("fl")
         val fr = findMotor("fr")
-        val rl = findMotor("rl", "bl")
-        val rr = findMotor("rr", "br")
+        val rl = findMotor("rl")
+        val rr = findMotor("rr")
 
         telemetry.addData("Status", "Ready. Press Play.")
         telemetry.addData("FL Motor (\"fl\")", if (fl != null) "FOUND" else "MISSING")

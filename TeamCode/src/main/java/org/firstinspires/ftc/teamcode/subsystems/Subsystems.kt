@@ -35,7 +35,9 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 
     override fun writeOutputs(state: RobotState, scale: Double) {
         val active = state.superstructure.season.intakeActive
-        val flywheelSpooling = state.superstructure.season.flywheelActive && state.superstructure.season.flywheelTargetRPM > state.superstructure.season.flywheelCurrentRPM
+        val season = state.superstructure.season
+        val flywheelSpooling = season.flywheelActive &&
+            (!season.flywheelVelocityValid || season.flywheelTargetRPM > season.flywheelCurrentRPM)
         val intakePowerScale = if (flywheelSpooling) 0.6 else 1.0
         val voltage = if (active) state.tuning.intakeNominalVoltage * scale * intakePowerScale else 0.0
         io.setRollerVoltage(voltage)
@@ -60,19 +62,29 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
 class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
     private var lastDispatchedRpm = 0.0
     private var lastDispatchTime = 0L
+    private var lastVelocityValid = false
 
     override fun readSensors(store: Store, timestampMs: Long) {
-        val currentRpm = io.velocityRpm
+        val velocityValid = io.velocityValid && io.velocityRpm.isFinite()
+        val currentRpm = if (velocityValid) io.velocityRpm else 0.0
         val timeSinceLastDispatch = timestampMs - lastDispatchTime
         
         val rpmDiff = kotlin.math.abs(currentRpm - lastDispatchedRpm)
-        if ((timeSinceLastDispatch >= 50 && rpmDiff >= 20.0) || timeSinceLastDispatch >= 250) {
+        if (velocityValid != lastVelocityValid ||
+            (timeSinceLastDispatch >= 50 && rpmDiff >= 20.0) || timeSinceLastDispatch >= 250
+        ) {
             this.currentRpm = currentRpm
             lastDispatchedRpm = currentRpm
             lastDispatchTime = timestampMs
+            lastVelocityValid = velocityValid
             
             val seasonState = store.state.superstructure.season
-            store.dispatch(RobotAction.UpdateSubsystemState(seasonState.copy(flywheelCurrentRPM = currentRpm)))
+            store.dispatch(RobotAction.UpdateSubsystemState(
+                seasonState.copy(
+                    flywheelCurrentRPM = currentRpm,
+                    flywheelVelocityValid = velocityValid
+                )
+            ))
         }
     }
 

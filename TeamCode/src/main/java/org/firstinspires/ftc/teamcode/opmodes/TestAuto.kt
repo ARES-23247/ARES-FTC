@@ -5,26 +5,22 @@ import com.areslib.state.Alliance
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 
 
-/** Red-alliance validation entry point for the shared `TestAuto` asset. */
+/** Red-alliance validation entry point for the shared native `test-auto` asset. */
 @Autonomous(name = "TestAuto - RED", group = "ARES")
 class TestAutoRed : AresAutoBase() {
-    override val pathName: String = "TestAuto"
-    override fun buildRobot(): AresRobot {
-        val robot = super.buildRobot()
-        configureAlliance(robot, Alliance.RED)
-        return robot
+    override fun defineAuto() = auto {
+        aresAuto("test-auto")
+        alliance(Alliance.RED)
     }
 }
 
 /**
- * Blue-alliance validation entry point for `TestAuto`; the base mirrors path and start pose.
+ * Blue-alliance validation entry point for `test-auto`; the base transforms goals and start pose.
  */
 @Autonomous(name = "TestAuto - BLUE", group = "ARES")
 class TestAutoBlue : AresAutoBase() {
-    override val pathName: String = "TestAuto"
-    override fun buildRobot(): AresRobot {
-        val robot = super.buildRobot()
-        configureAlliance(robot, Alliance.BLUE)
-        return robot
+    override fun defineAuto() = auto {
+        aresAuto("test-auto")
+        alliance(Alliance.BLUE)
     }
 }

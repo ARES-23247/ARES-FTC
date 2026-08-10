@@ -74,7 +74,7 @@ The canonical Robot Controller configuration names are:
 | Intake motor | `intake` | Optional season mechanism |
 | Flywheel motor | `shooter` | Optional; encoder configured for 28 ticks/rev by default |
 
-Indicator and Prism devices are optional and support aliases documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#hardware-configuration). Missing optional season mechanisms report telemetry and do not prevent the drivetrain from initializing. Do not silently rename `rl`/`rr` to `bl`/`br`; only the diagnostic OpMode accepts those legacy rear-motor aliases.
+Indicator and Prism devices are optional and support the names documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#hardware-configuration). Missing optional season mechanisms report telemetry and do not prevent the drivetrain from initializing. Drivetrain names are exactly `fl`, `fr`, `rl`, and `rr`.
 
 ## Quick commands
 

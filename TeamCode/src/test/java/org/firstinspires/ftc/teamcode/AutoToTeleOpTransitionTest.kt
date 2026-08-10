@@ -53,7 +53,7 @@ class AutoToTeleOpTransitionTest {
         PoseStorage.alliance = Alliance.BLUE
         PoseStorage.hasValidPose = true
 
-        // Simulate what ARESMecanumTeleOp.onInit reads:
+        // Simulate what ARESMecanumTeleOp.setup reads:
         //   if (PoseStorage.hasValidPose) dispatch(SetAlliance(PoseStorage.alliance))
         val restoredAlliance = if (PoseStorage.hasValidPose) PoseStorage.alliance else Alliance.RED
 
@@ -63,4 +63,3 @@ class AutoToTeleOpTransitionTest {
         )
     }
 }
-

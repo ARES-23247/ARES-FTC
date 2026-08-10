@@ -14,14 +14,14 @@ import org.firstinspires.ftc.teamcode.dsl.*
 class IntakeShootTeleOp : AresTeleOpBase() {
     private var prevTriggerState = false
 
-    override fun define() = aresTeleOp {
+    override fun define() = teleOp {
 
-        onInit { robot, _ ->
+        setup {
             robot.addTelemetry("Status", "Intake & Shoot TeleOp Ready!")
             robot.addTelemetry("Controls", "LB=Intake, RB=Flywheel, RT=(feed not wired)")
         }
 
-        onConfigure { robot, driver ->
+        controls {
             driver.leftBumper.onPress("Toggle Intake") {
                 robot.toggleIntake()
             }
@@ -44,7 +44,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             }
         }
 
-        onLoop { robot, driver, _ ->
+        everyLoop {
             robot.driveWithGamepad(driver, useHeadingLock = false)
 
             // Read one immutable snapshot so telemetry fields describe the same reducer state.

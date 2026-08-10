@@ -86,3 +86,4 @@ TeamCode/zulip.properties
 # Logs and generated reports
 *.jsonl
 **/logs/
+simulator/ares_run_summary.json

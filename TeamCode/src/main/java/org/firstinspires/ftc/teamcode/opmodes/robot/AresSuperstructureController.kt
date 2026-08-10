@@ -36,7 +36,12 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
         lastShooterToggleTimeMs = now
         val season = base.store.state.superstructure.season
         if (season.intakeActive) return
-        val currentTarget = if (!season.flywheelActive) base.store.state.tuning.flywheelTargetRpmPreset else 0.0
+        val configuredTarget = base.store.state.tuning.flywheelTargetRpmPreset
+        val currentTarget = if (!season.flywheelActive) {
+            configuredTarget.takeIf { it.isFinite() }?.coerceIn(0.0, MAX_FLYWHEEL_RPM) ?: 0.0
+        } else {
+            0.0
+        }
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(
                 flywheelActive = !season.flywheelActive,
@@ -59,5 +64,6 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
 
     private companion object {
         const val TOGGLE_DEBOUNCE_MS = 200L
+        const val MAX_FLYWHEEL_RPM = 6000.0
     }
 }

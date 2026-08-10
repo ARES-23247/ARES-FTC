@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.dsl
 
 import com.areslib.ftc.dsl.FtcMecanumAutoBase
+import com.areslib.ftc.dsl.FtcAutoBuilder
+import com.areslib.ftc.dsl.FtcAutoDefinition
 import com.areslib.ftc.FtcMecanumRobot
-import com.areslib.action.RobotAction
-import com.areslib.state.Alliance
+import com.areslib.ftc.photon.PhotonEnabledOpMode
 import com.areslib.util.PoseStorage
 import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 
@@ -14,15 +15,13 @@ import org.firstinspires.ftc.teamcode.opmodes.AresRobot
  * and final pose persistence. This adapter supplies the season facade and preserves
  * process-local team state needed by the following TeleOp.
  */
-abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>() {
+abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>(), PhotonEnabledOpMode {
 
     override fun buildRobot() = AresRobot(hardwareMap, telemetry)
 
-    /** Sets Redux alliance before resetting the alliance-specific field origin. */
-    protected fun configureAlliance(robot: AresRobot, alliance: Alliance) {
-        robot.base.store.dispatch(RobotAction.SetAlliance(alliance))
-        robot.resetPoseForAlliance()
-    }
+    /** Builds a validated autonomous definition for the season robot. */
+    fun auto(block: FtcAutoBuilder.() -> Unit): FtcAutoDefinition =
+        com.areslib.ftc.dsl.ftcAuto(block)
 
     override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot = robot.base
 

@@ -11,9 +11,9 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 @TeleOp(name = "ARES Live Tuning TeleOp", group = "Tuning")
 class ARESTuningTeleOp : AresTeleOpBase() {
 
-    override fun define() = aresTeleOp {
+    override fun define() = teleOp {
         
-        onConfigure { robot, driver ->
+        controls {
             driver.y.onPress("Reset Field Centric Pose") {
                 robot.resetPoseForAlliance()
             }
@@ -23,14 +23,14 @@ class ARESTuningTeleOp : AresTeleOpBase() {
             }
         }
 
-        onInit { robot, _ ->
+        setup {
             robot.base.isLiveTuningEnabled = true
             robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             robot.base.mecanumIO.slewRateLimit = 4.0
             robot.addTelemetry("Tuning", "LIVE NT4 DASHBOARD SYNC ACTIVE")
         }
         
-        onLoop { robot, driver, _ ->
+        everyLoop {
             robot.driveWithGamepad(driver, useHeadingLock = true)
         }
     }

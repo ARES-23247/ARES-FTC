@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "actions": [
+    {
+      "key": "intake.collect",
+      "displayName": "Collect game piece",
+      "description": "Starts the intake and safely stops the flywheel.",
+      "category": "Intake"
+    },
+    {
+      "key": "intake.stop",
+      "displayName": "Stop intake",
+      "description": "Stops the intake roller.",
+      "category": "Intake"
+    },
+    {
+      "key": "flywheel.prepare",
+      "displayName": "Prepare flywheel",
+      "description": "Stops the intake and spins the flywheel to the configured match preset.",
+      "category": "Shooter"
+    },
+    {
+      "key": "flywheel.stop",
+      "displayName": "Stop flywheel",
+      "description": "Stops closed-loop flywheel output and clears its speed target.",
+      "category": "Shooter"
+    },
+    {
+      "key": "SetIndicatorColor_OFF",
+      "displayName": "Primary light: Off",
+      "description": "Turns off the primary indicator light.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_RED",
+      "displayName": "Primary light: Red",
+      "description": "Sets the primary indicator light to red.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_ORANGE",
+      "displayName": "Primary light: Orange",
+      "description": "Sets the primary indicator light to orange.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_YELLOW",
+      "displayName": "Primary light: Yellow",
+      "description": "Sets the primary indicator light to yellow.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_GREEN",
+      "displayName": "Primary light: Green",
+      "description": "Sets the primary indicator light to green.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_CYAN",
+      "displayName": "Primary light: Cyan",
+      "description": "Sets the primary indicator light to cyan.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_BLUE",
+      "displayName": "Primary light: Blue",
+      "description": "Sets the primary indicator light to blue.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_PURPLE",
+      "displayName": "Primary light: Purple",
+      "description": "Sets the primary indicator light to purple.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetIndicatorColor_WHITE",
+      "displayName": "Primary light: White",
+      "description": "Sets the primary indicator light to white.",
+      "category": "Primary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_OFF",
+      "displayName": "Secondary light: Off",
+      "description": "Turns off the secondary indicator light.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_RED",
+      "displayName": "Secondary light: Red",
+      "description": "Sets the secondary indicator light to red.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_ORANGE",
+      "displayName": "Secondary light: Orange",
+      "description": "Sets the secondary indicator light to orange.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_YELLOW",
+      "displayName": "Secondary light: Yellow",
+      "description": "Sets the secondary indicator light to yellow.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_GREEN",
+      "displayName": "Secondary light: Green",
+      "description": "Sets the secondary indicator light to green.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_CYAN",
+      "displayName": "Secondary light: Cyan",
+      "description": "Sets the secondary indicator light to cyan.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_BLUE",
+      "displayName": "Secondary light: Blue",
+      "description": "Sets the secondary indicator light to blue.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_PURPLE",
+      "displayName": "Secondary light: Purple",
+      "description": "Sets the secondary indicator light to purple.",
+      "category": "Secondary indicator"
+    },
+    {
+      "key": "SetSecondIndicatorColor_WHITE",
+      "displayName": "Secondary light: White",
+      "description": "Sets the secondary indicator light to white.",
+      "category": "Secondary indicator"
+    }
+  ]
+}

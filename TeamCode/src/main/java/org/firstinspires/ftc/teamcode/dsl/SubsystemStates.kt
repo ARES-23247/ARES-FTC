@@ -19,6 +19,8 @@ data class SeasonSuperstructureState(
     val flywheelTargetRPM: Double = 0.0,
     /** Most recently accepted flywheel observation in motor RPM. */
     val flywheelCurrentRPM: Double = 0.0,
+    /** Whether [flywheelCurrentRPM] came from a fresh finite hardware observation. */
+    val flywheelVelocityValid: Boolean = false,
     /** Reserved lift target; no physical lift IO is currently registered. */
     val liftTargetHeight: Double = 0.0,
     /** Process-local lift observation carried from Auto to TeleOp. */

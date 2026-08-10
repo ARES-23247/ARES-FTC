@@ -9,7 +9,7 @@ import kotlin.math.pow
  *
  * Each axis is deadband-rescaled, exponent-shaped, and passed through a first-order EMA. Command
  * parameters follow ARES field axes: +X forward, +Y left, and CCW-positive rotation. The gamepad
- * adapter currently forwards left-stick X as field X and negated left-stick Y as field Y. Blue
+ * adapter maps negated left-stick Y to field X and negated left-stick X to field Y. Blue
  * alliance negates both field-relative translation axes but never rotation. Robot-relative driving
  * is not alliance mirrored. Instances retain smoothing history and belong to one robot.
  */
@@ -19,11 +19,12 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private var lastRot = 0.0
 
     private fun processAxis(input: Double): Double {
-        val magnitude = kotlin.math.abs(input)
+        val boundedInput = if (input.isFinite()) input.coerceIn(-1.0, 1.0) else 0.0
+        val magnitude = kotlin.math.abs(boundedInput)
         val deadzoned = if (magnitude < DEFAULT_DEADZONE) {
             0.0
         } else {
-            (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(input)
+            (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(boundedInput)
         }
         val exponent = base.store.state.tuning.driverDeadbandExponent
             .let { if (it > 0.0) it else DEFAULT_CURVE_EXPONENT }
@@ -74,8 +75,8 @@ class AresDriveController(private val base: FtcMecanumRobot) {
      * right-stick rotation are negative in SDK coordinates, hence those two negations.
      */
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
-        val px = processAxis(driver.leftStickX.value.toDouble())
-        val py = processAxis(-driver.leftStickY.value.toDouble())
+        val px = processAxis(-driver.leftStickY.value.toDouble())
+        val py = processAxis(-driver.leftStickX.value.toDouble())
         val prot = processAxis(-driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
 
@@ -83,7 +84,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
         val outX = if (blueAlliance) -smoothX else smoothX
         val outY = if (blueAlliance) -smoothY else smoothY
-        base.mecanumDrive.fieldRelativeDrive(outX, outY, smoothRot, useHeadingLock)
+        base.mecanumDrive.driveFieldRelativeNormalized(outX, outY, smoothRot, useHeadingLock)
     }
 
     /** Requests ARESLib target-space alignment to a specific AprilTag ID. */

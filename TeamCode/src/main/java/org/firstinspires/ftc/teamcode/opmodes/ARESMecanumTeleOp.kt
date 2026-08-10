@@ -14,11 +14,11 @@ import org.firstinspires.ftc.teamcode.dsl.season
 @TeleOp(name = "Direct Mecanum Drivetrain", group = "ARES")
 class ARESMecanumTeleOp : AresTeleOpBase() {
 
-    override fun define() = aresTeleOp {
+    override fun define() = teleOp {
         
         var isHeadingLockEnabled = true
         
-        onConfigure { robot, driver ->
+        controls {
             driver.leftStickButton.onPress("Toggle Heading Lock") {
                 isHeadingLockEnabled = !isHeadingLockEnabled
             }
@@ -55,11 +55,10 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
         }
 
-        onInit { robot, _ ->
+        setup {
             // PoseStorage survives OpMode changes in one RC process, not a reboot.
             if (com.areslib.util.PoseStorage.hasValidPose) {
                 robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.util.PoseStorage.alliance))
-                robot.base.resetPose(com.areslib.util.PoseStorage.currentPose)
             } else {
                 robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
             }
@@ -70,7 +69,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }
         
-        onLoop { robot, driver, _ ->
+        everyLoop {
             robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
         }
     }

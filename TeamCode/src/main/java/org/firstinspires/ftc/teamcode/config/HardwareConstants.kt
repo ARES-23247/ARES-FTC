@@ -3,9 +3,8 @@ package org.firstinspires.ftc.teamcode.config
 /**
  * Canonical FTC Robot Controller configuration names and season mechanism constants.
  *
- * Production drive code requires the rear-motor names `rl` and `rr`; the diagnostic
- * OpMode alone accepts legacy `bl`/`br` aliases. Encoder and RPM values describe the
- * currently installed bare goBILDA flywheel motor and must be retuned if it changes.
+ * Drive code and diagnostics require rear-motor names `rl` and `rr`. Encoder and RPM values
+ * describe the currently installed bare goBILDA flywheel motor and must be retuned if it changes.
  */
 object HardwareConstants {
     // Drivetrain hardware-map names.

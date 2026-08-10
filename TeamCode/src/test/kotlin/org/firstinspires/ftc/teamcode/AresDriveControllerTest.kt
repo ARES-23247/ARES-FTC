@@ -29,8 +29,9 @@ class AresDriveControllerTest {
     // and exp comes from store.state.tuning.driverDeadbandExponent (default TuningState = 1.0).
     // smoothTransition on first call (lastX=0): smoothed = 0.0 * 0.6 + processed * 0.4
     private fun expectedSmoothed(input: Double, exponent: Double = 1.0): Double {
-        if (kotlin.math.abs(input) < 0.05) return 0.0
-        val deadzoned = (kotlin.math.abs(input) - 0.05) / 0.95 * kotlin.math.sign(input)
+        val bounded = if (input.isFinite()) input.coerceIn(-1.0, 1.0) else 0.0
+        if (kotlin.math.abs(bounded) < 0.05) return 0.0
+        val deadzoned = (kotlin.math.abs(bounded) - 0.05) / 0.95 * kotlin.math.sign(bounded)
         val processed = kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
         return processed * 0.4 // first-frame smoothing: lastX starts at 0
     }
@@ -112,6 +113,16 @@ class AresDriveControllerTest {
             org.mockito.AdditionalMatchers.eq(expectedSmoothed(-2.0), 1e-3),
             org.mockito.AdditionalMatchers.eq(0.0, 1e-6)
         )
+    }
+
+    @Test
+    fun `non-finite joystick values fail closed`() {
+        val base = setupMockRobot()
+        val controller = AresDriveController(base)
+
+        controller.driveFieldCentric(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)
+
+        Mockito.verify(base).driveFieldCentric(0.0, 0.0, 0.0)
     }
 
     @Test

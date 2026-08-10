@@ -21,6 +21,7 @@ class NullOpMode : LinearOpMode() {
         while (opModeIsActive()) {
             telemetry.addData("Status", "Running...")
             telemetry.update()
+            idle()
         }
     }
 }

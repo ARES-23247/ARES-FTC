@@ -73,6 +73,8 @@ class AresRobot(
     var flywheelSubsystem: org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem? = null
 
     init {
+        org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities.register()
+
         try {
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
             intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO)
@@ -87,6 +89,7 @@ class AresRobot(
                 ticksPerRev = FLYWHEEL_TICKS_PER_REV,
                 maxRpm = FLYWHEEL_MAX_RPM
             )
+            base.sysIdFlywheelIO = flywheelIO
             flywheelSubsystem = org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO)
             base.registerSubsystem(flywheelSubsystem!!)
         } catch (e: Exception) {
@@ -94,7 +97,7 @@ class AresRobot(
         }
 
         val allDeviceNames = mutableSetOf<String>()
-        for (device in hardwareMap) {
+        for (device in hardwareMap.getAll(com.qualcomm.robotcore.hardware.HardwareDevice::class.java)) {
             allDeviceNames.addAll(hardwareMap.getNamesOf(device))
         }
 
@@ -164,8 +167,11 @@ class AresRobot(
         // Always register indicator color commands so an auto that references them does not
         // crash when the indicator IO failed to init; the task no-ops if absent.
         com.areslib.hardware.actuator.IndicatorLightColor.entries.forEach { color ->
-            com.areslib.pathing.NamedCommands.registerCommand(
-                "SetIndicatorColor_${color.name}",
+            com.areslib.pathing.NamedCommands.register(
+                key = com.areslib.pathing.CommandKey("SetIndicatorColor_${color.name}"),
+                description = "Set the primary indicator to ${color.name.lowercase()}",
+                category = "Indicators"
+            ) { _ ->
                 object : com.areslib.sequencer.Task {
                     override val name = "SetIndicatorColor_${color.name}"
                     override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
@@ -173,9 +179,12 @@ class AresRobot(
                         if (primaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator", color.position))
                         else emptyList()
                 }
-            )
-            com.areslib.pathing.NamedCommands.registerCommand(
-                "SetSecondIndicatorColor_${color.name}",
+            }
+            com.areslib.pathing.NamedCommands.register(
+                key = com.areslib.pathing.CommandKey("SetSecondIndicatorColor_${color.name}"),
+                description = "Set the secondary indicator to ${color.name.lowercase()}",
+                category = "Indicators"
+            ) { _ ->
                 object : com.areslib.sequencer.Task {
                     override val name = "SetSecondIndicatorColor_${color.name}"
                     override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
@@ -183,7 +192,7 @@ class AresRobot(
                         if (secondaryIO != null) listOf(com.areslib.action.RobotAction.SetIndicatorLight("indicator2", color.position))
                         else emptyList()
                 }
-            )
+            }
         }
 
         // --- goBILDA Prism RGB LED Driver ("prism") ---
@@ -231,8 +240,11 @@ class AresRobot(
         // Always register prism preset commands so an auto that references them does not
         // crash when the Prism I2C/PWM device failed to init; the task no-ops if absent.
         com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
-            com.areslib.pathing.NamedCommands.registerCommand(
-                "SetPrismPreset_${preset.name}",
+            com.areslib.pathing.NamedCommands.register(
+                key = com.areslib.pathing.CommandKey("SetPrismPreset_${preset.name}"),
+                description = "Set the Prism driver to ${preset.name.lowercase()}",
+                category = "Indicators"
+            ) { _ ->
                 object : com.areslib.sequencer.Task {
                     override val name = "SetPrismPreset_${preset.name}"
                     override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
@@ -240,7 +252,7 @@ class AresRobot(
                         if (prismIO != null) listOf(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
                         else emptyList()
                 }
-            )
+            }
         }
     }
 

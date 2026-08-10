@@ -35,8 +35,9 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
     override fun setPivotVoltage(volts: Double) {}
 
     override fun setRollerVoltage(volts: Double) {
-        val vBattery = cachedVoltage
-        val power = (volts / vBattery).coerceIn(-1.0, 1.0)
+        val safeVolts = volts.takeIf { it.isFinite() } ?: 0.0
+        val vBattery = cachedVoltage.takeIf { it.isFinite() && it >= MIN_VALID_VOLTAGE } ?: NOMINAL_VOLTAGE
+        val power = (safeVolts / vBattery).coerceIn(-1.0, 1.0)
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
             try {
                 motor?.power = power

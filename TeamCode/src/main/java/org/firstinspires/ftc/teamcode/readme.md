@@ -17,9 +17,26 @@ Start with `opmodes/ARESMecanumTeleOp.kt` for a driver-control example, `opmodes
 
 ## Adding an OpMode
 
-For a normal driver-controlled mode, extend `AresTeleOpBase` and return an `aresTeleOp { ... }` definition. Put one-time binding in `onConfigure`, state initialization in `onInit`, and per-frame driver intent in `onLoop`. The base owns robot construction, gamepad snapshots, periodic `robot.update(...)`, and guaranteed close.
+For a normal driver-controlled mode, extend `AresTeleOpBase` and return a `teleOp { ... }`
+definition. Use `setup` for one-time state, `controls` for driver/operator bindings,
+`duringInit` only for repeated pre-start work, `onStart` for the start edge, and `everyLoop` for
+driver intent. Each receiver exposes named `robot`, `driver`, `operator`, and `telemetry` properties.
+The iterative base owns SDK lifecycle callbacks, gamepad snapshots, periodic `robot.update(...)`, and
+idempotent close.
 
-For autonomous, extend `AresAutoBase`, set `pathName` to an auto in `src/main/assets/pathplanner/autos`, and call `configureAlliance(robot, Alliance.RED/BLUE)` from `buildRobot()`. The base loads the path, seeds localization, executes tasks, stops on completion/failure, persists the final pose, and closes hardware.
+For autonomous, extend `AresAutoBase` and declare the routine explicitly:
+
+```kotlin
+override fun defineAuto() = auto {
+    pathPlannerAuto("TestAuto")
+    alliance(Alliance.RED)
+}
+```
+
+The iterative base preflights the complete auto before START, seeds localization, refreshes hardware
+during INIT, enforces the FTC runtime limit, stops on completion/failure, persists a usable final pose,
+and closes hardware. Missing auto names, alliances, start poses, paths, or named commands block arming
+with a corrective Driver Station message.
 
 Do not copy an FTC sample's direct motor-write loop into a competition OpMode. Driver bindings should call the robot facade or dispatch `RobotAction`; registered subsystems translate immutable state to outputs.
 

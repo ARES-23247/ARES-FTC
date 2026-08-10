@@ -36,6 +36,8 @@ class FtcFlywheelIO(
     private var lastPower = -999.0
 
     init {
+        require(ticksPerRev.isFinite() && ticksPerRev > 0.0) { "ticksPerRev must be finite and positive" }
+        require(maxRpm.isFinite() && maxRpm > 0.0) { "maxRpm must be finite and positive" }
         motor?.mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER
         // The base clears REV bulk caches before refreshing registered IO, and
         // registration makes crash/stop safety reach this season-layer motor.
@@ -44,7 +46,8 @@ class FtcFlywheelIO(
 
     override fun setVelocityRpm(rpm: Double) {
         if (motor == null) return
-        val safeRpm = rpm.takeIf { it.isFinite() } ?: 0.0
+        val safeMaxRpm = maxRpm.takeIf { it.isFinite() && it > 0.0 } ?: 0.0
+        val safeRpm = rpm.takeIf { it.isFinite() }?.coerceIn(-safeMaxRpm, safeMaxRpm) ?: 0.0
         // FTC velocity control consumes encoder ticks/second, not RPM.
         val ticksPerSec = (safeRpm / 60.0) * ticksPerRev
         when {
@@ -73,7 +76,8 @@ class FtcFlywheelIO(
     }
 
     override fun setAppliedVoltage(volts: Double) {
-        val power = if (volts.isFinite()) (volts / 12.0).coerceIn(-1.0, 1.0) else 0.0
+        val busVoltage = cachedVoltage.takeIf { it.isFinite() && it >= 8.0 } ?: 12.0
+        val power = if (volts.isFinite()) (volts / busVoltage).coerceIn(-1.0, 1.0) else 0.0
         if (kotlin.math.abs(lastPower - power) > 1e-4) {
             try {
                 motor?.power = power
@@ -119,6 +123,25 @@ class FtcFlywheelIO(
             cachedVoltage = measuredVoltage?.takeIf { it.isFinite() && it >= 8.0 } ?: 12.0
         } catch (_: Exception) {
             cachedVoltage = 12.0
+        }
+    }
+
+    override fun configureVelocityController(
+        gains: com.areslib.control.tuning.PIDFCoefficients,
+        feedforward: com.areslib.control.tuning.SimpleFeedforwardCoeffs
+    ) {
+        val unitScale = (2.0 * Math.PI) / (12.0 * ticksPerRev)
+        val p = (gains.kP * unitScale).takeIf { it.isFinite() && it >= 0.0 } ?: return
+        val i = (gains.kI * unitScale).takeIf { it.isFinite() && it >= 0.0 } ?: return
+        val d = (gains.kD * unitScale).takeIf { it.isFinite() && it >= 0.0 } ?: return
+        val f = (feedforward.kV * unitScale).takeIf { it.isFinite() && it >= 0.0 } ?: return
+        try {
+            motor?.setPIDFCoefficients(
+                com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER,
+                com.qualcomm.robotcore.hardware.PIDFCoefficients(p, i, d, f)
+            )
+        } catch (_: Exception) {
+            supportsVelocityControl = false
         }
     }
 

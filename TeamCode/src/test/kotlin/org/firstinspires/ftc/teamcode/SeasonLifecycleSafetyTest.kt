@@ -7,6 +7,7 @@ import com.areslib.hardware.actuator.IndicatorLightIO
 import com.areslib.hardware.actuator.IntakeIO
 import com.areslib.reducer.rootReducer
 import com.areslib.state.RobotState
+import com.areslib.state.Alliance
 import com.areslib.state.SuperstructureState
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
@@ -103,6 +104,10 @@ class SeasonLifecycleSafetyTest {
         val wrapper = Mockito.mock(AresRobot::class.java)
         val base = Mockito.mock(FtcMecanumRobot::class.java)
         val auto = object : AresAutoBase() {
+            override fun defineAuto() = auto {
+                aresAuto("safety-fixture")
+                alliance(Alliance.RED)
+            }
             override fun buildRobot(): AresRobot = wrapper
             override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot = base
         }
