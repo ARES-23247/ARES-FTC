@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "documentId": "test-path",
+  "revision": 1,
+  "name": "Test Path",
+  "description": "Short safe drive used by simulation and novice onboarding.",
+  "steps": [
+    {
+      "kind": "DRIVE_TO",
+      "arguments": {},
+      "drive": {
+        "target": {"xMeters":0.5,"yMeters":0.0,"headingRadians":0.0},
+        "motionPresetKey": "safe",
+        "markers": [],
+        "duringActionKeys": [],
+        "arrivalActionKeys": []
+      },
+      "children": [],
+      "elseChildren": []
+    }
+  ]
+}

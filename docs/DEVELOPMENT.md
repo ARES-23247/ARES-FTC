@@ -90,7 +90,23 @@ Simulation limitations:
 - mocks cannot establish real REV transaction timing, USB/I2C failures, motor current accuracy, radio congestion, or mechanical sign conventions;
 - follow simulation with a restrained hardware test whenever a change affects physical IO or safety.
 
-## Paths and autonomous assets
+## Routines and autonomous assets
+
+New autonomous and macro authoring uses the repository-root `.ares` project. Analytics saves
+trigger-neutral routines under `.ares/routines`, while `.ares/autonomous-catalog.json` supplies
+starting poses and Driver Station choices. After an edit, regenerate the Kotlin source compiled
+into TeamCode:
+
+```powershell
+.\gradlew.bat :TeamCode:generateAresProject
+.\gradlew.bat :TeamCode:verifyAresProject
+```
+
+The build fails if generated Kotlin is stale. See [Routines, autonomous selection, and
+controls](ROUTINES_AND_CONTROLS.md) for the student workflow, action discovery, controller mapping,
+and FTC runtime limitations.
+
+### Legacy PathPlanner assets
 
 PathPlanner assets live in:
 
@@ -99,7 +115,9 @@ TeamCode/src/main/assets/pathplanner/paths/*.path
 TeamCode/src/main/assets/pathplanner/autos/*.auto
 ```
 
-The `pathName` property on an autonomous class matches the auto filename without `.auto`. Every referenced path must exist, and the first path or auto starting pose must reflect the robot's intended starting placement.
+These assets remain for compatibility and focused path tests. New ARES routines own their drive
+goals directly and do not require a separate path file. A legacy autonomous class's `pathName`
+property still matches the `.auto` filename, and every referenced legacy path must exist.
 
 To push assets without installing an APK:
 

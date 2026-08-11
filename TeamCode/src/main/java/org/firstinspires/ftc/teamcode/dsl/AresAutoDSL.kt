@@ -1,36 +1,320 @@
 package org.firstinspires.ftc.teamcode.dsl
 
-import com.areslib.ftc.dsl.FtcMecanumAutoBase
-import com.areslib.ftc.dsl.FtcAutoBuilder
-import com.areslib.ftc.dsl.FtcAutoDefinition
+import com.areslib.action.RobotAction
 import com.areslib.ftc.FtcMecanumRobot
 import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.routine.RoutineRequestResult
+import com.areslib.routine.RoutineStartPolicy
+import com.areslib.state.Alliance
+import com.areslib.telemetry.RobotStatusTracker
 import com.areslib.util.PoseStorage
+import com.areslib.util.RobotClock
+import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import org.firstinspires.ftc.teamcode.generated.GeneratedAresProject
 import org.firstinspires.ftc.teamcode.opmodes.AresRobot
+import org.firstinspires.ftc.teamcode.opmodes.TeamStateStorage
 
 /**
- * Team adapter for ARESLib's mecanum autonomous lifecycle.
+ * Generated-project FTC autonomous lifecycle with an offline, INIT-time Driver Station selector.
  *
- * The shared base owns path loading, alliance mirroring, task execution, abort safety,
- * and final pose persistence. This adapter supplies the season facade and preserves
- * process-local team state needed by the following TeleOp.
+ * The checked-in [GeneratedAresProject] is the only autonomous source at runtime: no robot or
+ * network connection is needed while authoring, and a stale generated file is rejected by the
+ * Gradle verification task before the APK is built. During INIT, D-pad left/right selects a
+ * routine and X toggles alliance. START seeds the selected catalog pose, invokes its neutral
+ * routine through the shared `RoutineManager`, and enforces fail-closed cancellation on timeout,
+ * error, stop, or mode transition.
+ *
+ * Photon remains explicitly enabled for every derived autonomous OpMode through
+ * [PhotonEnabledOpMode].
  */
-abstract class AresAutoBase : FtcMecanumAutoBase<AresRobot>(), PhotonEnabledOpMode {
+abstract class AresAutoBase : OpMode(), PhotonEnabledOpMode {
+    private companion object {
+        const val DEFAULT_MAXIMUM_RUNTIME_SECONDS = 29.5
+        const val OVERRUN_THRESHOLD_MS = 30L
+    }
 
-    override fun buildRobot() = AresRobot(hardwareMap, telemetry)
+    /** Optional fixed entry used by a narrow validation OpMode; null enables driver selection. */
+    protected open val lockedAutonomousEntryId: String? = null
 
-    /** Builds a validated autonomous definition for the season robot. */
-    fun auto(block: FtcAutoBuilder.() -> Unit): FtcAutoDefinition =
-        com.areslib.ftc.dsl.ftcAuto(block)
+    /** Optional fixed alliance used by a narrow validation OpMode; null enables INIT toggling. */
+    protected open val lockedAutonomousAlliance: Alliance? = null
 
-    override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot = robot.base
+    /** Competition-safe hard deadline. FTC autonomous cannot exceed 30 seconds. */
+    protected open val maximumRuntimeSeconds: Double = DEFAULT_MAXIMUM_RUNTIME_SECONDS
 
-    override fun updateRobot(robot: AresRobot) = robot.update()
+    private var robot: AresRobot? = null
+    private var generatedRuntime: FtcGeneratedProjectRuntime? = null
+    private lateinit var selector: FtcAutonomousSelector
+    private var configurationError: String? = null
+    private var hardwareError: String? = null
+    private var deadlineMs = 0L
+    private var started = false
+    private var finished = false
+    private var poseIsUsable = true
+    private var closed = false
+    private var loopCount = 0L
+    private var overrunCount = 0L
+    private var lastDashboardRequest: String? = null
+    private var lastPublishedSelection: String? = null
+    private var lastPublishedStatus: String? = null
 
-    override fun closeRobot(robot: AresRobot) {
-        org.firstinspires.ftc.teamcode.opmodes.TeamStateStorage.liftHeight = robot.base.store.state.superstructure.season.liftHeight
-        // PoseStorage and TeamStateStorage do not survive a Robot Controller restart.
-        PoseStorage.alliance = robot.base.store.state.drive.alliance
-        robot.close()
+    /** Constructs the season facade. Kept overridable for focused simulator tests. */
+    protected open fun buildRobot(): AresRobot = AresRobot(hardwareMap, telemetry)
+
+    /** Typed test seam for the shared mecanum safety boundary. */
+    protected open fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot = robot.base
+
+    /** Builds hardware and the generated routine registry before the mode can be armed. */
+    final override fun init() {
+        require(maximumRuntimeSeconds.isFinite() && maximumRuntimeSeconds > 0.0 && maximumRuntimeSeconds <= 30.0) {
+            "Autonomous maximum runtime must be finite and in (0, 30] seconds"
+        }
+        val builtRobot = buildRobot()
+        robot = builtRobot
+        builtRobot.base.mecanumIO.kS = builtRobot.base.driveFeedforward.kS.takeIf { it > 0.0 } ?: 0.05
+        selector = FtcAutonomousSelector(
+            entries = GeneratedAresProject.autonomousEntries,
+            defaultEntryId = GeneratedAresProject.DEFAULT_AUTONOMOUS_ENTRY_ID,
+            initialAlliance = lockedAutonomousAlliance ?: Alliance.RED,
+            lockedEntryId = lockedAutonomousEntryId,
+            lockedAlliance = lockedAutonomousAlliance,
+        )
+        configurationError = runCatching {
+            validateSelectedBounds(builtRobot)
+            seedSelectedPose(builtRobot)
+            generatedRuntime = FtcGeneratedProjectRuntime(
+                robot = builtRobot,
+                autonomousEntry = selector.selected,
+                selectedAlliance = selector.alliance,
+            )
+            generatedRuntime?.routineManager?.validateProject()
+                ?.firstOrNull { it.severity == com.areslib.routine.RoutineValidationSeverity.ERROR }
+                ?.let { error(it.message) }
+        }.exceptionOrNull()?.let { it.message ?: it::class.java.simpleName }
+        publishNetworkCatalog(builtRobot)
+        publishInitStatus()
+    }
+
+    /** Keeps hardware diagnostics and selection live while the Driver Station shows INIT. */
+    final override fun init_loop() {
+        val activeRobot = robot ?: return
+        val dashboardRequest = activeRobot.base.telemetryManager.nt4
+            .getString("ARES/Input/selectedAuto", "")
+            .trim()
+        var selectionChanged = false
+        if (dashboardRequest.isNotEmpty() && dashboardRequest != lastDashboardRequest) {
+            lastDashboardRequest = dashboardRequest
+            selectionChanged = selector.selectEntry(dashboardRequest)
+        }
+        selectionChanged = selector.update(
+            left = gamepad1.dpad_left,
+            right = gamepad1.dpad_right,
+            toggleAlliance = gamepad1.x,
+        ) || selectionChanged
+        if (selectionChanged) {
+            configurationError = runCatching {
+                generatedRuntime?.cancelAll("Autonomous selection changed during INIT")
+                validateSelectedBounds(activeRobot)
+                seedSelectedPose(activeRobot)
+                generatedRuntime = FtcGeneratedProjectRuntime(
+                    robot = activeRobot,
+                    autonomousEntry = selector.selected,
+                    selectedAlliance = selector.alliance,
+                )
+            }.exceptionOrNull()?.let { it.message ?: it::class.java.simpleName }
+        }
+        hardwareError = runCatching { activeRobot.update() }
+            .exceptionOrNull()
+            ?.let { "Robot initialization failed: ${it.message ?: it::class.java.simpleName}" }
+        publishInitStatus()
+    }
+
+    /** Starts the selected generated routine, or blocks and stops safely when preflight failed. */
+    final override fun start() {
+        started = true
+        RobotStatusTracker.activeOpMode = "Auto"
+        val activeRobot = robot ?: return
+        val runtime = generatedRuntime
+        val entry = selector.selected
+        val finalBoundsError = runCatching { validateSelectedBounds(activeRobot) }
+            .exceptionOrNull()
+            ?.let { it.message ?: it::class.java.simpleName }
+        if (finalBoundsError != null) configurationError = finalBoundsError
+        val blockingError = configurationError ?: hardwareError
+        if (entry == null || runtime == null || blockingError != null) {
+            poseIsUsable = false
+            safeRobot(activeRobot)
+            telemetry.addData("AUTO BLOCKED", blockingError ?: "No enabled autonomous entry exists")
+            publishNetworkStatus("Blocked")
+            telemetry.update()
+            finished = true
+            requestOpModeStop()
+            return
+        }
+
+        activeRobot.base.store.dispatch(RobotAction.SetAlliance(selector.alliance))
+        activeRobot.base.visionTracker.hasInitializedPoseWithVision = true
+        when (val request = runtime.routineManager.request(entry.routineId, RoutineStartPolicy.RESTART_EXISTING)) {
+            is RoutineRequestResult.Accepted,
+            is RoutineRequestResult.AlreadyRunning -> {
+                deadlineMs = RobotClock.currentTimeMillis() + (maximumRuntimeSeconds * 1_000.0).toLong()
+                publishNetworkStatus("Running")
+            }
+            is RoutineRequestResult.Rejected -> {
+                configurationError = request.issues.joinToString(separator = "; ") { it.message }
+                poseIsUsable = false
+                finishActiveRun("Generated routine was rejected")
+            }
+        }
+    }
+
+    /** Advances generated tasks, applies their Redux actions, then runs one hardware frame. */
+    final override fun loop() {
+        if (finished) return
+        val activeRobot = robot ?: return
+        val runtime = generatedRuntime ?: return
+        val loopStartMs = RobotClock.currentTimeMillis()
+        if (loopStartMs >= deadlineMs) {
+            poseIsUsable = false
+            finishActiveRun("Runtime limit reached; outputs stopped")
+            return
+        }
+
+        try {
+            runtime.updateTasks()
+            activeRobot.update()
+            if (runtime.routineManager.activeCount == 0 && runtime.routineManager.queuedCount == 0) {
+                finishActiveRun("Complete")
+                return
+            }
+        } catch (error: Exception) {
+            poseIsUsable = false
+            configurationError = error.message ?: error::class.java.simpleName
+            finishActiveRun("Aborted: ${configurationError}")
+            return
+        }
+
+        val elapsedMs = RobotClock.currentTimeMillis() - loopStartMs
+        loopCount++
+        if (elapsedMs > OVERRUN_THRESHOLD_MS) overrunCount++
+        val pose = activeRobot.base.drive.odometryPose
+        telemetry.addData(
+            "Pose",
+            "x=%.2f y=%.2f h=%.1f deg".format(
+                pose.x,
+                pose.y,
+                Math.toDegrees(pose.heading.radians),
+            ),
+        )
+        telemetry.addData("Loop", "${elapsedMs}ms; overruns $overrunCount/$loopCount")
+        telemetry.update()
+    }
+
+    /** Cancels generated work, persists a usable final pose, and closes owned resources once. */
+    final override fun stop() {
+        if (closed) return
+        closed = true
+        val activeRobot = robot
+        try {
+            if (!finished) publishNetworkStatus("Stopped")
+            generatedRuntime?.cancelAll("FTC OpMode stopped")
+            if (started && poseIsUsable && configurationError == null && activeRobot != null) {
+                PoseStorage.currentPose = activeRobot.base.drive.odometryPose
+                PoseStorage.alliance = selector.alliance
+                PoseStorage.hasValidPose = true
+                TeamStateStorage.liftHeight = activeRobot.base.store.state.superstructure.season.liftHeight
+            } else if (!poseIsUsable || configurationError != null) {
+                PoseStorage.hasValidPose = false
+            }
+            if (activeRobot != null) safeRobot(activeRobot)
+        } finally {
+            try {
+                activeRobot?.close()
+            } finally {
+                generatedRuntime = null
+                robot = null
+                runCatching { com.areslib.ftc.photon.AresPhotonCore.disable() }
+            }
+        }
+    }
+
+    private fun seedSelectedPose(activeRobot: AresRobot) {
+        activeRobot.base.store.dispatch(RobotAction.SetAlliance(selector.alliance))
+        val entry = selector.selected ?: return
+        activeRobot.base.resetPose(
+            resolveFtcAutonomousPose(entry, selector.alliance),
+            resetHardware = true,
+        )
+    }
+
+    private fun validateSelectedBounds(activeRobot: AresRobot) {
+        val entry = selector.selected ?: return
+        val envelope = ftcFieldEnvelopeForRobot(activeRobot)
+        val errors = validateFtcAutonomousBounds(
+            entry = entry,
+            routines = GeneratedAresProject.routines,
+            envelope = envelope,
+            selectedAlliance = selector.alliance,
+        )
+        require(errors.isEmpty()) { errors.joinToString(separator = "; ") }
+    }
+
+    private fun finishActiveRun(status: String) {
+        if (finished) return
+        finished = true
+        generatedRuntime?.cancelAll(status)
+        robot?.let(::safeRobot)
+        telemetry.addData("Auto", status)
+        publishNetworkStatus(if (status == "Complete") "Complete" else "Blocked")
+        telemetry.update()
+        requestOpModeStop()
+    }
+
+    /** Stops shared drive hardware and every registered season subsystem. */
+    open fun safeRobot(activeRobot: AresRobot) {
+        val baseRobot = getMecanumRobot(activeRobot)
+        baseRobot.safeAll()
+        baseRobot.safeHardware()
+    }
+
+    private fun publishInitStatus() {
+        val entry = selector.selected
+        telemetry.addData("Autonomous", entry?.displayName ?: "Safe do-nothing")
+        telemetry.addData("Routine ID", entry?.routineId ?: "none")
+        telemetry.addData("Alliance", selector.alliance)
+        val error = configurationError ?: hardwareError
+        if (error == null && entry != null) {
+            telemetry.addData("Status", "READY - press START")
+            if (lockedAutonomousEntryId == null) telemetry.addData("Select", "D-pad left/right")
+            if (lockedAutonomousAlliance == null) telemetry.addData("Alliance control", "X toggles red/blue")
+        } else {
+            telemetry.addData("Status", "BLOCKED")
+            telemetry.addData("Fix", error ?: "Enable at least one autonomous entry in the project")
+        }
+        publishNetworkStatus(if (error == null && entry != null) "Ready" else "Blocked")
+        telemetry.update()
+    }
+
+    private fun publishNetworkCatalog(activeRobot: AresRobot) {
+        val enabledIds = GeneratedAresProject.autonomousEntries
+            .asSequence()
+            .filter { it.enabled }
+            .sortedWith(compareBy<com.areslib.routine.AutonomousCatalogEntry> { it.sortOrder }.thenBy { it.entryId })
+            .joinToString(separator = ",") { it.entryId }
+        val nt4 = activeRobot.base.telemetryManager.nt4
+        nt4.putString("ARES/Auto/AvailableDocuments", enabledIds)
+        nt4.putString("ARES/Auto/Source", "generated:${GeneratedAresProject.CONTENT_SHA256}")
+        nt4.update()
+    }
+
+    private fun publishNetworkStatus(status: String) {
+        val nt4 = robot?.base?.telemetryManager?.nt4 ?: return
+        val selectedId = selector.selected?.entryId.orEmpty()
+        if (selectedId == lastPublishedSelection && status == lastPublishedStatus) return
+        nt4.putString("ARES/Auto/Selected", selectedId)
+        nt4.putString("ARES/Auto/Status", status)
+        nt4.update()
+        lastPublishedSelection = selectedId
+        lastPublishedStatus = status
     }
 }

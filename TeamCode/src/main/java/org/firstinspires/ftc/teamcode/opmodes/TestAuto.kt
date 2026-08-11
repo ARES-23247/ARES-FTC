@@ -8,10 +8,8 @@ import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 /** Red-alliance validation entry point for the shared native `test-auto` asset. */
 @Autonomous(name = "TestAuto - RED", group = "ARES")
 class TestAutoRed : AresAutoBase() {
-    override fun defineAuto() = auto {
-        aresAuto("test-auto")
-        alliance(Alliance.RED)
-    }
+    override val lockedAutonomousEntryId = "test-auto"
+    override val lockedAutonomousAlliance = Alliance.RED
 }
 
 /**
@@ -19,8 +17,6 @@ class TestAutoRed : AresAutoBase() {
  */
 @Autonomous(name = "TestAuto - BLUE", group = "ARES")
 class TestAutoBlue : AresAutoBase() {
-    override fun defineAuto() = auto {
-        aresAuto("test-auto")
-        alliance(Alliance.BLUE)
-    }
+    override val lockedAutonomousEntryId = "test-auto"
+    override val lockedAutonomousAlliance = Alliance.BLUE
 }

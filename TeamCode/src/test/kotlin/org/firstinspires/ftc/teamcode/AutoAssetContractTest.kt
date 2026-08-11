@@ -24,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
+import org.firstinspires.ftc.teamcode.generated.GeneratedAresProject
 import java.io.File
 
 /** Guards the checked-in GUI assets against the capabilities and compiler shipped to the robot. */
@@ -54,6 +55,24 @@ class AutoAssetContractTest {
 
         assertEquals("editor manifest drifted from source-owned action metadata", declared, manifest)
         assertEquals("runtime registry drifted from the editor manifest", manifest, registered)
+    }
+
+    @Test
+    fun `generated project references only shipped FTC routines and capabilities`() {
+        val advertisedKeys = FtcAutoCapabilities.descriptors.map { it.key.value }.toSet()
+        assertEquals(advertisedKeys, GeneratedAresProject.knownActionKeys)
+        assertTrue(GeneratedAresProject.routines.isNotEmpty())
+        assertTrue(GeneratedAresProject.autonomousEntries.any { it.enabled })
+        assertTrue(
+            "generated autonomous catalog references a missing routine",
+            GeneratedAresProject.autonomousEntries.all { it.routineId in GeneratedAresProject.routines },
+        )
+        assertTrue(
+            "generated default autonomous entry is missing or disabled",
+            GeneratedAresProject.autonomousEntries.any {
+                it.entryId == GeneratedAresProject.DEFAULT_AUTONOMOUS_ENTRY_ID && it.enabled
+            },
+        )
     }
 
     @Test

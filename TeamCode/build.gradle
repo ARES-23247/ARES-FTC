@@ -40,6 +40,7 @@ configurations {
             attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
         }
     }
+    aresCodegen
 }
 
 dependencies {
@@ -48,6 +49,8 @@ dependencies {
     implementation('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT') { changing = true }
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     simRun('com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT') { changing = true }
+    aresCodegen('com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT') { changing = true }
+    aresCodegen 'com.google.code.gson:gson:2.10.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.11.0'
@@ -91,11 +94,47 @@ android.applicationVariants.all { variant ->
     }
 }
 
-configurations.all {
-    exclude group: 'org.slf4j', module: 'slf4j-api'
-    exclude group: 'org.java-websocket', module: 'Java-WebSocket'
-    exclude group: 'com.google.code.gson', module: 'gson'
-    exclude group: 'org.nanohttpd', module: 'nanohttpd'
+configurations.configureEach { configuration ->
+    if (configuration.name != 'aresCodegen') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'org.java-websocket', module: 'Java-WebSocket'
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'org.nanohttpd', module: 'nanohttpd'
+    }
+}
+
+// The build-time generator runs on the desktop JVM and needs its full transitive classpath. Robot
+// packaging exclusions above remain unchanged for every Android/runtime configuration.
+
+def generatedAresSource = file(
+    "src/main/java/org/firstinspires/ftc/teamcode/generated/GeneratedAresProject.kt"
+)
+
+tasks.register("generateAresProject", JavaExec) {
+    group = "ARES"
+    description = "Generate checked-in Kotlin from the offline .ares project documents."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC"
+}
+
+tasks.register("verifyAresProject", JavaExec) {
+    group = "verification"
+    description = "Fail when generated ARES Kotlin does not match the checked-in project documents."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC",
+        "--check"
+}
+
+tasks.matching { task -> task.name.startsWith("compile") && task.name.endsWith("Kotlin") }.configureEach {
+    dependsOn tasks.named("verifyAresProject")
 }
 
 koverReport {

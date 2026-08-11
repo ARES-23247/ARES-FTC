@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "documentId": "test-auto",
+  "revision": 1,
+  "name": "Test Auto",
+  "description": "Small mechanism-only routine used to verify autonomous execution.",
+  "steps": [
+    {"kind":"ACTION","actionKey":"intake.stop","arguments":{},"children":[],"elseChildren":[]},
+    {"kind":"WAIT","arguments":{},"durationSeconds":0.25,"children":[],"elseChildren":[]}
+  ]
+}

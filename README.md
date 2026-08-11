@@ -8,6 +8,7 @@ The project is based on FTC SDK 11.1. `FtcRobotController/` remains upstream SDK
 
 - [Architecture and control lifecycle](docs/ARCHITECTURE.md)
 - [Build, simulate, test, and deploy](docs/DEVELOPMENT.md)
+- [Routines, autonomous selection, and visual controls](docs/ROUTINES_AND_CONTROLS.md)
 - [Troubleshooting and safe diagnostics](docs/TROUBLESHOOTING.md)
 - [Team code package guide](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/readme.md)
 
@@ -26,6 +27,7 @@ ARES-FTC/
 │       └── assets/           Field data and PathPlanner paths/autos
 ├── simulator/                Desktop JVM launcher using real TeamCode + FTC mocks
 ├── FtcRobotController/       Upstream FTC SDK application module
+├── .ares/                    Canonical routines, action/auto catalogs, and controller mappings
 ├── docs/                     Project documentation
 └── .ares-robot.json          Team/season/robot identity for ARES tooling
 ```
@@ -86,6 +88,10 @@ From PowerShell in this repository:
 
 # Run TeamCode unit tests
 .\gradlew.bat :TeamCode:testDebugUnitTest
+
+# Regenerate and verify Kotlin compiled from the offline .ares project
+.\gradlew.bat :TeamCode:generateAresProject
+.\gradlew.bat :TeamCode:verifyAresProject
 
 # Run the desktop simulator with TeamCode and FTC mocks
 .\gradlew.bat :simulator:run
