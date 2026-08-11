@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_RIGHT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT
 import org.firstinspires.ftc.teamcode.dsl.*
+import org.firstinspires.ftc.teamcode.generated.subsystems.GeneratedSubsystemRegistry
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
@@ -74,6 +75,9 @@ class AresRobot(
 
     init {
         org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities.register()
+
+        // GUI-managed and hand-authored subsystem DSL documents share this generated registry.
+        GeneratedSubsystemRegistry.createAll(hardwareMap).forEach(base::registerSubsystem)
 
         try {
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)

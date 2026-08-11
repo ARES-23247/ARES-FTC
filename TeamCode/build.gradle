@@ -109,6 +109,8 @@ configurations.configureEach { configuration ->
 def generatedAresSource = file(
     "src/main/java/org/firstinspires/ftc/teamcode/generated/GeneratedAresProject.kt"
 )
+def generatedSubsystemSource = file("src/main/java/org/firstinspires/ftc/teamcode/generated/subsystems")
+def generatedSubsystemTests = file("src/test/kotlin/org/firstinspires/ftc/teamcode/generated/subsystems")
 
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"
@@ -118,7 +120,10 @@ tasks.register("generateAresProject", JavaExec) {
     args "--project", rootProject.projectDir.absolutePath,
         "--output", generatedAresSource.absolutePath,
         "--package", "org.firstinspires.ftc.teamcode.generated",
-        "--platform", "FTC"
+        "--platform", "FTC",
+        "--subsystems-output", generatedSubsystemSource.absolutePath,
+        "--subsystems-test-output", generatedSubsystemTests.absolutePath,
+        "--subsystems-package", "org.firstinspires.ftc.teamcode.generated.subsystems"
 }
 
 tasks.register("verifyAresProject", JavaExec) {
@@ -130,6 +135,9 @@ tasks.register("verifyAresProject", JavaExec) {
         "--output", generatedAresSource.absolutePath,
         "--package", "org.firstinspires.ftc.teamcode.generated",
         "--platform", "FTC",
+        "--subsystems-output", generatedSubsystemSource.absolutePath,
+        "--subsystems-test-output", generatedSubsystemTests.absolutePath,
+        "--subsystems-package", "org.firstinspires.ftc.teamcode.generated.subsystems",
         "--check"
 }
 
