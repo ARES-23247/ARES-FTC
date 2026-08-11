@@ -84,12 +84,13 @@ internal class FtcAutonomousSelector(
  *
  * Mirroring is relative to the catalog's authored alliance, rather than the legacy assumption
  * that one hard-coded alliance is always canonical. FTC uses the established center-origin,
- * rotational (180-degree) field symmetry and CCW-positive headings.
+ * season-declared field symmetry and CCW-positive headings.
  */
 internal fun resolveFtcAutonomousPose(
     entry: AutonomousCatalogEntry,
     selectedAlliance: Alliance,
     pose: RoutinePose = entry.startingPose,
+    symmetry: FieldSymmetry = com.areslib.state.RobotFieldManager.activeConfig.allianceSymmetry,
 ): Pose2d {
     val authoredAlliance = when (entry.authoredAlliance) {
         RoutineAlliance.RED -> Alliance.RED
@@ -108,6 +109,6 @@ internal fun resolveFtcAutonomousPose(
     return AllianceMirroring.mirror(
         authoredPose,
         Alliance.RED,
-        FieldSymmetry.ROTATIONAL,
+        symmetry,
     )
 }

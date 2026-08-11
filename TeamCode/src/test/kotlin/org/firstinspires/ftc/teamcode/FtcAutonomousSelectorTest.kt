@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode
 
 import com.areslib.math.wrapAngle
+import com.areslib.math.coordinate.FieldSymmetry
 import com.areslib.routine.AutonomousCatalogEntry
 import com.areslib.routine.RoutineAlliance
 import com.areslib.routine.RoutinePose
@@ -75,21 +76,21 @@ class FtcAutonomousSelectorTest {
     }
 
     @Test
-    fun `FTC pose mirroring is relative to authored alliance and is rotational`() {
+    fun `FTC pose mirroring is relative to authored alliance and uses season symmetry`() {
         val entry = entry("score", 0).copy(
             authoredAlliance = RoutineAlliance.RED,
             startingPose = RoutinePose(1.0, 2.0, 0.25),
         )
 
-        val red = resolveFtcAutonomousPose(entry, Alliance.RED)
+        val red = resolveFtcAutonomousPose(entry, Alliance.RED, symmetry = FieldSymmetry.MIRRORED)
         assertEquals(1.0, red.x, 1e-9)
         assertEquals(2.0, red.y, 1e-9)
         assertEquals(0.25, red.heading.radians, 1e-9)
 
-        val blue = resolveFtcAutonomousPose(entry, Alliance.BLUE)
-        assertEquals(-1.0, blue.x, 1e-9)
+        val blue = resolveFtcAutonomousPose(entry, Alliance.BLUE, symmetry = FieldSymmetry.MIRRORED)
+        assertEquals(1.0, blue.x, 1e-9)
         assertEquals(-2.0, blue.y, 1e-9)
-        assertEquals(wrapAngle(0.25 + Math.PI), blue.heading.radians, 1e-9)
+        assertEquals(wrapAngle(-0.25), blue.heading.radians, 1e-9)
     }
 
     @Test

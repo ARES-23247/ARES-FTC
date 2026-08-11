@@ -74,6 +74,15 @@ class AresRobot(
     var flywheelSubsystem: org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem? = null
 
     init {
+        // Field symmetry changes by season. Load the checked-in field contract before any
+        // autonomous target, waypoint, or costmap is resolved.
+        runCatching {
+            hardwareMap.appContext.assets.open("paths/field.json").bufferedReader().use { reader ->
+                com.areslib.state.RobotFieldDocument.decode(reader.readText())
+            }
+        }.onSuccess(com.areslib.state.RobotFieldManager::setActiveConfig)
+            .onFailure { error -> addTelemetry("Field", "Using fallback field config: ${error.message}") }
+
         org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities.register()
 
         // GUI-managed and hand-authored subsystem DSL documents share this generated registry.

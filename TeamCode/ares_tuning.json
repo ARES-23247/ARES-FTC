@@ -27,7 +27,7 @@
     "ftcPinpoint": {
       "xOffsetMm": -2.646690996383435,
       "yOffsetMm": -0.013876460111646236,
-      "encoderResolution": 20.44
+      "encoderResolution": 0.0
     }
   },
   "driver": {

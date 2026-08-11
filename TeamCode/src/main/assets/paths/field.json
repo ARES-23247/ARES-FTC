@@ -5,6 +5,7 @@
   "name": "2025-2026 DECODE",
   "gameYear": "2025-2026",
   "fieldType": "ftc",
+  "allianceSymmetry": "mirrored",
   "widthMeters": 3.6576,
   "heightMeters": 3.6576,
   "xAxisDirection": "up",
