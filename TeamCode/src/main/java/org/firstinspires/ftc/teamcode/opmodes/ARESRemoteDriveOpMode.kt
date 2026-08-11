@@ -1,23 +1,23 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.areslib.networktables.NT4Server
 import com.areslib.util.RobotClock
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 
 /**
  * Accepts field-relative drive commands from the local ARES NT4 client.
  *
- * `ARES/Input/heartbeat` must change at least once per second. A stale heartbeat, parse error,
- * or networking exception commands zero velocity with heading lock disabled. Topic names are
- * canonical and omit a leading slash. The optional `reset x y headingRadians` command resets
- * the EKF pose. Non-finite motion values fail closed, and malformed reset commands are rejected
- * atomically rather than partially defaulting a pose to the field origin.
+ * Motion is accepted only from the atomic `ARES/Input/driveFrame` double-array topic. Each frame
+ * carries a publisher session, sequence, timestamp, and all three axes. A new session or expired
+ * lease must first publish a complete neutral frame; only a later sequence may command motion.
+ * Legacy scalar heartbeat/axis topics remain fail-closed and cannot arm this OpMode. The optional
+ * `reset x y headingRadians` command resets the EKF pose after the atomic handshake. Non-finite or
+ * malformed input, stale/replayed sequences, and networking exceptions command zero velocity.
  */
 @TeleOp(name = "ARES Remote Drive (NT4)", group = "ARES")
 class ARESRemoteDriveOpMode : AresTeleOpBase() {
-
-    private var lastHeartbeatTime = 0L
-    private var lastHeartbeatVal = 0L
+    private val driveFrameGate = RemoteDriveFrameGate()
     private val commandWhitespace = Regex("\\s+")
 
     override fun define() = teleOp {
@@ -31,27 +31,20 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
         everyLoop {
             try {
                 val nt4 = robot.base.telemetryManager.nt4
-                val currentHeartbeat = nt4.getNumber("ARES/Input/heartbeat", Double.NaN)
-                    .takeIf { it.isFinite() }
-                    ?.toLong()
                 val now = RobotClock.currentTimeMillis()
-
-                if (currentHeartbeat != null && currentHeartbeat != lastHeartbeatVal) {
-                    lastHeartbeatVal = currentHeartbeat
-                    lastHeartbeatTime = now
+                val encodedFrame = try {
+                    NT4Server.getDoubleArray(DRIVE_FRAME_TOPIC, EMPTY_DRIVE_FRAME)
+                } catch (_: Exception) {
+                    null
                 }
+                val frameFresh = driveFrameGate.observe(
+                    encodedFrame = encodedFrame,
+                    timestampMs = now,
+                    maxTranslationMps = robot.base.drive.maxSpeedMps,
+                    maxOmegaRadiansPerSecond = robot.base.drive.maxAngularSpeedRadiansPerSecond
+                )
 
-                // A frozen publisher value is treated as a disconnected controller.
-                if (now - lastHeartbeatTime < 1000L) {
-                    val vx = finiteClamped(nt4.getNumber("ARES/Input/vx", 0.0), robot.base.drive.maxSpeedMps)
-                    val vy = finiteClamped(nt4.getNumber("ARES/Input/vy", 0.0), robot.base.drive.maxSpeedMps)
-                    val omega = finiteClamped(
-                        nt4.getNumber("ARES/Input/omega", 0.0),
-                        robot.base.drive.maxAngularSpeedRadiansPerSecond
-                    )
-
-                    robot.base.drive.joystickDrive(vx, vy, omega, isFieldCentric = true)
-                    
+                if (frameFresh && driveFrameGate.motionAuthorized) {
                     // Commands are single-consumer: clear the topic before executing one.
                     val cmdStr = nt4.getString("ARES/Input/command", "")
                     if (cmdStr.isNotEmpty()) {
@@ -72,23 +65,33 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
                     }
 
                     robot.addTelemetry("Status", "DRIVING")
-                    robot.addTelemetry("vx", vx)
-                    robot.addTelemetry("vy", vy)
-                    robot.addTelemetry("omega", omega)
+                    robot.addTelemetry("vx", driveFrameGate.vx)
+                    robot.addTelemetry("vy", driveFrameGate.vy)
+                    robot.addTelemetry("omega", driveFrameGate.omega)
+
+                    // Apply motion last, after every network read, command operation, and telemetry
+                    // write in this loop has completed. Any earlier exception reaches hard zero.
+                    robot.base.drive.joystickDrive(
+                        driveFrameGate.vx,
+                        driveFrameGate.vy,
+                        driveFrameGate.omega,
+                        isFieldCentric = true
+                    )
+                } else if (frameFresh) {
+                    // A retained command string must not survive into the first post-handshake
+                    // motion frame. Clear it while holding drivetrain output at neutral.
+                    nt4.putString("ARES/Input/command", "")
+                    robot.base.drive.joystickDrive(0.0, 0.0, 0.0, isFieldCentric = true)
+                    robot.addTelemetry("Status", "ATOMIC NEUTRAL HANDSHAKE ACCEPTED")
                 } else {
                     robot.base.drive.joystickDrive(0.0, 0.0, 0.0, isFieldCentric = true)
-                    robot.addTelemetry("Status", "DISCONNECTED / STALE HEARTBEAT")
+                    robot.addTelemetry("Status", "DISCONNECTED / WAITING FOR NEUTRAL DRIVE FRAME")
                 }
             } catch (e: Exception) {
                 robot.base.drive.joystickDrive(0.0, 0.0, 0.0, isFieldCentric = true)
                 robot.addTelemetry("Status", "WATCHDOG ERROR: ${e.message}")
             }
         }
-    }
-
-    private fun finiteClamped(value: Double, magnitudeLimit: Double): Double {
-        val safeLimit = magnitudeLimit.takeIf { it.isFinite() && it > 0.0 } ?: return 0.0
-        return value.takeIf { it.isFinite() }?.coerceIn(-safeLimit, safeLimit) ?: 0.0
     }
 
     private fun parseResetPose(command: String): com.areslib.math.geometry.Pose2d? {
@@ -98,5 +101,164 @@ class ARESRemoteDriveOpMode : AresTeleOpBase() {
         val y = parts[2].toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
         val heading = parts[3].toDoubleOrNull()?.takeIf { it.isFinite() } ?: return null
         return com.areslib.math.geometry.Pose2d(x, y, com.areslib.math.geometry.Rotation2d(heading))
+    }
+
+    private companion object {
+        const val DRIVE_FRAME_TOPIC = "ARES/Input/driveFrame"
+        val EMPTY_DRIVE_FRAME = DoubleArray(0)
+    }
+}
+
+/**
+ * Fail-closed state machine for atomic remote-drive frames.
+ *
+ * Payload: `[version, sessionNonce, sequence, clientTimestampMs, vx, vy, omega]`. Version is `1`;
+ * session, sequence, and timestamp are exact non-negative integers within JavaScript's safe integer
+ * range. Session changes, malformed frames, read failures, clock rollback, and lease expiry disarm
+ * motion. The first accepted sequence in each arming cycle must be neutral and never moves the
+ * robot; a later sequence from that same session authorizes complete-frame motion.
+ */
+internal class RemoteDriveFrameGate(
+    private val timeoutMs: Long = 1_000L
+) {
+    private var hasSession = false
+    private var sessionNonce = 0L
+    private var lastSequence = -1L
+    private var lastAcceptedTimeMs = 0L
+    private var neutralHandshakeComplete = false
+
+    var vx: Double = 0.0
+        private set
+    var vy: Double = 0.0
+        private set
+    var omega: Double = 0.0
+        private set
+    var motionAuthorized: Boolean = false
+        private set
+
+    init {
+        require(timeoutMs > 0L) { "timeoutMs must be positive" }
+    }
+
+    fun observe(
+        encodedFrame: DoubleArray?,
+        timestampMs: Long,
+        maxTranslationMps: Double,
+        maxOmegaRadiansPerSecond: Double
+    ): Boolean {
+        if (!isFresh(timestampMs)) disarmForHandshake(clearSession = false)
+        if (encodedFrame == null || encodedFrame.size != FRAME_SIZE ||
+            !maxTranslationMps.isFinite() || maxTranslationMps <= 0.0 ||
+            !maxOmegaRadiansPerSecond.isFinite() || maxOmegaRadiansPerSecond <= 0.0
+        ) {
+            disarmForHandshake(clearSession = true)
+            return false
+        }
+
+        val version = encodedFrame[VERSION_INDEX]
+        val parsedSession = exactNonNegativeLong(encodedFrame[SESSION_INDEX])
+        val parsedSequence = exactNonNegativeLong(encodedFrame[SEQUENCE_INDEX])
+        val parsedClientTimestamp = exactNonNegativeLong(encodedFrame[CLIENT_TIMESTAMP_INDEX])
+        val candidateVx = encodedFrame[VX_INDEX]
+        val candidateVy = encodedFrame[VY_INDEX]
+        val candidateOmega = encodedFrame[OMEGA_INDEX]
+        if (version != PROTOCOL_VERSION || parsedSession == null || parsedSequence == null ||
+            parsedClientTimestamp == null || !candidateVx.isFinite() || !candidateVy.isFinite() ||
+            !candidateOmega.isFinite() || kotlin.math.abs(candidateVx) > maxTranslationMps ||
+            kotlin.math.abs(candidateVy) > maxTranslationMps ||
+            kotlin.math.abs(candidateOmega) > maxOmegaRadiansPerSecond
+        ) {
+            disarmForHandshake(clearSession = false)
+            return false
+        }
+
+        if (!hasSession || parsedSession != sessionNonce) {
+            disarmForHandshake(clearSession = false)
+            hasSession = true
+            sessionNonce = parsedSession
+            lastSequence = parsedSequence
+            return acceptNeutralHandshake(candidateVx, candidateVy, candidateOmega, timestampMs)
+        }
+
+        if (parsedSequence < lastSequence) {
+            disarmForHandshake(clearSession = false)
+            return false
+        }
+        // Polling an unchanged atomic topic may return the same committed sequence many times.
+        // It may hold the last coherent command only within the receiver-side freshness lease.
+        if (parsedSequence == lastSequence) return isFresh(timestampMs)
+        lastSequence = parsedSequence
+
+        if (!neutralHandshakeComplete) {
+            return acceptNeutralHandshake(candidateVx, candidateVy, candidateOmega, timestampMs)
+        }
+
+        vx = candidateVx
+        vy = candidateVy
+        omega = candidateOmega
+        motionAuthorized = true
+        lastAcceptedTimeMs = timestampMs
+        return true
+    }
+
+    private fun acceptNeutralHandshake(
+        candidateVx: Double,
+        candidateVy: Double,
+        candidateOmega: Double,
+        timestampMs: Long
+    ): Boolean {
+        if (kotlin.math.abs(candidateVx) > NEUTRAL_EPSILON ||
+            kotlin.math.abs(candidateVy) > NEUTRAL_EPSILON ||
+            kotlin.math.abs(candidateOmega) > NEUTRAL_EPSILON
+        ) {
+            return false
+        }
+        neutralHandshakeComplete = true
+        motionAuthorized = false
+        vx = 0.0
+        vy = 0.0
+        omega = 0.0
+        lastAcceptedTimeMs = timestampMs
+        return true
+    }
+
+    private fun isFresh(timestampMs: Long): Boolean {
+        if (!neutralHandshakeComplete) return false
+        val elapsedMs = timestampMs - lastAcceptedTimeMs
+        return elapsedMs >= 0L && elapsedMs < timeoutMs
+    }
+
+    private fun disarmForHandshake(clearSession: Boolean) {
+        neutralHandshakeComplete = false
+        motionAuthorized = false
+        vx = 0.0
+        vy = 0.0
+        omega = 0.0
+        lastAcceptedTimeMs = 0L
+        if (clearSession) {
+            hasSession = false
+            sessionNonce = 0L
+            lastSequence = -1L
+        }
+    }
+
+    private fun exactNonNegativeLong(value: Double): Long? {
+        if (!value.isFinite() || value < 0.0 || value > MAX_SAFE_INTEGER_AS_DOUBLE) return null
+        val parsed = value.toLong()
+        return parsed.takeIf { it.toDouble() == value }
+    }
+
+    private companion object {
+        const val FRAME_SIZE = 7
+        const val VERSION_INDEX = 0
+        const val SESSION_INDEX = 1
+        const val SEQUENCE_INDEX = 2
+        const val CLIENT_TIMESTAMP_INDEX = 3
+        const val VX_INDEX = 4
+        const val VY_INDEX = 5
+        const val OMEGA_INDEX = 6
+        const val PROTOCOL_VERSION = 1.0
+        const val MAX_SAFE_INTEGER_AS_DOUBLE = 9_007_199_254_740_991.0
+        const val NEUTRAL_EPSILON = 1e-6
     }
 }

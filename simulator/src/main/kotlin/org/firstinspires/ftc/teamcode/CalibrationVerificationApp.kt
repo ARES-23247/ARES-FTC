@@ -137,14 +137,19 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
 
         println("Finished $command. Points collected: $pointsCount, returned to NONE: $wentBackToNone")
         
-        if (pointsCount < 5) {
-            error("Insufficient fresh calibration samples: received $pointsCount")
+        val failureMessage = when {
+            !wentBackToNone ->
+                "Calibration routine $command did not return to NONE before the completion deadline"
+            pointsCount < 5 ->
+                "Insufficient fresh calibration samples: received $pointsCount"
+            else -> null
         }
 
-        // Reset command state before the next routine.
+        // Reset command state before the next routine, including on a recorded verification failure.
         calCmdPub.set("STOP")
         ntInst.flush()
         Thread.sleep(300)
+        if (failureMessage != null) error(failureMessage)
     }
 
     // Hardware-affecting routines are deliberately serialized.

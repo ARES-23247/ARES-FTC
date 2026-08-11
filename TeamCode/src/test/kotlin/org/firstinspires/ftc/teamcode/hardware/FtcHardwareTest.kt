@@ -140,6 +140,19 @@ class FtcHardwareTest {
     }
 
     @Test
+    fun intakeRejectsPhysicallyInvalidNegativeCurrent() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("intake", mockMotor).hardwareMap
+        Mockito.`when`(mockMotor.getCurrent(CurrentUnit.AMPS)).thenReturn(-0.25)
+
+        val io = FtcIntakeIO(hardwareMap)
+        io.refresh()
+
+        assertFalse(io.rollerCurrentValid)
+        assertEquals(0.0, io.rollerCurrentAmps, 1e-6)
+    }
+
+    @Test
     fun intakeUsesNominalVoltageWhenBatteryReadingIsNotFinite() {
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
         val fixture = createMockHardwareMap("intake", mockMotor, voltage = Double.NaN)
@@ -189,27 +202,91 @@ class FtcHardwareTest {
 
         val io = FtcFlywheelIO(hardwareMap)
         io.refresh()
+        assertFalse(io.currentReadingValid)
         assertEquals(0.0, io.currentAmps, 1e-6)
 
         io.refresh()
+        assertTrue(io.currentReadingValid)
         assertEquals("One failed hub transaction must not permanently disable sensing", 7.25, io.currentAmps, 1e-6)
         Mockito.verify(mockMotor, Mockito.times(2)).getCurrent(CurrentUnit.AMPS)
     }
 
     @Test
-    fun flywheelOpenLoopFallbackNeverWritesNonFinitePowerForInvalidBatteryVoltage() {
+    fun flywheelVelocityControlFailureStopsAndRequiresExplicitHealthyZeroBeforeRetry() {
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
-        val fixture = createMockHardwareMap("shooter", mockMotor, voltage = Double.NaN)
-        Mockito.doThrow(RuntimeException("velocity control unavailable"))
-            .`when`(mockMotor).velocity = Mockito.anyDouble()
+        val fixture = createMockHardwareMap("shooter", mockMotor)
+        Mockito.`when`(mockMotor.velocity).thenReturn(0.0)
+        var velocityWrites = 0
+        Mockito.doAnswer {
+            velocityWrites++
+            if (velocityWrites == 1) throw RuntimeException("velocity control unavailable")
+            null
+        }.`when`(mockMotor).velocity = Mockito.anyDouble()
 
         val io = FtcFlywheelIO(fixture.hardwareMap)
         io.refresh()
-        Mockito.verify(fixture.voltageSensor).voltage
+        Mockito.clearInvocations(mockMotor)
         io.setVelocityRpm(3_000.0)
 
-        // Invalid bus voltage must fall back to the 12 V nominal value: 3000/6000 = 0.5.
-        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.5, 1e-9)
+        Mockito.verify(mockMotor).velocity = (3_000.0 / 60.0) * 28.0
+        Mockito.verify(mockMotor).power = 0.0
+        Mockito.verify(mockMotor, Mockito.never()).mode = com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER
+        assertFalse("A failed controller write must invalidate closed-loop availability", io.velocityValid)
+
+        Mockito.clearInvocations(mockMotor)
+        io.setVelocityRpm(3_000.0)
+        Mockito.verify(mockMotor, Mockito.never()).velocity = Mockito.anyDouble()
+        Mockito.verify(mockMotor, Mockito.never()).power = AdditionalMatchers.eq(0.5, 1e-9)
+
+        // A good read alone cannot silently re-arm the failed output path.
+        io.refresh()
+        assertFalse(io.velocityValid)
+        Mockito.clearInvocations(mockMotor)
+        io.setVelocityRpm(0.0)
+        assertTrue("A healthy sample plus explicit zero command should re-arm closed-loop control", io.velocityValid)
+
+        Mockito.clearInvocations(mockMotor)
+        io.setVelocityRpm(3_000.0)
+        Mockito.verify(mockMotor).velocity = (3_000.0 / 60.0) * 28.0
+        Mockito.verify(mockMotor, Mockito.never()).power = AdditionalMatchers.eq(0.5, 1e-9)
+    }
+
+    @Test
+    fun flywheelReducedEffortRequiresFeedbackAndCommandsActualZeroWhenFeedbackIsInvalid() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val fixture = createMockHardwareMap("shooter", mockMotor)
+        Mockito.`when`(mockMotor.velocity)
+            .thenReturn(0.0)
+            .thenThrow(RuntimeException("encoder unavailable"))
+
+        val io = FtcFlywheelIO(fixture.hardwareMap)
+        io.refresh()
+        Mockito.clearInvocations(mockMotor)
+        io.setVelocityRpm(3_500.0, 0.45)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.45, 1e-9)
+
+        io.refresh()
+        assertFalse(io.velocityValid)
+        Mockito.clearInvocations(mockMotor)
+        io.setVelocityRpm(3_500.0, 0.45)
+        Mockito.verify(mockMotor).power = 0.0
+        Mockito.verify(mockMotor, Mockito.never()).velocity = Mockito.anyDouble()
+    }
+
+    @Test
+    fun flywheelHardStopIsWrittenAfterVelocityCommandEvenWhenPreviousRawPowerWasZero() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("shooter", mockMotor).hardwareMap
+        val io = FtcFlywheelIO(hardwareMap)
+
+        io.setAppliedVoltage(0.0)
+        io.setVelocityRpm(3_000.0)
+        Mockito.clearInvocations(mockMotor)
+
+        io.setAppliedVoltage(0.0)
+
+        Mockito.verify(mockMotor).power = 0.0
+        Mockito.verify(mockMotor, Mockito.never()).velocity = Mockito.anyDouble()
     }
 
     @Test
@@ -227,6 +304,25 @@ class FtcHardwareTest {
 
         subsystem.writeOutputs(state, 0.0)
 
-        Mockito.verify(io).setVelocityRpm(0.0)
+        Mockito.verify(io).setAppliedVoltage(0.0)
+        Mockito.verify(io, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
+    }
+
+    @Test
+    fun flywheelPartialScalePreservesTargetAndLimitsEffort() {
+        val io = Mockito.mock(FlywheelIO::class.java)
+        val subsystem = FlywheelSubsystem(io)
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = 3_500.0
+                )
+            )
+        )
+
+        subsystem.writeOutputs(state, 0.45)
+
+        Mockito.verify(io).setVelocityRpm(3_500.0, 0.45)
     }
 }

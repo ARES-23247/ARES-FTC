@@ -62,7 +62,7 @@ class FtcIntakeIO(hardwareMap: HardwareMap) : IntakeIO, AutoCloseable {
 
             try {
                 val current = motor.getCurrent(CurrentUnit.AMPS)
-                cachedRollerCurrentValid = current.isFinite()
+                cachedRollerCurrentValid = current.isFinite() && current >= 0.0
                 cachedRollerAmps = if (cachedRollerCurrentValid) current else 0.0
             } catch (_: Exception) {
                 // A transient hub/CAN read failure must not retain a stale overcurrent

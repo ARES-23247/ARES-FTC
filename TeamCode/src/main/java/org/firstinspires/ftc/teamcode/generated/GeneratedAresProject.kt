@@ -128,8 +128,8 @@ fun interface GeneratedAresProjectControlTaskSink {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 3
     const val CATALOG_SHA256: String = "efae98af6ae95fc69616265aabfac616cbae6cfd7cc1e0bd71ed2e24485e8f74"
-    const val CONTENT_SHA256: String = "8a72adbad229fda0f0718b6856a9af248e0cd185d3c248e4937a66a74aa0f157"
-    const val SOURCE_SHA256: String = "c97b512335f595cc0d8efc2ba182e5f7fe27417c5098e28ae2d49000f12f3ded"
+    const val CONTENT_SHA256: String = "dc164ea21062efbb7ecba1294e6873731e3917c73ea2a39f1a449aa41a08eb53"
+    const val SOURCE_SHA256: String = "d5b5859edf1909a83e609c7d8a4e51bee8af3ba6a4755e4489a4fedd852c13b9"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -143,6 +143,40 @@ object GeneratedAresProject {
     val knownConditionKeys: Set<String> = emptySet()
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
+        "new-routine-e0d35bd4" to RoutineDocument(
+            schemaVersion = 1,
+            documentId = "new-routine-e0d35bd4",
+            revision = 1,
+            parentContentHash = null,
+            name = "New Routine",
+            description = null,
+            steps = listOf(
+                RoutineStep(
+                    kind = RoutineStepKind.DRIVE_TO,
+                    drive = RoutineDriveStep(
+                        target = RoutinePose(
+                            xMeters = -0.5681932250976562,
+                            yMeters = -0.15872606735229491,
+                            headingRadians = 0.0,
+                        ),
+                        motionPresetKey = "balanced",
+                        preferredEngineKey = null,
+                    ),
+                ),
+                RoutineStep(
+                    kind = RoutineStepKind.DRIVE_TO,
+                    drive = RoutineDriveStep(
+                        target = RoutinePose(
+                            xMeters = -1.4791425636291504,
+                            yMeters = -0.5129841676712036,
+                            headingRadians = 0.0,
+                        ),
+                        motionPresetKey = "balanced",
+                        preferredEngineKey = null,
+                    ),
+                ),
+            ),
+        ),
         "test-auto" to RoutineDocument(
             schemaVersion = 1,
             documentId = "test-auto",
