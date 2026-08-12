@@ -8,6 +8,7 @@ The project is based on FTC SDK 11.1. `FtcRobotController/` remains upstream SDK
 
 - [Architecture and control lifecycle](docs/ARCHITECTURE.md)
 - [Build, simulate, test, and deploy](docs/DEVELOPMENT.md)
+- [Subsystem generator and hand-authoring guide](docs/SUBSYSTEM_AUTHORING.md)
 - [Routines, autonomous selection, and visual controls](docs/ROUTINES_AND_CONTROLS.md)
 - [Troubleshooting and safe diagnostics](docs/TROUBLESHOOTING.md)
 - [Team code package guide](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/readme.md)
@@ -92,6 +93,11 @@ From PowerShell in this repository:
 # Regenerate and verify Kotlin compiled from the offline .ares project
 .\gradlew.bat :TeamCode:generateAresProject
 .\gradlew.bat :TeamCode:verifyAresProject
+
+# Preview or create subsystem starters; normal project generation refreshes plumbing
+.\gradlew.bat :TeamCode:previewSubsystemChanges
+.\gradlew.bat :TeamCode:generateSubsystemStarters
+.\gradlew.bat :TeamCode:generateAresProject
 
 # Run the desktop simulator with TeamCode and FTC mocks
 .\gradlew.bat :simulator:run

@@ -13,6 +13,11 @@ concurrency:
 permissions:
   contents: read
 
+# Cross-repository feature branches must compile together. Every other ref deliberately falls back
+# to the protected ARESLib master branch, including scheduled/manual runs on master.
+env:
+  ARESLIB_REF: ${{ (github.head_ref || github.ref_name) == 'codex/subsystem-authoring-v2' && 'codex/subsystem-authoring-v2' || 'master' }}
+
 jobs:
   build-and-test:
     name: Build, test, and verify
@@ -29,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ARES-23247/ARESLib-Kotlin
-          ref: master
+          ref: ${{ env.ARESLIB_REF }}
           path: ARESLib-Kotlin
 
       - name: Set up JDK 17
@@ -74,7 +79,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ARES-23247/ARESLib-Kotlin
-          ref: master
+          ref: ${{ env.ARESLIB_REF }}
           path: ARESLib-Kotlin
 
       - name: Set up JDK 21

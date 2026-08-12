@@ -17,8 +17,18 @@ apply from: '../build.dependencies.gradle'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.kotlinx.kover'
 
+// Mechanical subsystem registration and contract tests are disposable build products. Editable
+// starters stay under src/ and are protected by the generator's ownership/diff contract.
+def generatedAresSubsystemMainDir = file("${buildDir}/generated/ares/main/kotlin")
+def generatedAresSubsystemTestDir = file("${buildDir}/generated/ares/test/kotlin")
+
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
+
+    sourceSets {
+        main.java.srcDir generatedAresSubsystemMainDir
+        test.java.srcDir generatedAresSubsystemTestDir
+    }
 
     packagingOptions {
         jniLibs.useLegacyPackaging true
@@ -109,20 +119,99 @@ configurations.configureEach { configuration ->
 def generatedAresSource = file(
     "src/main/java/org/firstinspires/ftc/teamcode/generated/GeneratedAresProject.kt"
 )
+def subsystemStarterSource = file(
+    "src/main/java/org/firstinspires/ftc/teamcode/subsystems"
+)
+// Keep split roots configured even with no subsystem documents: generation then removes stale
+// manifests/sources and emits the empty registry deterministically after the final definition is
+// deleted. No ordinary build task creates or replaces editable starters.
+def subsystemCodegenArgs = [
+    "--subsystems-starter-output", subsystemStarterSource.absolutePath,
+    "--subsystems-generated-output", generatedAresSubsystemMainDir.absolutePath,
+    "--subsystems-generated-test-output", generatedAresSubsystemTestDir.absolutePath,
+    "--subsystems-package", "org.firstinspires.ftc.teamcode.subsystems",
+]
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"
-    description = "Generate checked-in Kotlin from the offline .ares project documents."
+    description = "Generate checked-in project Kotlin and disposable subsystem plumbing; never replace starters."
     classpath = configurations.aresCodegen
     mainClass = "com.areslib.codegen.AresProjectCodegenCli"
     args "--project", rootProject.projectDir.absolutePath,
         "--output", generatedAresSource.absolutePath,
         "--package", "org.firstinspires.ftc.teamcode.generated",
         "--platform", "FTC"
+    args subsystemCodegenArgs
+}
+
+tasks.register("prepareAresSubsystemPlumbing", JavaExec) {
+    group = "build setup"
+    description = "Materialize disposable subsystem registration/tests without modifying editable starters."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC",
+        "--subsystems-only"
+    args subsystemCodegenArgs
+}
+
+tasks.register("previewSubsystemChanges", JavaExec) {
+    group = "ARES"
+    description = "Preview categorized subsystem starter changes and safety warnings without writing files."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC",
+        "--subsystems-only",
+        "--preview-subsystem-starters"
+    args subsystemCodegenArgs
+}
+
+tasks.register("generateSubsystemStarters", JavaExec) {
+    group = "ARES"
+    description = "Create missing editable subsystem starters and generated plumbing; refuse replacements."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC",
+        "--subsystems-only",
+        "--apply-subsystem-starters"
+    args subsystemCodegenArgs
+}
+
+tasks.register("replaceSubsystemStarters", JavaExec) {
+    group = "ARES"
+    description = "Replace changed generated starters only with the exact token printed by preview."
+    classpath = configurations.aresCodegen
+    mainClass = "com.areslib.codegen.AresProjectCodegenCli"
+    args "--project", rootProject.projectDir.absolutePath,
+        "--output", generatedAresSource.absolutePath,
+        "--package", "org.firstinspires.ftc.teamcode.generated",
+        "--platform", "FTC",
+        "--subsystems-only",
+        "--apply-subsystem-starters"
+    args subsystemCodegenArgs
+    doFirst {
+        def token = providers.gradleProperty("ares.subsystemReplacementToken").orNull
+        if (token == null || token.trim().isEmpty()) {
+            throw new GradleException(
+                "Run previewSubsystemChanges, review its structured diff, then pass " +
+                    "-Pares.subsystemReplacementToken=<exact-token>."
+            )
+        }
+        args "--subsystems-confirmation-token", token
+    }
 }
 
 tasks.register("verifyAresProject", JavaExec) {
     group = "verification"
-    description = "Fail when generated ARES Kotlin does not match the checked-in project documents."
+    description = "Fail when checked-in project Kotlin, starters, or generated subsystem plumbing is stale."
+    dependsOn tasks.named("prepareAresSubsystemPlumbing")
     classpath = configurations.aresCodegen
     mainClass = "com.areslib.codegen.AresProjectCodegenCli"
     args "--project", rootProject.projectDir.absolutePath,
@@ -130,6 +219,7 @@ tasks.register("verifyAresProject", JavaExec) {
         "--package", "org.firstinspires.ftc.teamcode.generated",
         "--platform", "FTC",
         "--check"
+    args subsystemCodegenArgs
 }
 
 tasks.matching { task -> task.name.startsWith("compile") && task.name.endsWith("Kotlin") }.configureEach {

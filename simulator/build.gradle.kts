@@ -20,7 +20,11 @@ dependencies {
 
 sourceSets {
     main {
-        java.srcDirs("../TeamCode/src/main/java", "src/main/kotlin")
+        java.srcDirs(
+            "../TeamCode/src/main/java",
+            "../TeamCode/build/generated/ares/main/kotlin",
+            "src/main/kotlin",
+        )
     }
 }
 
@@ -29,6 +33,12 @@ kotlin {
 }
 
 val javaToolchains = project.extensions.getByType<JavaToolchainService>()
+
+// The simulator compiles the real editable adapters plus the same disposable registration source
+// as the Android app. It must never grow a simulator-only wiring path.
+tasks.named("compileKotlin") {
+    dependsOn(":TeamCode:prepareAresSubsystemPlumbing")
+}
 
 tasks.named<JavaExec>("run") {
     group = "application"

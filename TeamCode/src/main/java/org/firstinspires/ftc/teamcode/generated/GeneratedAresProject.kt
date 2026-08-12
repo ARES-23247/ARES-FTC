@@ -102,8 +102,8 @@ interface GeneratedAresProjectCapabilities {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 5
     const val CATALOG_SHA256: String = "efae98af6ae95fc69616265aabfac616cbae6cfd7cc1e0bd71ed2e24485e8f74"
-    const val CONTENT_SHA256: String = "c5ba8f03bc0d03f6ca069ae551f9abe4420e864d285d642b9b85ced50b9c75c4"
-    const val SOURCE_SHA256: String = "1eb4972b7b12d2569d4ac818f792e6669f95b04c22edd8232110efff414cd00c"
+    const val CONTENT_SHA256: String = "7d1a3b3ac51648dee957cabbc84c641e39669f26cdd3f631e8429997b0043340"
+    const val SOURCE_SHA256: String = "ba79d687009730b318bf2aca84c2172a4899c10926f39867d9359f8c7995bcfc"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
