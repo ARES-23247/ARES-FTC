@@ -100,10 +100,10 @@ interface GeneratedAresProjectCapabilities {
 
 /** Generated from the project's checked-in ARES documents. Do not edit by hand. */
 object GeneratedAresProject {
-    const val GENERATOR_VERSION: Int = 4
+    const val GENERATOR_VERSION: Int = 5
     const val CATALOG_SHA256: String = "efae98af6ae95fc69616265aabfac616cbae6cfd7cc1e0bd71ed2e24485e8f74"
-    const val CONTENT_SHA256: String = "1f724031bd2a1848484cb59870166dd14f76d3ea3a4c2df56d49a622692e8116"
-    const val SOURCE_SHA256: String = "d42e4f6f7cd07582959a4aec042c5e02810aa36d39a8d9f28d7c59265020f916"
+    const val CONTENT_SHA256: String = "c5ba8f03bc0d03f6ca069ae551f9abe4420e864d285d642b9b85ced50b9c75c4"
+    const val SOURCE_SHA256: String = "1eb4972b7b12d2569d4ac818f792e6669f95b04c22edd8232110efff414cd00c"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -118,7 +118,7 @@ object GeneratedAresProject {
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
         "test-auto" to RoutineDocument(
-            schemaVersion = 1,
+            schemaVersion = 2,
             documentId = "test-auto",
             revision = 1,
             parentContentHash = null,
@@ -127,16 +127,18 @@ object GeneratedAresProject {
             steps = listOf(
                 RoutineStep(
                     kind = RoutineStepKind.ACTION,
+                    stepId = "step-stop-intake",
                     actionKey = "intake.stop",
                 ),
                 RoutineStep(
                     kind = RoutineStepKind.WAIT,
+                    stepId = "step-settle",
                     durationSeconds = 0.25,
                 ),
             ),
         ),
         "test-path" to RoutineDocument(
-            schemaVersion = 1,
+            schemaVersion = 2,
             documentId = "test-path",
             revision = 1,
             parentContentHash = null,
@@ -145,6 +147,7 @@ object GeneratedAresProject {
             steps = listOf(
                 RoutineStep(
                     kind = RoutineStepKind.DRIVE_TO,
+                    stepId = "step-drive-forward",
                     drive = RoutineDriveStep(
                         target = RoutinePose(
                             xMeters = 0.5,
