@@ -122,18 +122,15 @@ def generatedAresSource = file(
 def subsystemStarterSource = file(
     "src/main/java/org/firstinspires/ftc/teamcode/subsystems"
 )
-// Avoid making the checked-in project registry reference a generated subsystem registry until the
-// first canonical subsystem document actually exists. A new Gradle invocation sees documents saved
-// by Analytics before configuring these tasks.
-def hasAresSubsystemDocuments = !fileTree("${rootProject.projectDir}/.ares/subsystems") {
-    include "*.aressubsystem"
-}.isEmpty()
-def subsystemCodegenArgs = hasAresSubsystemDocuments ? [
-        "--subsystems-starter-output", subsystemStarterSource.absolutePath,
-        "--subsystems-generated-output", generatedAresSubsystemMainDir.absolutePath,
-        "--subsystems-generated-test-output", generatedAresSubsystemTestDir.absolutePath,
-        "--subsystems-package", "org.firstinspires.ftc.teamcode.subsystems",
-    ] : []
+// Keep split roots configured even with no subsystem documents: generation then removes stale
+// manifests/sources and emits the empty registry deterministically after the final definition is
+// deleted. No ordinary build task creates or replaces editable starters.
+def subsystemCodegenArgs = [
+    "--subsystems-starter-output", subsystemStarterSource.absolutePath,
+    "--subsystems-generated-output", generatedAresSubsystemMainDir.absolutePath,
+    "--subsystems-generated-test-output", generatedAresSubsystemTestDir.absolutePath,
+    "--subsystems-package", "org.firstinspires.ftc.teamcode.subsystems",
+]
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"
     description = "Generate checked-in project Kotlin and disposable subsystem plumbing; never replace starters."
