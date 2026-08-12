@@ -16,13 +16,13 @@ Check the active JVM:
 
 ### ARESLib classes are unresolved or stale
 
-Confirm `../ARESLib-Kotlin` exists. `settings.gradle` should announce/use the included build and substitute local projects. If testing the wider workspace, publish the library and rebuild without relying on an old Maven cache:
+Confirm `aresVersion` points to an available Maven Central release. For an unpublished sibling change, build its isolated repository and pass it explicitly:
 
 ```powershell
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat publishToMavenLocal
+.\gradlew.bat apiCheck publishReleaseValidation
 Pop-Location
-.\gradlew.bat :TeamCode:assembleDebug
+.\gradlew.bat :TeamCode:assembleDebug -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
 ```
 
 ### Android build works but simulator compilation fails

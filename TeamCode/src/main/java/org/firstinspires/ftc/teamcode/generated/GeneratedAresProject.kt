@@ -49,6 +49,42 @@ interface GeneratedAresProjectCapabilities {
     /** Implements action key SetIndicatorColor_YELLOW. */
     fun actionSetIndicatorColorYELLOW(): Task
 
+    /** Implements action key SetPrismPreset_EMERGENCY_LIGHTS. */
+    fun actionSetPrismPresetEMERGENCYLIGHTS(): Task
+
+    /** Implements action key SetPrismPreset_FTC_TIMER. */
+    fun actionSetPrismPresetFTCTIMER(): Task
+
+    /** Implements action key SetPrismPreset_RAINBOW_FULL_COLOR. */
+    fun actionSetPrismPresetRAINBOWFULLCOLOR(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_BLUE. */
+    fun actionSetPrismPresetSOLIDBLUE(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_CYAN. */
+    fun actionSetPrismPresetSOLIDCYAN(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_GREEN. */
+    fun actionSetPrismPresetSOLIDGREEN(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_OFF. */
+    fun actionSetPrismPresetSOLIDOFF(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_ORANGE. */
+    fun actionSetPrismPresetSOLIDORANGE(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_PURPLE. */
+    fun actionSetPrismPresetSOLIDPURPLE(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_RED. */
+    fun actionSetPrismPresetSOLIDRED(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_WHITE. */
+    fun actionSetPrismPresetSOLIDWHITE(): Task
+
+    /** Implements action key SetPrismPreset_SOLID_YELLOW. */
+    fun actionSetPrismPresetSOLIDYELLOW(): Task
+
     /** Implements action key SetSecondIndicatorColor_BLUE. */
     fun actionSetSecondIndicatorColorBLUE(): Task
 
@@ -101,9 +137,9 @@ interface GeneratedAresProjectCapabilities {
 /** Generated from the project's checked-in ARES documents. Do not edit by hand. */
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 5
-    const val CATALOG_SHA256: String = "efae98af6ae95fc69616265aabfac616cbae6cfd7cc1e0bd71ed2e24485e8f74"
-    const val CONTENT_SHA256: String = "7d1a3b3ac51648dee957cabbc84c641e39669f26cdd3f631e8429997b0043340"
-    const val SOURCE_SHA256: String = "ba79d687009730b318bf2aca84c2172a4899c10926f39867d9359f8c7995bcfc"
+    const val CATALOG_SHA256: String = "754f20f33b603a25bea1ed471a2132814f119bb37c63dbf0f496f40c40bdee6a"
+    const val CONTENT_SHA256: String = "b277e943f07eda7633bba397844f760c74e0cb1985ae83cb31eff9ce5a1d3414"
+    const val SOURCE_SHA256: String = "95ce4b290c03153064413740dbb004d8b9ab60d841e851e3ca87fcb025e6b187"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -113,7 +149,7 @@ object GeneratedAresProject {
     const val FIELD_LENGTH_METERS: Double = 3.6576
     const val FIELD_WIDTH_METERS: Double = 3.6576
 
-    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
+    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
     val knownConditionKeys: Set<String> = emptySet()
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
@@ -288,6 +324,102 @@ object GeneratedAresProject {
                         )
                         registry.actionSetIndicatorColorYELLOW()
                     }
+                    "SetPrismPreset_EMERGENCY_LIGHTS" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_EMERGENCY_LIGHTS",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetEMERGENCYLIGHTS()
+                    }
+                    "SetPrismPreset_FTC_TIMER" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_FTC_TIMER",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetFTCTIMER()
+                    }
+                    "SetPrismPreset_RAINBOW_FULL_COLOR" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_RAINBOW_FULL_COLOR",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetRAINBOWFULLCOLOR()
+                    }
+                    "SetPrismPreset_SOLID_BLUE" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_BLUE",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDBLUE()
+                    }
+                    "SetPrismPreset_SOLID_CYAN" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_CYAN",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDCYAN()
+                    }
+                    "SetPrismPreset_SOLID_GREEN" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_GREEN",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDGREEN()
+                    }
+                    "SetPrismPreset_SOLID_OFF" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_OFF",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDOFF()
+                    }
+                    "SetPrismPreset_SOLID_ORANGE" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_ORANGE",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDORANGE()
+                    }
+                    "SetPrismPreset_SOLID_PURPLE" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_PURPLE",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDPURPLE()
+                    }
+                    "SetPrismPreset_SOLID_RED" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_RED",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDRED()
+                    }
+                    "SetPrismPreset_SOLID_WHITE" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_WHITE",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDWHITE()
+                    }
+                    "SetPrismPreset_SOLID_YELLOW" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "SetPrismPreset_SOLID_YELLOW",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.actionSetPrismPresetSOLIDYELLOW()
+                    }
                     "SetSecondIndicatorColor_BLUE" -> {
                         CapabilityArgumentReader(
                             capabilityKey = "SetSecondIndicatorColor_BLUE",
@@ -428,6 +560,18 @@ object GeneratedAresProject {
                     "SetIndicatorColor_VIOLET" -> setOf("indicator.primary")
                     "SetIndicatorColor_WHITE" -> setOf("indicator.primary")
                     "SetIndicatorColor_YELLOW" -> setOf("indicator.primary")
+                    "SetPrismPreset_EMERGENCY_LIGHTS" -> setOf("prism")
+                    "SetPrismPreset_FTC_TIMER" -> setOf("prism")
+                    "SetPrismPreset_RAINBOW_FULL_COLOR" -> setOf("prism")
+                    "SetPrismPreset_SOLID_BLUE" -> setOf("prism")
+                    "SetPrismPreset_SOLID_CYAN" -> setOf("prism")
+                    "SetPrismPreset_SOLID_GREEN" -> setOf("prism")
+                    "SetPrismPreset_SOLID_OFF" -> setOf("prism")
+                    "SetPrismPreset_SOLID_ORANGE" -> setOf("prism")
+                    "SetPrismPreset_SOLID_PURPLE" -> setOf("prism")
+                    "SetPrismPreset_SOLID_RED" -> setOf("prism")
+                    "SetPrismPreset_SOLID_WHITE" -> setOf("prism")
+                    "SetPrismPreset_SOLID_YELLOW" -> setOf("prism")
                     "SetSecondIndicatorColor_BLUE" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_CYAN" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_GREEN" -> setOf("indicator.secondary")

@@ -109,12 +109,13 @@ From PowerShell in this repository:
 .\gradlew.bat :TeamCode:installDebug
 ```
 
-Android builds require JDK 17. The standalone simulator uses a JDK 21 toolchain. When this repository is beside `ARESLib-Kotlin`, `settings.gradle` substitutes local ARESLib projects automatically, so changes to the shared library are tested against their source. In the complete four-repository workspace, publish shared changes first when another consumer relies on Maven Local:
+Android builds require JDK 17. The standalone simulator uses a JDK 21 toolchain. Normal builds consume the pinned ARESLib release from Maven Central. To validate an unpublished sibling library bundle:
 
 ```powershell
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat publishToMavenLocal
+.\gradlew.bat apiCheck publishReleaseValidation
 Pop-Location
+.\gradlew.bat :TeamCode:testDebugUnitTest -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
 ```
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for prerequisites, path deployment, simulator arguments, and validation order.

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.dsl
 
 import com.areslib.action.RobotAction
 import com.areslib.hardware.actuator.IndicatorLightColor
+import com.areslib.hardware.actuator.PrismPwmPreset
 import com.areslib.pathing.CommandKey
 import com.areslib.pathing.NamedCommandDescriptor
 import com.areslib.pathing.NamedCommands
@@ -46,6 +47,16 @@ object FtcAutoCapabilities {
     }
     private val secondaryIndicatorDescriptors = IndicatorLightColor.entries.associateWith { color ->
         indicatorDescriptor(color, primary = false)
+    }
+    private val prismDescriptors by lazy {
+        PRISM_PRESETS.associate { choice ->
+            choice.preset to NamedCommandDescriptor(
+                key = CommandKey("SetPrismPreset_${choice.preset.name}"),
+                displayName = "Prism: ${choice.displayName}",
+                description = choice.description,
+                category = "Prism"
+            )
+        }
     }
 
     /** Registers only mechanism actions backed by hardware discovered for this robot instance. */
@@ -121,6 +132,31 @@ object FtcAutoCapabilities {
         }
     }
 
+    /**
+     * Registers a deliberately small, novice-friendly Prism effect catalog.
+     *
+     * The shared Prism driver supports many specialized pulse-width presets. Controller and
+     * autonomous menus expose the common match-safe choices here instead of presenting students
+     * with a long list of raw microsecond values. Registration remains hardware-gated: an action
+     * is unavailable when the optional `prism` device was not discovered during robot init.
+     */
+    fun registerPrismActions(prismAvailable: Boolean) {
+        if (!prismAvailable) return
+        PRISM_PRESETS.forEach { choice ->
+            val descriptor = requireNotNull(prismDescriptors[choice.preset])
+            NamedCommands.register(descriptor) {
+                object : Task {
+                    override val name: String = descriptor.displayName
+
+                    override fun initialize(state: RobotState): List<RobotAction> =
+                        listOf(RobotAction.SetPrismDriver("prism", choice.preset.pulseWidthUs))
+
+                    override fun isCompleted(state: RobotState, elapsedMs: Long): Boolean = true
+                }
+            }
+        }
+    }
+
     private fun registerStateAction(
         descriptor: NamedCommandDescriptor,
         actionFactory: (com.areslib.state.RobotState) -> RobotAction
@@ -169,4 +205,37 @@ object FtcAutoCapabilities {
     }
 
     private const val MAX_FLYWHEEL_RPM = 6000.0
+
+    private data class PrismPresetChoice(
+        val preset: PrismPwmPreset,
+        val displayName: String,
+        val description: String,
+    )
+
+    private val PRISM_PRESETS = listOf(
+        PrismPresetChoice(PrismPwmPreset.SOLID_OFF, "Off", "Turns the goBILDA Prism LEDs off."),
+        PrismPresetChoice(
+            PrismPwmPreset.RAINBOW_FULL_COLOR,
+            "Full rainbow",
+            "Shows a full-color rainbow animation on the goBILDA Prism."
+        ),
+        PrismPresetChoice(
+            PrismPwmPreset.FTC_TIMER,
+            "FTC timer",
+            "Shows the Prism's built-in FTC match timer animation."
+        ),
+        PrismPresetChoice(
+            PrismPwmPreset.EMERGENCY_LIGHTS,
+            "Emergency lights",
+            "Shows the Prism's alternating emergency-lights animation."
+        ),
+        PrismPresetChoice(PrismPwmPreset.SOLID_RED, "Solid red", "Sets the Prism to solid red."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_ORANGE, "Solid orange", "Sets the Prism to solid orange."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_YELLOW, "Solid yellow", "Sets the Prism to solid yellow."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_GREEN, "Solid green", "Sets the Prism to solid green."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_CYAN, "Solid cyan", "Sets the Prism to solid cyan."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_BLUE, "Solid blue", "Sets the Prism to solid blue."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_PURPLE, "Solid purple", "Sets the Prism to solid purple."),
+        PrismPresetChoice(PrismPwmPreset.SOLID_WHITE, "Solid white", "Sets the Prism to solid white."),
+    )
 }

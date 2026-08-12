@@ -7,26 +7,27 @@
 - JDK 17 for Android/AGP builds.
 - A JDK 21 toolchain for the standalone `simulator` module.
 - ADB for Robot Controller deployment.
-- The sibling `ARESLib-Kotlin` checkout for integrated development.
+- The sibling `ARESLib-Kotlin` checkout only when modifying the library itself.
 
 On Windows, the settings script can detect a standard JDK 17 or Android Studio's runtime when Gradle starts under an unsupported JVM. Prefer setting Android Studio's Gradle JVM explicitly rather than relying on the one-time fallback.
 
 ## Dependency behavior
 
-Normal remote coordinates are changing JitPack artifacts:
+Normal builds use immutable Maven Central artifacts constrained by the ARES BOM:
 
 ```text
-com.github.ARES-23247.ARESLib-Kotlin:{core,ftc-hardware,simulator,ftc-mocks}:master-SNAPSHOT
+org.aresfirst.ares:{core,codegen,ftc-hardware,simulator,ftc-mocks,simulator-runtime-*}:3.0.0
 ```
 
-When `../ARESLib-Kotlin` exists, `settings.gradle` includes it as a composite build and substitutes both the JitPack and `com.areslib` coordinates with sibling projects. This is the preferred local development layout because TeamCode compiles against the exact shared source.
+The sibling checkout is not selected automatically. Library developers can compile against exact shared source with `-ParesUseSiblingLib=true`; student and release builds use the pinned binaries.
 
-After changing ARESLib in the complete workspace, publish it before validating consumers that use Maven Local:
+After changing ARESLib, validate the exact unpublished binary bundle through its isolated repository:
 
 ```powershell
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat publishToMavenLocal
+.\gradlew.bat apiCheck publishReleaseValidation
 Pop-Location
+.\gradlew.bat :TeamCode:testDebugUnitTest -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
 ```
 
 ## Build and test
@@ -54,10 +55,10 @@ For an ARESLib change used by this repository, a practical validation sequence i
 ```powershell
 Push-Location ..\ARESLib-Kotlin
 .\gradlew.bat :core:test :ftc-hardware:test :simulator:test
-.\gradlew.bat publishToMavenLocal
+.\gradlew.bat apiCheck publishReleaseValidation
 Pop-Location
 
-.\gradlew.bat :TeamCode:testDebugUnitTest :TeamCode:assembleDebug
+.\gradlew.bat :TeamCode:testDebugUnitTest :TeamCode:assembleDebug -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
 ```
 
 ## Desktop simulation

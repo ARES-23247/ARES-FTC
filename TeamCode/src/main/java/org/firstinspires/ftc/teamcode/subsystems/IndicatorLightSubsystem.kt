@@ -1,3 +1,5 @@
+// ARES OWNERSHIP: USER-OWNED
+// Hand-authored production example. Code generation must never replace this file.
 package org.firstinspires.ftc.teamcode.subsystems
 
 import com.areslib.hardware.actuator.IndicatorLightIO

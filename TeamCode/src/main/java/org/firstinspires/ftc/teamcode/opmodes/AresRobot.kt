@@ -211,6 +211,7 @@ class AresRobot(
         } else {
             addTelemetry("Subsystem", "Optional 'prism' device not configured")
         }
+        FtcAutoCapabilities.registerPrismActions(prismAvailable = prismIOInstance != null)
 
         FtcAutoCapabilities.registerMechanismActions(
             intakeAvailable = intakeSubsystem != null,
