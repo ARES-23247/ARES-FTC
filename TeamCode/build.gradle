@@ -47,7 +47,7 @@ dependencies {
     implementation project(':FtcRobotController')
     implementation('com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT') { changing = true }
     implementation('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT') { changing = true }
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0'
     simRun('com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT') { changing = true }
     aresCodegen('com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT') { changing = true }
     aresCodegen 'com.google.code.gson:gson:2.10.1'
