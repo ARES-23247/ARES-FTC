@@ -37,7 +37,7 @@ val javaToolchains = project.extensions.getByType<JavaToolchainService>()
 // The simulator compiles the real editable adapters plus the same disposable registration source
 // as the Android app. It must never grow a simulator-only wiring path.
 tasks.named("compileKotlin") {
-    dependsOn(":TeamCode:generateAresProject")
+    dependsOn(":TeamCode:prepareAresSubsystemPlumbing")
 }
 
 tasks.named<JavaExec>("run") {
