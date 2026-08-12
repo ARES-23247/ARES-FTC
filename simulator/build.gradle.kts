@@ -3,11 +3,20 @@ plugins {
     application
 }
 
+val aresVersion = providers.gradleProperty("aresVersion").orElse("3.0.0").get()
+val aresSimulatorRuntime = when {
+    System.getProperty("os.name").contains("windows", ignoreCase = true) -> "simulator-runtime-windows"
+    System.getProperty("os.name").contains("mac", ignoreCase = true) -> "simulator-runtime-macos"
+    else -> "simulator-runtime-linux"
+}
+
 dependencies {
-    implementation("com.github.ARES-23247.ARESLib-Kotlin:core:master-SNAPSHOT")
-    implementation("com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware:master-SNAPSHOT")
-    implementation("com.github.ARES-23247.ARESLib-Kotlin:simulator:master-SNAPSHOT")
-    implementation("com.github.ARES-23247.ARESLib-Kotlin:ftc-mocks:master-SNAPSHOT")
+    implementation(platform("org.aresfirst.ares:ares-bom:$aresVersion"))
+    implementation("org.aresfirst.ares:core")
+    implementation("org.aresfirst.ares:ftc-hardware")
+    implementation("org.aresfirst.ares:simulator")
+    implementation("org.aresfirst.ares:ftc-mocks")
+    runtimeOnly("org.aresfirst.ares:$aresSimulatorRuntime")
     
     val wpiVersion = "2024.3.2"
     implementation("edu.wpi.first.ntcore:ntcore-java:$wpiVersion")

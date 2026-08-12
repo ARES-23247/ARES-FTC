@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 5,
+  "documentId": "prism",
+  "name": "PrismSubsystem",
+  "description": "Optional goBILDA Prism RGB LED driver with named effects, PWM/I2C adapters, and power-aware brightness limiting.",
+  "platform": "FTC",
+  "revision": 1,
+  "hardware": [
+    {
+      "hardwareId": "prismDriver",
+      "displayName": "goBILDA Prism",
+      "kind": "POSITIONAL_SERVO",
+      "connection": { "hardwareMapName": "prism" },
+      "measurements": [],
+      "required": false,
+      "safeOutput": 0.3
+    }
+  ],
+  "stateFields": [
+    {
+      "fieldId": "pulseWidthUs",
+      "displayName": "Effect pulse width",
+      "type": "INT",
+      "role": "TARGET",
+      "unit": "microseconds",
+      "defaultInt": 1055,
+      "minimum": 500.0,
+      "maximum": 2500.0
+    }
+  ],
+  "controlLoops": [
+    {
+      "loopId": "effectOutput",
+      "displayName": "Prism effect output",
+      "strategy": "SERVO_POSITION",
+      "actuatorId": "prismDriver",
+      "targetFieldId": "pulseWidthUs",
+      "minimumOutput": 500.0,
+      "maximumOutput": 2500.0
+    }
+  ],
+  "template": "ADVANCED_CUSTOM",
+  "implementation": {
+    "kind": "HAND_AUTHORED",
+    "ownership": "USER_OWNED",
+    "modulePath": ":TeamCode",
+    "sourceFiles": [
+      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/PrismSubsystem.kt",
+      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/MockPrismDriverIO.kt"
+    ],
+    "subsystemClassName": "org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem",
+    "ioContractClassName": "com.areslib.hardware.actuator.PrismDriverIO",
+    "hardwareAdapterClassName": "com.areslib.ftc.hardware.FtcPrismDriverI2cIO",
+    "simulation": {
+      "support": "HAND_AUTHORED_MOCK",
+      "adapterClassName": "org.firstinspires.ftc.teamcode.subsystems.MockPrismDriverIO"
+    },
+    "teaching": {
+      "level": "INTERMEDIATE",
+      "summary": "A vendor-hardware example that converts named effects into cached Redux output and scales brightness without changing the effect.",
+      "documentationPath": "docs/examples/HAND_AUTHORED_LIGHTING.md",
+      "concepts": [
+        "Vendor IO abstraction",
+        "Named effect capabilities",
+        "Power-aware brightness limiting",
+        "Hardware-gated action registration"
+      ]
+    }
+  },
+  "capabilityActionKeys": [
+    "SetPrismPreset_SOLID_OFF",
+    "SetPrismPreset_RAINBOW_FULL_COLOR",
+    "SetPrismPreset_FTC_TIMER",
+    "SetPrismPreset_EMERGENCY_LIGHTS",
+    "SetPrismPreset_SOLID_RED",
+    "SetPrismPreset_SOLID_ORANGE",
+    "SetPrismPreset_SOLID_YELLOW",
+    "SetPrismPreset_SOLID_GREEN",
+    "SetPrismPreset_SOLID_CYAN",
+    "SetPrismPreset_SOLID_BLUE",
+    "SetPrismPreset_SOLID_PURPLE",
+    "SetPrismPreset_SOLID_WHITE"
+  ],
+  "safety": {
+    "feedbackTimeoutMs": null,
+    "requiresHoming": false,
+    "requiresCalibration": false,
+    "requiresConfigurationHealth": false,
+    "requiresCurrentMonitoring": false,
+    "latchOutputFaults": false,
+    "requiresExplicitNeutralRecovery": false,
+    "telemetryEnabled": true,
+    "zeroAllocationPeriodic": true
+  },
+  "autonomousResourceKey": "prism",
+  "requiredAtStartup": false,
+  "generateMockIo": false,
+  "generateTest": false
+}

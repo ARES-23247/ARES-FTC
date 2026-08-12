@@ -111,6 +111,11 @@ responsibilities. Existing `IntakeSubsystem`/`FtcIntakeIO` and
 `FlywheelSubsystem`/`FtcFlywheelIO` are production examples; they are more useful than a minimal
 motor demo because they include invalid-current/velocity handling and neutral-first recovery.
 
+For smaller examples, see
+[`Hand-authored lighting subsystems`](examples/HAND_AUTHORED_LIGHTING.md). The indicator-light
+example demonstrates a beginner-friendly write-only output, while the Prism example demonstrates
+vendor presets and bounded brightness without bypassing Redux.
+
 Start by copying this design worksheet into the pull-request description or a short design note.
 It is the hand-authoring equivalent of the capability template; do not start from the FTC motor API
 and attempt to add safety after the controller works.

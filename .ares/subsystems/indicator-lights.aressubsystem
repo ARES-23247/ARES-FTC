@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 5,
+  "documentId": "indicator-lights",
+  "name": "IndicatorLightSubsystem",
+  "description": "Two optional goBILDA RGB indicator lights controlled through immutable Redux state and servo-compatible IO.",
+  "platform": "FTC",
+  "revision": 1,
+  "hardware": [
+    {
+      "hardwareId": "primaryIndicator",
+      "displayName": "Primary indicator light",
+      "kind": "POSITIONAL_SERVO",
+      "connection": { "hardwareMapName": "indicator" },
+      "measurements": [],
+      "required": false,
+      "safeOutput": 0.0
+    },
+    {
+      "hardwareId": "secondaryIndicator",
+      "displayName": "Secondary indicator light",
+      "kind": "POSITIONAL_SERVO",
+      "connection": { "hardwareMapName": "indicator2" },
+      "measurements": [],
+      "required": false,
+      "safeOutput": 0.0
+    }
+  ],
+  "stateFields": [
+    {
+      "fieldId": "primaryPosition",
+      "displayName": "Primary color position",
+      "type": "DOUBLE",
+      "role": "TARGET",
+      "unit": "normalized servo position",
+      "defaultNumber": 0.0,
+      "minimum": -1.0,
+      "maximum": 1.0
+    },
+    {
+      "fieldId": "secondaryPosition",
+      "displayName": "Secondary color position",
+      "type": "DOUBLE",
+      "role": "TARGET",
+      "unit": "normalized servo position",
+      "defaultNumber": 0.0,
+      "minimum": -1.0,
+      "maximum": 1.0
+    }
+  ],
+  "controlLoops": [
+    {
+      "loopId": "primaryColorOutput",
+      "displayName": "Primary indicator color",
+      "strategy": "SERVO_POSITION",
+      "actuatorId": "primaryIndicator",
+      "targetFieldId": "primaryPosition",
+      "minimumOutput": 0.0,
+      "maximumOutput": 1.0
+    },
+    {
+      "loopId": "secondaryColorOutput",
+      "displayName": "Secondary indicator color",
+      "strategy": "SERVO_POSITION",
+      "actuatorId": "secondaryIndicator",
+      "targetFieldId": "secondaryPosition",
+      "minimumOutput": 0.0,
+      "maximumOutput": 1.0
+    }
+  ],
+  "template": "SIMPLE_ACTUATOR",
+  "implementation": {
+    "kind": "HAND_AUTHORED",
+    "ownership": "USER_OWNED",
+    "modulePath": ":TeamCode",
+    "sourceFiles": [
+      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/IndicatorLightSubsystem.kt"
+    ],
+    "subsystemClassName": "org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem",
+    "ioContractClassName": "com.areslib.hardware.actuator.IndicatorLightIO",
+    "hardwareAdapterClassName": "com.areslib.ftc.hardware.FtcIndicatorLightIO",
+    "simulation": {
+      "support": "HAND_AUTHORED_MOCK",
+      "adapterClassName": "com.areslib.ftc.MockIndicatorLightIO"
+    },
+    "teaching": {
+      "level": "BEGINNER",
+      "summary": "A write-only actuator example that keeps controller bindings, Redux intent, lifecycle caching, and hardware IO separate.",
+      "documentationPath": "docs/examples/HAND_AUTHORED_LIGHTING.md",
+      "concepts": [
+        "Immutable Redux output intent",
+        "Named, colorblind-safe capabilities",
+        "Optional hardware discovery",
+        "Write-only subsystem lifecycle"
+      ]
+    }
+  },
+  "capabilityActionKeys": [
+    "SetIndicatorColor_OFF",
+    "SetIndicatorColor_RAINBOW",
+    "SetIndicatorColor_RED",
+    "SetIndicatorColor_ORANGE",
+    "SetIndicatorColor_YELLOW",
+    "SetIndicatorColor_GREEN",
+    "SetIndicatorColor_CYAN",
+    "SetIndicatorColor_BLUE",
+    "SetIndicatorColor_PURPLE",
+    "SetIndicatorColor_VIOLET",
+    "SetIndicatorColor_WHITE",
+    "SetSecondIndicatorColor_OFF",
+    "SetSecondIndicatorColor_RAINBOW",
+    "SetSecondIndicatorColor_RED",
+    "SetSecondIndicatorColor_ORANGE",
+    "SetSecondIndicatorColor_YELLOW",
+    "SetSecondIndicatorColor_GREEN",
+    "SetSecondIndicatorColor_CYAN",
+    "SetSecondIndicatorColor_BLUE",
+    "SetSecondIndicatorColor_PURPLE",
+    "SetSecondIndicatorColor_VIOLET",
+    "SetSecondIndicatorColor_WHITE"
+  ],
+  "safety": {
+    "feedbackTimeoutMs": null,
+    "requiresHoming": false,
+    "requiresCalibration": false,
+    "requiresConfigurationHealth": false,
+    "requiresCurrentMonitoring": false,
+    "latchOutputFaults": false,
+    "requiresExplicitNeutralRecovery": false,
+    "telemetryEnabled": true,
+    "zeroAllocationPeriodic": true
+  },
+  "requiredAtStartup": false,
+  "generateMockIo": false,
+  "generateTest": false
+}

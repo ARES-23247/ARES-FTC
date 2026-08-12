@@ -7,6 +7,7 @@ import com.areslib.hardware.HardwareRegistry
 import com.areslib.hardware.actuator.FlywheelIO
 import com.areslib.hardware.actuator.IndicatorLightIO
 import com.areslib.hardware.actuator.IntakeIO
+import com.areslib.hardware.actuator.PrismPwmPreset
 import com.areslib.reducer.rootReducer
 import com.areslib.state.RobotState
 import com.areslib.state.SuperstructureState
@@ -16,6 +17,8 @@ import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 import org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem
 import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem
+import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem
+import org.firstinspires.ftc.teamcode.subsystems.MockPrismDriverIO
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -160,6 +163,27 @@ class SeasonLifecycleSafetyTest {
 
         subsystem.close()
         assertEquals(listOf("close"), events)
+    }
+
+    @Test
+    fun prismLifecycleAppliesReduxPresetWithBoundedBrightnessAndCloses() {
+        val io = MockPrismDriverIO()
+        val subsystem = PrismSubsystem(io, configuredMaxBrightness = 80)
+        val store = Store(RobotState(), ::rootReducer)
+        store.dispatch(RobotAction.SetPrismDriver("prism", 1005))
+
+        subsystem.readSensors(store, 0L)
+        subsystem.writeOutputs(store.state, 0.5)
+
+        assertEquals(1005, io.currentPulseWidthUs)
+        assertEquals(40, io.maxBrightnessPercent)
+        subsystem.close()
+        assertTrue(io.isClosed)
+        assertEquals(
+            "Mock cleanup must match the FTC adapter's visible red safety indication",
+            PrismPwmPreset.SOLID_RED.pulseWidthUs,
+            io.currentPulseWidthUs,
+        )
     }
 
     @Test

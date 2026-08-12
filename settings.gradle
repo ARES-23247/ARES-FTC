@@ -51,18 +51,21 @@ include ':FtcRobotController'
 include ':TeamCode'
 include ':simulator'
 
-if (file('../ARESLib-Kotlin').exists()) {
+def useSiblingAresLib = providers.gradleProperty('aresUseSiblingLib')
+    .map { it.toBoolean() }
+    .getOrElse(false)
+if (useSiblingAresLib && file('../ARESLib-Kotlin').exists()) {
     includeBuild('../ARESLib-Kotlin') {
         dependencySubstitution {
-            substitute module('com.github.ARES-23247.ARESLib-Kotlin:core') using project(':core')
-            substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-hardware') using project(':ftc-hardware')
-            substitute module('com.github.ARES-23247.ARESLib-Kotlin:simulator') using project(':simulator')
-            substitute module('com.github.ARES-23247.ARESLib-Kotlin:ftc-mocks') using project(':ftc-mocks')
-
-            substitute module('com.areslib:core') using project(':core')
-            substitute module('com.areslib:ftc-hardware') using project(':ftc-hardware')
-            substitute module('com.areslib:simulator') using project(':simulator')
-            substitute module('com.areslib:ftc-mocks') using project(':ftc-mocks')
+            substitute module('org.aresfirst.ares:core') using project(':core')
+            substitute module('org.aresfirst.ares:codegen') using project(':codegen')
+            substitute module('org.aresfirst.ares:ftc-hardware') using project(':ftc-hardware')
+            substitute module('org.aresfirst.ares:simulator') using project(':simulator')
+            substitute module('org.aresfirst.ares:ftc-mocks') using project(':ftc-mocks')
+            substitute module('org.aresfirst.ares:simulator-runtime-windows') using project(':simulator-runtime-windows')
+            substitute module('org.aresfirst.ares:simulator-runtime-linux') using project(':simulator-runtime-linux')
+            substitute module('org.aresfirst.ares:simulator-runtime-macos') using project(':simulator-runtime-macos')
+            substitute module('org.aresfirst.ares:ares-bom') using project(':ares-bom')
         }
     }
 }

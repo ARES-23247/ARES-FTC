@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode
 
 import com.areslib.pathing.CommandKey
 import com.areslib.pathing.NamedCommands
+import com.areslib.action.RobotAction
+import com.areslib.hardware.actuator.PrismPwmPreset
 import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
 import org.firstinspires.ftc.teamcode.dsl.requireFtcDriveActionsAvailable
 import com.areslib.routine.RoutineDriveMarker
@@ -14,6 +16,7 @@ import com.areslib.state.Alliance
 import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
 import org.firstinspires.ftc.teamcode.dsl.validateFtcAutonomousBounds
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -41,6 +44,22 @@ class FtcAutoCapabilitiesTest {
         assertFalse(NamedCommands.contains(CommandKey("flywheel.prepare")))
         assertFalse(NamedCommands.contains(CommandKey("SetIndicatorColor_GREEN")))
         assertTrue(NamedCommands.contains(CommandKey("SetSecondIndicatorColor_GREEN")))
+    }
+
+    @Test
+    fun `Prism capabilities are hardware gated and dispatch immutable Redux actions`() {
+        val rainbowKey = CommandKey("SetPrismPreset_RAINBOW_FULL_COLOR")
+        FtcAutoCapabilities.registerPrismActions(prismAvailable = false)
+        assertFalse(NamedCommands.contains(rainbowKey))
+
+        FtcAutoCapabilities.registerPrismActions(prismAvailable = true)
+        assertTrue(NamedCommands.contains(rainbowKey))
+        assertTrue(NamedCommands.contains(CommandKey("SetPrismPreset_SOLID_OFF")))
+
+        val task = requireNotNull(NamedCommands.create(rainbowKey, 0L))
+        val action = task.initialize(com.areslib.state.RobotState()).single() as RobotAction.SetPrismDriver
+        assertEquals("prism", action.name)
+        assertEquals(PrismPwmPreset.RAINBOW_FULL_COLOR.pulseWidthUs, action.pulseWidthUs)
     }
 
     @Test
