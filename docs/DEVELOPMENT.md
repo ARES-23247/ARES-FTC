@@ -133,19 +133,20 @@ Before enabling a competition OpMode:
 
 ## Adding a subsystem safely
 
-Use the existing intake/flywheel structure as the smallest working example:
+Use the capability-oriented generator or follow the same boundaries by hand. The generator previews a
+structured change set before it writes anything; it never silently replaces an editable starter.
 
-1. Define the mechanism's physical interface, preferably in ARESLib if it is reusable.
-2. Implement FTC IO. Resolve hardware during construction; cache all sensor reads in `refresh()`.
-3. Make `safe()` command neutral outputs and make `close()` call it.
-4. Register IO with `HardwareRegistry` during initialization.
-5. Add immutable state/actions and reducer behavior.
-6. Implement `Subsystem.readSensors` and `Subsystem.writeOutputs` without crossing their responsibilities.
-7. Register the subsystem once in `AresRobot`.
-8. Add unit tests for absent/invalid sensors, power scale zero, and close/failure behavior.
-9. Exercise it in the simulator and on restrained hardware.
+```powershell
+.\gradlew.bat :TeamCode:previewSubsystemChanges
+.\gradlew.bat :TeamCode:generateSubsystemStarters
+.\gradlew.bat :TeamCode:verifyAresProject
+```
 
-Avoid allocations and direct hardware calls in the loop. A getter such as `currentAmps` must return the most recent cached value; it must not call `motor.getCurrent(...)`.
+Generated plumbing is written below `TeamCode/build/generated/ares/` and is intentionally absent
+from version control. Editable starters remain under `TeamCode/src/main/java`; hand-written tests
+remain under `TeamCode/src/test/kotlin`. Read [Subsystem generator and hand-authoring guide](SUBSYSTEM_AUTHORING.md)
+for artifact ownership, template selection, safety requirements, regeneration, manual templates,
+and the complete verification checklist.
 
 ## Logs and dashboard connectivity
 

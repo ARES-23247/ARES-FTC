@@ -53,6 +53,12 @@ A mechanism normally needs:
 
 Hardware reads belong in `refresh()` and happen after REV bulk caches are cleared. Property getters must return the cached fields. `safe()` and `close()` must drive outputs to their safe state. Register the IO with `HardwareRegistry` and register the subsystem with `base.registerSubsystem(...)`; these serve different but complementary lifecycle roles.
 
+Do not use an ad-hoc console scaffolder. The repository's capability-oriented generator and a
+complete manual checklist are documented in
+[SUBSYSTEM_AUTHORING.md](../../../../../../../../docs/SUBSYSTEM_AUTHORING.md). Its preview/apply flow
+keeps domain, control, FTC hardware, simulation, lifecycle, generated plumbing, and verification
+separate, and refuses to silently overwrite code that a person may have customized.
+
 ## Coordinates and controls
 
 - Meters and seconds internally.

@@ -17,8 +17,18 @@ apply from: '../build.dependencies.gradle'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.kotlinx.kover'
 
+// Mechanical subsystem registration and contract tests are disposable build products. Editable
+// starters stay under src/ and are protected by the generator's ownership/diff contract.
+def generatedAresSubsystemMainDir = file("${buildDir}/generated/ares/main/kotlin")
+def generatedAresSubsystemTestDir = file("${buildDir}/generated/ares/test/kotlin")
+
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
+
+    sourceSets {
+        main.java.srcDir generatedAresSubsystemMainDir
+        test.java.srcDir generatedAresSubsystemTestDir
+    }
 
     packagingOptions {
         jniLibs.useLegacyPackaging true
