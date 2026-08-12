@@ -57,6 +57,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     val selectPub = ntInst.getStringTopic("ARES/DriverStation/SelectedOpMode").publish()
     val calCmdPub = ntInst.getStringTopic("SysId/Command").publish()
     val enableTokenPub = ntInst.getStringTopic("SysId/EnableToken").publish()
+    val enableLeasePub = ntInst.getDoubleTopic("SysId/EnableLease").publish()
     val armedSub = ntInst.getBooleanTopic(
         com.areslib.telemetry.TelemetryTopicNormalizer.toWireTopic("SysId/Armed")
     ).subscribe(false)
@@ -75,9 +76,20 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     ntInst.flush()
     Thread.sleep(250L)
     enableTokenPub.set("calibration-verification-${System.nanoTime()}")
+    var enableLeaseSequence = 1L
+    enableLeasePub.set(enableLeaseSequence.toDouble())
     ntInst.flush()
     val armDeadline = System.currentTimeMillis() + 3000L
-    while (!armedSub.get() && System.currentTimeMillis() < armDeadline) Thread.sleep(25L)
+    var lastLeaseRefreshMs = System.currentTimeMillis()
+    while (!armedSub.get() && System.currentTimeMillis() < armDeadline) {
+        Thread.sleep(25L)
+        val nowMs = System.currentTimeMillis()
+        if (nowMs - lastLeaseRefreshMs >= 200L) {
+            enableLeasePub.set((++enableLeaseSequence).toDouble())
+            ntInst.flush()
+            lastLeaseRefreshMs = nowMs
+        }
+    }
     val calibrationArmed = armedSub.get()
 
     // Calibration command/status/data contract shared with ARES Analytics.
@@ -101,6 +113,12 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         var currentStatus = calStatusSub.get()
         while (currentStatus != expectedStatus && System.currentTimeMillis() < statusDeadline) {
             Thread.sleep(50L)
+            val nowMs = System.currentTimeMillis()
+            if (nowMs - lastLeaseRefreshMs >= 200L) {
+                enableLeasePub.set((++enableLeaseSequence).toDouble())
+                ntInst.flush()
+                lastLeaseRefreshMs = nowMs
+            }
             currentStatus = calStatusSub.get()
         }
         println("Current Status: $currentStatus")
@@ -116,6 +134,12 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         var lastDataChange = calDataSub.lastChange
 
         while (System.currentTimeMillis() - startWait < 8000) {
+            val nowMs = System.currentTimeMillis()
+            if (nowMs - lastLeaseRefreshMs >= 200L) {
+                enableLeasePub.set((++enableLeaseSequence).toDouble())
+                ntInst.flush()
+                lastLeaseRefreshMs = nowMs
+            }
             val status = calStatusSub.get()
             val data = calDataSub.get()
             
@@ -177,6 +201,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
         try { cmdPub.set("STOP") } catch (_: Exception) {}
         calCmdPub.close()
         enableTokenPub.close()
+        enableLeasePub.close()
         armedSub.close()
         calStatusSub.close()
         calDataSub.close()
