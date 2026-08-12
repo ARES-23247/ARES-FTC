@@ -46,6 +46,13 @@ jobs:
         with:
           languages: java-kotlin
           build-mode: manual
+          config: |
+            paths:
+              - ARES-FTC/TeamCode/src
+              - ARES-FTC/simulator/src
+            paths-ignore:
+              - ARES-FTC/FtcRobotController/**
+              - ARESLib-Kotlin/**
 
       - name: Compile FTC and simulator sources
         working-directory: ARES-FTC
