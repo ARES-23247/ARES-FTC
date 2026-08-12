@@ -3,8 +3,8 @@ package org.firstinspires.ftc.teamcode.subsystems
 import com.areslib.Store
 import com.areslib.state.RobotState
 import com.areslib.subsystem.Subsystem
-import org.firstinspires.ftc.teamcode.hardware.IntakeIO
-import org.firstinspires.ftc.teamcode.hardware.FlywheelIO
+import com.areslib.hardware.actuator.IntakeIO
+import com.areslib.hardware.actuator.FlywheelIO
 
 import com.areslib.action.RobotAction
 
@@ -17,7 +17,8 @@ import org.firstinspires.ftc.teamcode.dsl.season
  * tolerated for a bounded 100 ms grace period, then fails closed into the same safety latch.
  * A latch stops roller output and can clear only while the intake is disabled after a sustained
  * valid, low-current recovery observation. Output otherwise follows Redux intent and the global
- * power budget, with an additional 60% cap while the flywheel accelerates.
+ * power budget. An invalid state requesting intake and flywheel together fails closed at this
+ * final hardware boundary even if an upstream producer bypasses the season controller.
  */
 class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
     private var overcurrentStartTimeMs = UNSET_TIME
@@ -71,14 +72,11 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
         private set
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        val active = state.superstructure.season.intakeActive
         val season = state.superstructure.season
-        val flywheelSpooling = season.flywheelActive &&
-            (!season.flywheelVelocityValid || season.flywheelTargetRPM > season.flywheelCurrentRPM)
-        val intakePowerScale = if (flywheelSpooling) 0.6 else 1.0
+        val active = season.intakeActive && !season.flywheelActive && season.flywheelTargetRPM == 0.0
         val safeScale = scale.takeIf { it.isFinite() }?.coerceIn(0.0, 1.0) ?: 0.0
         val nominalVoltage = state.tuning.intakeNominalVoltage.takeIf { it.isFinite() } ?: 0.0
-        val voltage = if (active && !stalled) nominalVoltage * safeScale * intakePowerScale else 0.0
+        val voltage = if (active && !stalled) nominalVoltage * safeScale else 0.0
         io.setRollerVoltage(voltage)
     }
 
@@ -172,8 +170,9 @@ class FlywheelSubsystem(private val io: FlywheelIO) : Subsystem {
      * depends directly on unscaled flywheel RPM to hit target scoring goals accurately.
      */
     override fun writeOutputs(state: RobotState, scale: Double) {
-        val active = state.superstructure.season.flywheelActive
-        val targetRpm = state.superstructure.season.flywheelTargetRPM
+        val season = state.superstructure.season
+        val active = season.flywheelActive && !season.intakeActive
+        val targetRpm = season.flywheelTargetRPM
             .takeIf { it.isFinite() && it > 0.0 }
             ?: 0.0
         val effortScale = scale.takeIf { it.isFinite() }?.coerceIn(0.0, 1.0) ?: 0.0

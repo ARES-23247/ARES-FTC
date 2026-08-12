@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -178,6 +179,27 @@ class SeasonLifecycleSafetyTest {
         order.verifyNoMoreInteractions()
     }
 
+    @Test
+    fun autonomousAbortSafetyStillStopsPlatformWhenSeasonSafetyThrows() {
+        val wrapper = Mockito.mock(AresRobot::class.java)
+        val base = Mockito.mock(FtcMecanumRobot::class.java)
+        val failure = IllegalStateException("season output fault")
+        Mockito.doThrow(failure).`when`(base).safeAll()
+        val auto = object : AresAutoBase() {
+            override fun buildRobot(): AresRobot = wrapper
+            override fun getMecanumRobot(robot: AresRobot): FtcMecanumRobot = base
+        }
+
+        val thrown = org.junit.Assert.assertThrows(IllegalStateException::class.java) {
+            auto.safeRobot(wrapper)
+        }
+
+        assertSame(failure, thrown)
+        val order = Mockito.inOrder(base)
+        order.verify(base).safeAll()
+        order.verify(base).safeHardware()
+    }
+
     private class RecordingIntakeIO(
         private val events: MutableList<String>
     ) : IntakeIO, AutoCloseable {
@@ -255,7 +277,7 @@ class SeasonLifecycleSafetyTest {
                 custom = SeasonSuperstructureState(
                     intakeActive = intakeActive,
                     flywheelActive = flywheelActive,
-                    flywheelTargetRPM = 3_500.0
+                    flywheelTargetRPM = if (flywheelActive) 3_500.0 else 0.0
                 )
             )
         ),

@@ -40,12 +40,24 @@ internal class FtcAutonomousSelector(
     val selected: AutonomousCatalogEntry?
         get() = entries.getOrNull(index)
 
-    /** Selects one generated entry by stable ID; invalid or locked requests leave the fallback. */
+    /** Selects one generated entry by stable ID; invalid or locked requests leave the selection. */
     fun selectEntry(entryId: String): Boolean {
         if (lockedEntryId != null) return false
         val requestedIndex = entries.indexOfFirst { it.entryId == entryId }
         if (requestedIndex < 0 || requestedIndex == index) return false
         index = requestedIndex
+        return true
+    }
+
+    /**
+     * Applies an externally authoritative alliance during INIT.
+     *
+     * Locked validation modes reject the request. Returning whether the value changed lets the
+     * lifecycle rebuild its generated runtime and reseed its pose exactly once.
+     */
+    fun selectAlliance(requestedAlliance: Alliance): Boolean {
+        if (lockedAlliance != null || requestedAlliance == alliance) return false
+        alliance = requestedAlliance
         return true
     }
 
@@ -75,7 +87,10 @@ internal class FtcAutonomousSelector(
     private fun selectInitialIndex(requestedId: String?): Int {
         if (entries.isEmpty()) return -1
         val requestedIndex = entries.indexOfFirst { it.entryId == requestedId }
-        return if (requestedIndex >= 0) requestedIndex else 0
+        if (requestedIndex >= 0) return requestedIndex
+        // A dedicated validation OpMode names an exact generated entry. Substituting the first
+        // catalog entry after a rename or disable would run unrelated autonomous behavior.
+        return if (lockedEntryId != null) -1 else 0
     }
 }
 

@@ -36,6 +36,8 @@ class ARESLocalizationCalibration : AresTeleOpBase() {
     private var pendingCheckpoint = LocalizationCalibrationCheckpoint.NONE
     private var pendingRunId = 0
     private var lastRecordedVisionTimestampMs = Long.MIN_VALUE
+    private val stationaryGate = StationaryCalibrationGate()
+    private var lastTelemetryMs = 0L
 
     override fun define() = teleOp {
         setup {
@@ -87,17 +89,34 @@ class ARESLocalizationCalibration : AresTeleOpBase() {
 
         everyLoop {
             robot.driveWithGamepad(driver, useHeadingLock = true)
+            val nowMs = RobotClock.currentTimeMillis()
+            val driveState = robot.base.store.state.drive
+            val driverNeutral = kotlin.math.abs(driver.leftStickX.value) <= DRIVER_NEUTRAL_DEADZONE &&
+                kotlin.math.abs(driver.leftStickY.value) <= DRIVER_NEUTRAL_DEADZONE &&
+                kotlin.math.abs(driver.rightStickX.value) <= DRIVER_NEUTRAL_DEADZONE
+            val measuredTranslationMps = kotlin.math.hypot(
+                driveState.measuredFieldXVelocityMetersPerSecond,
+                driveState.measuredFieldYVelocityMetersPerSecond
+            )
+            val stationaryReady = stationaryGate.update(
+                nowMs = nowMs,
+                driverNeutral = driverNeutral,
+                translationMetersPerSecond = measuredTranslationMps,
+                angularRadiansPerSecond = driveState.measuredAngularVelocityRadiansPerSecond,
+            )
             val checkpoint = pendingCheckpoint
-            if (checkpoint != LocalizationCalibrationCheckpoint.NONE) {
+            if (checkpoint != LocalizationCalibrationCheckpoint.NONE && stationaryReady) {
                 record(robot, checkpoint, pendingRunId, truthValid = true)
                 pendingCheckpoint = LocalizationCalibrationCheckpoint.NONE
             }
 
-            if (continuousRecording &&
+            if (continuousRecording && stationaryReady &&
                 (testType == LocalizationCalibrationTestType.VISION_STATIONARY ||
                     testType == LocalizationCalibrationTestType.COMBINED_VALIDATION)) {
                 var newestVisionTimestamp = Long.MIN_VALUE
-                for (measurement in robot.base.visionTracker.visionInputs.measurements) {
+                val measurements = robot.base.visionTracker.visionInputs.measurements
+                for (index in measurements.indices) {
+                    val measurement = measurements[index]
                     if (measurement.timestampMs > newestVisionTimestamp) {
                         newestVisionTimestamp = measurement.timestampMs
                     }
@@ -108,11 +127,17 @@ class ARESLocalizationCalibration : AresTeleOpBase() {
                 }
             }
 
-            robot.addTelemetry("Cal/Test", testType.name)
-            robot.addTelemetry("Cal/Run", runId)
-            robot.addTelemetry("Cal/Recording", continuousRecording)
-            robot.addTelemetry("Cal/Truth", "%.2f, %.2f, %.1f deg".format(truthX, truthY, Math.toDegrees(truthHeading)))
-            robot.addTelemetry("Cal/Dropped", recorder?.droppedSampleCount ?: 0L)
+            if (nowMs - lastTelemetryMs >= TELEMETRY_PERIOD_MS) {
+                lastTelemetryMs = nowMs
+                robot.addTelemetry("Cal/Test", testType.name)
+                robot.addTelemetry("Cal/Run", runId)
+                robot.addTelemetry("Cal/Recording", continuousRecording && stationaryReady)
+                robot.addTelemetry("Cal/Stationary", stationaryReady)
+                robot.addTelemetry("Cal/Truth X", truthX)
+                robot.addTelemetry("Cal/Truth Y", truthY)
+                robot.addTelemetry("Cal/Truth Heading", Math.toDegrees(truthHeading))
+                robot.addTelemetry("Cal/Dropped", recorder?.droppedSampleCount ?: 0L)
+            }
         }
     }
 
@@ -137,5 +162,46 @@ class ARESLocalizationCalibration : AresTeleOpBase() {
                 truthHeading = truthHeading
             )
         )
+    }
+
+    private companion object {
+        const val DRIVER_NEUTRAL_DEADZONE = 0.03f
+        const val TELEMETRY_PERIOD_MS = 100L
+    }
+}
+
+/** Neutral-command plus measured-motion dwell required before any calibration sample is written. */
+internal class StationaryCalibrationGate(
+    private val translationThresholdMps: Double = 0.03,
+    private val angularThresholdRps: Double = 0.05,
+    private val dwellMs: Long = 500L,
+) {
+    private var stationarySinceMs = Long.MIN_VALUE
+
+    init {
+        require(translationThresholdMps.isFinite() && translationThresholdMps >= 0.0)
+        require(angularThresholdRps.isFinite() && angularThresholdRps >= 0.0)
+        require(dwellMs >= 0L)
+    }
+
+    fun update(
+        nowMs: Long,
+        driverNeutral: Boolean,
+        translationMetersPerSecond: Double,
+        angularRadiansPerSecond: Double,
+    ): Boolean {
+        val stationary = driverNeutral && translationMetersPerSecond.isFinite() &&
+            angularRadiansPerSecond.isFinite() &&
+            kotlin.math.abs(translationMetersPerSecond) <= translationThresholdMps &&
+            kotlin.math.abs(angularRadiansPerSecond) <= angularThresholdRps
+        if (!stationary) {
+            stationarySinceMs = Long.MIN_VALUE
+            return false
+        }
+        if (stationarySinceMs == Long.MIN_VALUE || nowMs < stationarySinceMs) {
+            stationarySinceMs = nowMs
+            return dwellMs == 0L
+        }
+        return nowMs - stationarySinceMs >= dwellMs
     }
 }

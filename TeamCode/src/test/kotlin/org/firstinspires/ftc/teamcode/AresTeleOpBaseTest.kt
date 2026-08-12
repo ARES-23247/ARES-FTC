@@ -8,7 +8,6 @@ import com.qualcomm.hardware.limelightvision.Limelight3A
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
-import org.firstinspires.ftc.teamcode.dsl.AresGeneratedTeleOpBase
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 import org.firstinspires.ftc.teamcode.opmodes.ARESMecanumDiagnostic
 import com.areslib.ftc.dsl.FtcTeleOpBuilder
@@ -30,16 +29,8 @@ class AresTeleOpBaseTest {
     @Test
     fun `team TeleOp and Auto bases explicitly opt into Photon`() {
         assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresTeleOpBase::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresGeneratedTeleOpBase::class.java))
         assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresAutoBase::class.java))
         assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(ARESMecanumDiagnostic::class.java))
-    }
-
-    @Test
-    fun `generated controls use a distinct callback-free TeleOp authority`() {
-        val defineMethod = AresGeneratedTeleOpBase::class.java.getDeclaredMethod("define")
-        assertTrue(java.lang.reflect.Modifier.isFinal(defineMethod.modifiers))
-        assertFalse(AresGeneratedTeleOpBase::class.java.isAssignableFrom(AresTeleOpBase::class.java))
     }
 
     @Test

@@ -45,7 +45,6 @@ class AresSuperstructureControllerTest {
                 custom = SeasonSuperstructureState(
                     flywheelActive = flywheelActive,
                     intakeActive = intakeActive,
-                    liftHeight = 0.0
                 )
             )
         )
@@ -63,7 +62,7 @@ class AresSuperstructureControllerTest {
         controller.toggleIntake()
 
         val season = robot.store.state.superstructure.season
-        assertTrue("A fresh zero-height state must not be blocked by an orphan lift interlock", season.intakeActive)
+        assertTrue("Intake should be turned on", season.intakeActive)
     }
 
     @Test
@@ -114,7 +113,7 @@ class AresSuperstructureControllerTest {
     }
 
     @Test
-    fun repeatedShooterToggleInsideDebounceWindowIsIgnored() {
+    fun shooterStopInsideDebounceWindowIsAlwaysHonored() {
         val robot = createRobotWithStore(flywheelActive = false)
         val controller = AresSuperstructureController(robot)
 
@@ -124,7 +123,39 @@ class AresSuperstructureControllerTest {
         RobotClock.setMockTimeMs(1_199L)
         controller.toggleShooter()
 
-        assertTrue("A second edge inside 200 ms must not turn the shooter back off", robot.store.state.superstructure.season.flywheelActive)
+        assertFalse("Stopping must never be delayed by debounce", robot.store.state.superstructure.season.flywheelActive)
+        assertEquals(0.0, robot.store.state.superstructure.season.flywheelTargetRPM, 0.0)
+    }
+
+    @Test
+    fun startingIntakeAtomicallyStopsShooter() {
+        val robot = createRobotWithStore(flywheelActive = true)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleIntake()
+
+        val season = robot.store.state.superstructure.season
+        assertTrue(season.intakeActive)
+        assertFalse(season.flywheelActive)
+        assertEquals(0.0, season.flywheelTargetRPM, 0.0)
+    }
+
+    @Test
+    fun staleShooterTargetCanAlwaysBeClearedWhileIntakeIsActive() {
+        val robot = createRobotWithStore(intakeActive = true)
+        val stale = robot.store.state.superstructure.season.copy(
+            flywheelActive = false,
+            flywheelTargetRPM = 3_500.0,
+        )
+        robot.store.dispatch(RobotAction.UpdateSubsystemState(stale))
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleShooter()
+
+        val season = robot.store.state.superstructure.season
+        assertTrue(season.intakeActive)
+        assertFalse(season.flywheelActive)
+        assertEquals(0.0, season.flywheelTargetRPM, 0.0)
     }
 
     @Test

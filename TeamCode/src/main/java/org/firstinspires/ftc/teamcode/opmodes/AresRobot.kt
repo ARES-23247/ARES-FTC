@@ -12,8 +12,9 @@ import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_LEFT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_RIGHT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT
-import org.firstinspires.ftc.teamcode.dsl.*
-import org.firstinspires.ftc.teamcode.generated.subsystems.GeneratedSubsystemRegistry
+import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
+import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
+import org.firstinspires.ftc.teamcode.dsl.season
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
@@ -31,11 +32,10 @@ import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
  * - Angular velocities: Radians per second ($rad/s$).
  * - Heading: CCW-positive radians ($rad$).
  *
- * [update] preserves the hot-loop ordering: refresh hardware caches, consume cached season
- * sensors, apply interlocks, write season outputs, then run the shared drivetrain/power update.
- * Season outputs are written before the shared update so a fatal shared failure leaves the final
- * command as `HardwareRegistry.safeAll`, rather than allowing this wrapper to re-enable a motor.
- * Any exception escaping season work invokes both subsystem and platform safety before rethrowing.
+ * [update] preserves the hot-loop ordering: the shared frame refreshes every registered hardware
+ * cache and computes power protection once, then the season layer consumes those caches, applies
+ * interlocks, and writes mechanisms with that same frame's scale. Any exception escaping either
+ * layer invokes both subsystem and platform safety before rethrowing.
  *
  * @param hardwareMap FTC device registry. Production drive names are `fl`, `fr`, `rl`, and `rr`.
  * @param localTelemetry optional Driver Station telemetry sink.
@@ -64,6 +64,13 @@ class AresRobot(
     private val driveController = AresDriveController(base)
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
+    private var fatalSeasonFailure: Throwable? = null
+    private var closed = false
+    private var intakeIO: org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO? = null
+    private var flywheelIO: org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO? = null
+    /** True only after the checked-in season field and its AprilTag projection validate. */
+    var hasCanonicalFieldContract: Boolean = false
+        private set
     /** Optional Prism IO, exposed for diagnostics and simulator inspection. */
     var prismIO: com.areslib.hardware.actuator.PrismDriverIO? = null
 
@@ -80,16 +87,58 @@ class AresRobot(
             hardwareMap.appContext.assets.open("paths/field.json").bufferedReader().use { reader ->
                 com.areslib.state.RobotFieldDocument.decode(reader.readText())
             }
-        }.onSuccess(com.areslib.state.RobotFieldManager::setActiveConfig)
-            .onFailure { error -> addTelemetry("Field", "Using fallback field config: ${error.message}") }
+        }.mapCatching { config ->
+            require(config.fieldType == com.areslib.state.FieldType.FTC) {
+                "Canonical season field must declare FTC geometry"
+            }
+            require(config.apriltags.isNotEmpty()) { "FTC field must declare its AprilTag layout" }
+            val tagIds = HashSet<Int>(config.apriltags.size)
+            require(config.apriltags.all { tagIds.add(it.id) }) {
+                "FTC field contains duplicate AprilTag IDs"
+            }
+            val tags = config.apriltags.associate { tag ->
+                require(tag.id > 0 && tag.x.isFinite() && tag.y.isFinite() && tag.z.isFinite() && tag.yaw.isFinite()) {
+                    "FTC field contains an invalid AprilTag"
+                }
+                tag.id to com.areslib.math.geometry.Pose3d(
+                    com.areslib.math.geometry.Translation3d(tag.x, tag.y, tag.z),
+                    com.areslib.math.geometry.Rotation3d(0.0, 0.0, Math.toRadians(tag.yaw))
+                )
+            }
+            config to tags
+        }.onSuccess { (config, tags) ->
+            com.areslib.state.RobotFieldManager.setActiveConfig(config)
+            // Auto and every TeleOp use the same checked-in field document. This assignment also
+            // replaces the shared generic 1-4 square layout selected before this facade is built.
+            com.areslib.math.estimation.PoseEstimator.activeTags = tags
+            hasCanonicalFieldContract = true
+        }.onFailure { error ->
+            // Never continue vision localization against the generic/shared tag layout when the
+            // season contract is missing or invalid. Manual drive remains available without tags.
+            com.areslib.state.RobotFieldManager.setActiveConfig(
+                com.areslib.state.RobotFieldConfig(
+                    id = "unavailable-ftc-season-field",
+                    name = "Unavailable FTC season field",
+                    fieldType = com.areslib.state.FieldType.FTC,
+                    widthMeters = 3.6576,
+                    heightMeters = 3.6576,
+                    apriltags = emptyList(),
+                )
+            )
+            com.areslib.math.estimation.PoseEstimator.activeTags = emptyMap()
+            hasCanonicalFieldContract = false
+            addTelemetry("Field", "Canonical field unavailable; vision tags disabled: ${error.message}")
+        }
 
-        org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities.register()
-
-        // GUI-managed and hand-authored subsystem DSL documents share this generated registry.
-        GeneratedSubsystemRegistry.createAll(hardwareMap).forEach(base::registerSubsystem)
+        // Registrations are process-global. Clear the previous OpMode's optional hardware catalog
+        // before discovering this robot instance so missing devices cannot inherit stale commands.
+        com.areslib.pathing.NamedCommands.clear()
 
         try {
-            val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap)
+            val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap) {
+                base.powerManager.batteryVoltage
+            }
+            this.intakeIO = intakeIO
             intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO)
             base.registerSubsystem(intakeSubsystem!!)
         } catch (e: Exception) {
@@ -100,148 +149,87 @@ class AresRobot(
             val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(
                 hardwareMap,
                 ticksPerRev = FLYWHEEL_TICKS_PER_REV,
-                maxRpm = FLYWHEEL_MAX_RPM
+                maxRpm = FLYWHEEL_MAX_RPM,
+                batteryVoltageSupplier = { base.powerManager.batteryVoltage },
             )
-            base.sysIdFlywheelIO = flywheelIO
+            this.flywheelIO = flywheelIO
             flywheelSubsystem = org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO)
             base.registerSubsystem(flywheelSubsystem!!)
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
         }
 
-        val allDeviceNames = mutableSetOf<String>()
-        for (device in hardwareMap.getAll(com.qualcomm.robotcore.hardware.HardwareDevice::class.java)) {
-            allDeviceNames.addAll(hardwareMap.getNamesOf(device))
-        }
-
-        // --- Primary Indicator Light ("indicator") ---
-        var primaryName: String? = null
-        var primaryIO: com.areslib.ftc.hardware.FtcIndicatorLightIO? = null
-        val primaryCandidates = listOf("indicator", "indicator1", "indicator_1", "light1", "light_1", "led1")
-        for (candidateName in primaryCandidates) {
-            if (candidateName in allDeviceNames) {
-                try {
-                    primaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
-                    primaryName = candidateName
-                    break
-                } catch (e: Exception) {
-                    addTelemetry("Init", "Indicator '$candidateName' failed: ${e.message}")
-                }
-            }
-        }
-        if (primaryIO != null && primaryName != null) {
+        // Optional hardware is discovered only by its canonical RC configuration name. A typo is
+        // reported as missing instead of silently binding a different servo through fuzzy aliases.
+        val primaryIO = runCatching {
+            requireNotNull(
+                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "indicator")
+            ) { "Optional FTC servo 'indicator' was not discovered" }
+            com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
+        }.getOrNull()
+        if (primaryIO != null) {
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(primaryIO, "indicator"))
             setIndicatorColor("indicator", com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
         } else {
-            addTelemetry("Subsystem", "Primary indicator light not found in Hardware Map")
+            addTelemetry("Subsystem", "Optional 'indicator' servo not configured")
         }
 
-        // --- Secondary Indicator Light ("indicator2") ---
-        var secondaryIO: com.areslib.ftc.hardware.FtcIndicatorLightIO? = null
-        var loadedSecondaryName: String? = null
-        val secondaryCandidates = listOf("indicator2", "indicator_2", "second_indicator", "indicatorLight2", "light2", "light_2", "led2", "led_2")
-        for (candidateName in secondaryCandidates) {
-            if (candidateName != primaryName && candidateName in allDeviceNames) {
-                try {
-                    secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, candidateName)
-                    loadedSecondaryName = candidateName
-                    break
-                } catch (_: Exception) {}
-            }
-        }
-
-        // Fall back to any remaining servo whose name looks like an indicator light.
-        if (secondaryIO == null) {
-            try {
-                for (entry in hardwareMap.servo.entrySet()) {
-                    val deviceName = entry.key
-                    if (deviceName != primaryName && (
-                            deviceName.contains("indicator", ignoreCase = true) ||
-                            deviceName.contains("light", ignoreCase = true) ||
-                            deviceName.contains("led", ignoreCase = true))) {
-                        try {
-                            secondaryIO = com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, deviceName)
-                            loadedSecondaryName = deviceName
-                            break
-                        } catch (_: Exception) {}
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-
-        if (secondaryIO != null && loadedSecondaryName != null) {
+        val secondaryIO = runCatching {
+            requireNotNull(
+                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "indicator2")
+            ) { "Optional FTC servo 'indicator2' was not discovered" }
+            com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator2")
+        }.getOrNull()
+        if (secondaryIO != null) {
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(secondaryIO, "indicator2"))
             setSecondIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.BLUE)
-            addTelemetry("Subsystem", "Secondary indicator light loaded as: $loadedSecondaryName")
         } else {
-            addTelemetry("Subsystem", "Secondary indicator light (indicator2) not configured in Hardware Map")
+            addTelemetry("Subsystem", "Optional 'indicator2' servo not configured")
         }
 
-        // Always register indicator commands. Missing optional hardware turns them into safe
-        // no-ops, while the runtime catalog remains identical to the visual editor manifest.
         FtcAutoCapabilities.registerIndicatorActions(
             primaryAvailable = primaryIO != null,
             secondaryAvailable = secondaryIO != null
         )
 
         // --- goBILDA Prism RGB LED Driver ("prism") ---
-        val prismCandidates = listOf("prism", "prism_driver", "gobilda_prism", "prism_led")
-        var loadedPrismName: String? = null
-        var prismIOInstance: com.areslib.hardware.actuator.PrismDriverIO? = null
-
-        // 1. Try I2C Device initialization first (Address 0x38)
-        for (candidateName in prismCandidates) {
-            if (candidateName in allDeviceNames) {
-                try {
-                    prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, candidateName)
-                    loadedPrismName = "$candidateName (I2C 0x38)"
-                    break
-                } catch (e: Exception) {
-                    addTelemetry("Init", "Prism I2C '$candidateName' failed: ${e.message}")
-                }
-            }
-        }
-
-        // 2. Fall back to PWM Servo initialization if I2C device is not configured
-        if (prismIOInstance == null) {
-            for (candidateName in prismCandidates) {
-                if (candidateName in allDeviceNames) {
-                    try {
-                        prismIOInstance = com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, candidateName)
-                        loadedPrismName = "$candidateName (PWM Servo)"
-                        break
-                    } catch (e: Exception) {
-                        addTelemetry("Init", "Prism PWM '$candidateName' failed: ${e.message}")
-                    }
-                }
-            }
-        }
-
-        if (prismIOInstance != null && loadedPrismName != null) {
+        val prismIOInstance = runCatching<com.areslib.hardware.actuator.PrismDriverIO> {
+            requireNotNull(
+                hardwareMap.get(com.qualcomm.robotcore.hardware.I2cDeviceSynch::class.java, "prism")
+            ) { "Optional FTC I2C device 'prism' was not discovered" }
+            com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, "prism")
+        }.recoverCatching {
+            requireNotNull(
+                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "prism")
+            ) { "Optional FTC servo 'prism' was not discovered" }
+            com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, "prism")
+        }.getOrNull()
+        if (prismIOInstance != null) {
             prismIO = prismIOInstance
             base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem(prismIOInstance, "prism"))
             setPrismPreset(com.areslib.hardware.actuator.PrismPwmPreset.RAINBOW_FULL_COLOR)
-            addTelemetry("Subsystem", "Prism RGB Driver loaded as: $loadedPrismName")
         } else {
-            addTelemetry("Subsystem", "Prism RGB Driver (prism) optional")
+            addTelemetry("Subsystem", "Optional 'prism' device not configured")
         }
 
-        // Always register prism preset commands so an auto that references them does not
-        // crash when the Prism I2C/PWM device failed to init; the task no-ops if absent.
-        com.areslib.hardware.actuator.PrismPwmPreset.entries.forEach { preset ->
-            com.areslib.pathing.NamedCommands.register(
-                key = com.areslib.pathing.CommandKey("SetPrismPreset_${preset.name}"),
-                description = "Set the Prism driver to ${preset.name.lowercase()}",
-                category = "Indicators"
-            ) { _ ->
-                object : com.areslib.sequencer.Task {
-                    override val name = "SetPrismPreset_${preset.name}"
-                    override fun isCompleted(state: com.areslib.state.RobotState, elapsedMs: Long) = true
-                    override fun initialize(state: com.areslib.state.RobotState): List<com.areslib.action.RobotAction> =
-                        if (prismIO != null) listOf(com.areslib.action.RobotAction.SetPrismDriver("prism", preset.pulseWidthUs))
-                        else emptyList()
-                }
-            }
+        FtcAutoCapabilities.registerMechanismActions(
+            intakeAvailable = intakeSubsystem != null,
+            flywheelAvailable = flywheelSubsystem != null
+        )
+        // Simulator game-piece interaction consumes only cached commands that actually reached
+        // season IO after interlocks, brownout scaling, and fault latches. Dashboard intent is not
+        // authoritative for mechanism state.
+        base.simMechanismOutputProvider = object : com.areslib.ftc.sim.FtcSimMechanismStateProvider {
+            override val intakeAccepted: Boolean
+                get() = base.store.state.superstructure.season.intakeActive
+            override val flywheelAccepted: Boolean
+                get() = base.store.state.superstructure.season.flywheelActive
+            override val intakeApplied: Boolean
+                get() = intakeIO?.outputApplied == true
+            override val flywheelApplied: Boolean
+                get() = flywheelIO?.outputApplied == true
+            override val transferApplied: Boolean
+                get() = false // The DECODE robot has no independently actuated transfer.
         }
     }
 
@@ -267,34 +255,47 @@ class AresRobot(
         gamepad1: com.areslib.telemetry.GamepadState? = null,
         gamepad2: com.areslib.telemetry.GamepadState? = null
     ) {
+        // Check both latches before touching any actuator. A failed instance can only recover
+        // through normal OpMode reconstruction.
+        val priorFailure = fatalSeasonFailure ?: base.fatalUpdateFailure
+        if (priorFailure != null) {
+            runCatching { base.safeAll() }
+            runCatching { base.safeHardware() }
+            throw priorFailure
+        }
         try {
-            // Clear REV bulk caches and refresh registered IO before consuming season sensors.
-            base.readSensors()
+            // Refresh all registered IO, update drivetrain/EKF, and compute this frame's power
+            // scale exactly once. A thrown shared update skips every season write and its safety
+            // stop remains final.
+            base.update(gamepad1, gamepad2)
 
-            // Poll subsystem state from the freshly cached IO values.
+            // Consume the season IO values cached by the shared refresh above.
             val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
             base.readAllSensors(timestamp)
-        
+
             if (intakeSubsystem?.stalled == true) {
                 val seasonState = base.store.state.superstructure.season
                 if (seasonState.intakeActive) {
                     base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
                 }
             }
-            // Command season actuators before entering the base update. If the base
-            // catches a fatal drivetrain/update failure, its final action remains the
-            // HardwareRegistry safety stop instead of this wrapper re-enabling motors.
+            // Apply the freshly computed brownout/current scale to every season mechanism in the
+            // same frame. Mechanism voltage normalization reads the same cached power sample.
             base.writeAllOutputs(base.powerManager.powerScale)
-
-            // Update drivebase sensors, EKF, kinematics, and the next power scale.
-            base.update(gamepad1, gamepad2)
 
             // Continuously update core Driver Station telemetry.
             telemetryHelper.updateTelemetry()
         } catch (t: Throwable) {
-            // Season work happens outside FtcBaseRobot.update's catch block.
-            base.safeAll()
-            base.safeHardware()
+            fatalSeasonFailure = t
+            // Clear season intent as diagnostic state and perform best-effort safing. The latch
+            // above prevents a later frame from writing these outputs before shared update runs.
+            runCatching {
+                base.store.dispatch(
+                    com.areslib.action.RobotAction.UpdateSubsystemState(SeasonSuperstructureState())
+                )
+            }
+            runCatching { base.safeAll() }
+            runCatching { base.safeHardware() }
             throw t
         }
     }
@@ -323,13 +324,49 @@ class AresRobot(
 
     fun setPrismPreset(preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset("prism", preset)
     fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
+
+    /** Enables the shared calibration receiver only for a dedicated tuning OpMode. */
+    fun enableCalibrationMode() {
+        base.sysIdFlywheelIO = flywheelIO
+        base.isLiveTuningEnabled = true
+        try {
+            base.enableCalibrationMode()
+        } catch (failure: Throwable) {
+            base.sysIdFlywheelIO = null
+            base.isLiveTuningEnabled = false
+            throw failure
+        }
+    }
+
+    /** Safes characterization output and removes the season mechanism adapter. */
+    fun disableCalibrationMode() {
+        try {
+            base.disableCalibrationMode()
+        } finally {
+            base.sysIdFlywheelIO = null
+            base.isLiveTuningEnabled = false
+        }
+    }
+
     /** Zeroes outputs, closes season subsystems, then always closes shared robot resources. */
     fun close() {
-        try {
-            base.safeAll()
-            base.closeSubsystems()
-        } finally {
-            base.close()
+        if (closed) return
+        closed = true
+        var firstFailure: Throwable? = null
+        fun attempt(action: () -> Unit) {
+            try {
+                action()
+            } catch (failure: Throwable) {
+                val primary = firstFailure
+                if (primary == null) firstFailure = failure
+                else if (primary !== failure) primary.addSuppressed(failure)
+            }
         }
+        attempt(::disableCalibrationMode)
+        attempt(base::safeAll)
+        base.simMechanismOutputProvider = null
+        attempt(base::closeSubsystems)
+        attempt(base::close)
+        firstFailure?.let { throw it }
     }
 }

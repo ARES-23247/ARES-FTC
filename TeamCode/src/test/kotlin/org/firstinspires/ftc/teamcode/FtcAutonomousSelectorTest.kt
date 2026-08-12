@@ -71,8 +71,63 @@ class FtcAutonomousSelectorTest {
         )
 
         assertFalse(selector.update(left = true, right = false, toggleAlliance = true))
+        assertFalse(selector.selectAlliance(Alliance.RED))
         assertEquals("second", selector.selected?.entryId)
         assertEquals(Alliance.BLUE, selector.alliance)
+    }
+
+    @Test
+    fun `unlocked selector accepts dashboard alliance and resolves matching mirrored start pose`() {
+        val catalogEntry = entry("dashboard-auto", 0).copy(
+            authoredAlliance = RoutineAlliance.RED,
+            startingPose = RoutinePose(0.4, 0.7, 0.3),
+        )
+        val selector = FtcAutonomousSelector(
+            entries = listOf(catalogEntry),
+            defaultEntryId = catalogEntry.entryId,
+            initialAlliance = Alliance.RED,
+        )
+
+        assertTrue(selector.selectAlliance(Alliance.BLUE))
+        assertEquals(Alliance.BLUE, selector.alliance)
+        val bluePose = resolveFtcAutonomousPose(
+            requireNotNull(selector.selected),
+            selector.alliance,
+            symmetry = FieldSymmetry.MIRRORED,
+        )
+        assertEquals(0.4, bluePose.x, 1e-9)
+        assertEquals(-0.7, bluePose.y, 1e-9)
+        assertEquals(-0.3, bluePose.heading.radians, 1e-9)
+        val blueRuntimeTarget = resolveFtcAutonomousPose(
+            requireNotNull(selector.selected),
+            selector.alliance,
+            pose = RoutinePose(0.9, 0.5, 0.2),
+            symmetry = FieldSymmetry.MIRRORED,
+        )
+        assertEquals(0.9, blueRuntimeTarget.x, 1e-9)
+        assertEquals(-0.5, blueRuntimeTarget.y, 1e-9)
+        assertEquals(-0.2, blueRuntimeTarget.heading.radians, 1e-9)
+        assertFalse(selector.selectAlliance(Alliance.BLUE))
+    }
+
+    @Test
+    fun `missing or disabled locked entry fails closed instead of selecting first auto`() {
+        val missing = FtcAutonomousSelector(
+            entries = listOf(entry("first", 0), entry("second", 1)),
+            defaultEntryId = "first",
+            initialAlliance = Alliance.RED,
+            lockedEntryId = "renamed-entry",
+        )
+        val disabled = FtcAutonomousSelector(
+            entries = listOf(entry("first", 0), entry("locked", 1, enabled = false)),
+            defaultEntryId = "first",
+            initialAlliance = Alliance.RED,
+            lockedEntryId = "locked",
+        )
+
+        assertNull(missing.selected)
+        assertNull(disabled.selected)
+        assertFalse(missing.update(left = true, right = true, toggleAlliance = false))
     }
 
     @Test

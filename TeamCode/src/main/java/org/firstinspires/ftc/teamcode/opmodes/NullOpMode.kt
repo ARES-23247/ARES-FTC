@@ -18,10 +18,19 @@ class NullOpMode : LinearOpMode() {
 
         waitForStart()
 
+        var lastTelemetryMs = 0L
         while (opModeIsActive()) {
-            telemetry.addData("Status", "Running...")
-            telemetry.update()
+            val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
+            if (nowMs - lastTelemetryMs >= TELEMETRY_PERIOD_MS) {
+                lastTelemetryMs = nowMs
+                telemetry.addData("Status", "Running...")
+                telemetry.update()
+            }
             idle()
         }
+    }
+
+    private companion object {
+        const val TELEMETRY_PERIOD_MS = 250L
     }
 }

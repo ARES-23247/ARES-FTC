@@ -22,29 +22,48 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
     /** Toggles intake intent after the 200 ms edge debounce. */
     fun toggleIntake() {
         val now = RobotClock.currentTimeMillis()
+        val season = base.store.state.superstructure.season
+        // Stopping is a safety action and must never be blocked by debounce or another mechanism.
+        if (season.intakeActive) {
+            lastIntakeToggleTimeMs = now
+            base.store.dispatch(RobotAction.UpdateSubsystemState(season.copy(intakeActive = false)))
+            return
+        }
         if (now - lastIntakeToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
         lastIntakeToggleTimeMs = now
-        val season = base.store.state.superstructure.season
+        // Starting intake atomically removes every shooter command so the two mechanisms can
+        // never be active together, even when their button edges arrive in adjacent frames.
         base.store.dispatch(RobotAction.UpdateSubsystemState(
-            state = season.copy(intakeActive = !season.intakeActive)
+            state = season.copy(
+                intakeActive = true,
+                flywheelActive = false,
+                flywheelTargetRPM = 0.0
+            )
         ))
     }
     /** Toggles flywheel intent unless debounce or the intake interlock rejects the request. */
     fun toggleShooter() {
         val now = RobotClock.currentTimeMillis()
+        val season = base.store.state.superstructure.season
+        // A stop request always wins, including immediately after a start edge and while intake is
+        // active because of a stale/restored state.
+        if (season.flywheelActive || season.flywheelTargetRPM != 0.0) {
+            lastShooterToggleTimeMs = now
+            base.store.dispatch(RobotAction.UpdateSubsystemState(
+                season.copy(flywheelActive = false, flywheelTargetRPM = 0.0)
+            ))
+            return
+        }
         if (now - lastShooterToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
         lastShooterToggleTimeMs = now
-        val season = base.store.state.superstructure.season
         if (season.intakeActive) return
         val configuredTarget = base.store.state.tuning.flywheelTargetRpmPreset
-        val currentTarget = if (!season.flywheelActive) {
-            configuredTarget.takeIf { it.isFinite() }?.coerceIn(0.0, MAX_FLYWHEEL_RPM) ?: 0.0
-        } else {
-            0.0
-        }
+        val currentTarget = configuredTarget.takeIf { it.isFinite() }
+            ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
+            ?: 0.0
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(
-                flywheelActive = !season.flywheelActive,
+                flywheelActive = currentTarget > 0.0,
                 flywheelTargetRPM = currentTarget
             )
         ))

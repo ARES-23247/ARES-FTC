@@ -109,9 +109,6 @@ configurations.configureEach { configuration ->
 def generatedAresSource = file(
     "src/main/java/org/firstinspires/ftc/teamcode/generated/GeneratedAresProject.kt"
 )
-def generatedSubsystemSource = file("src/main/java/org/firstinspires/ftc/teamcode/generated/subsystems")
-def generatedSubsystemTests = file("src/test/kotlin/org/firstinspires/ftc/teamcode/generated/subsystems")
-
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"
     description = "Generate checked-in Kotlin from the offline .ares project documents."
@@ -120,10 +117,7 @@ tasks.register("generateAresProject", JavaExec) {
     args "--project", rootProject.projectDir.absolutePath,
         "--output", generatedAresSource.absolutePath,
         "--package", "org.firstinspires.ftc.teamcode.generated",
-        "--platform", "FTC",
-        "--subsystems-output", generatedSubsystemSource.absolutePath,
-        "--subsystems-test-output", generatedSubsystemTests.absolutePath,
-        "--subsystems-package", "org.firstinspires.ftc.teamcode.generated.subsystems"
+        "--platform", "FTC"
 }
 
 tasks.register("verifyAresProject", JavaExec) {
@@ -135,9 +129,6 @@ tasks.register("verifyAresProject", JavaExec) {
         "--output", generatedAresSource.absolutePath,
         "--package", "org.firstinspires.ftc.teamcode.generated",
         "--platform", "FTC",
-        "--subsystems-output", generatedSubsystemSource.absolutePath,
-        "--subsystems-test-output", generatedSubsystemTests.absolutePath,
-        "--subsystems-package", "org.firstinspires.ftc.teamcode.generated.subsystems",
         "--check"
 }
 
@@ -159,39 +150,6 @@ koverReport {
                 classes("org.firstinspires.ftc.teamcode.opmodes.*")
             }
         }
-    }
-}
-
-task pushPaths(type: Exec) {
-    group = 'ARES'
-    description = 'Pushes all PathPlanner path and auto files to the connected robot SD card via ADB.'
-    
-    // Find adb.exe in SDK location
-    def sdkDir = project.android.sdkDirectory
-    def adbPath = sdkDir ? "${sdkDir.absolutePath}/platform-tools/adb" : "adb"
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        adbPath += ".exe"
-    }
-
-    commandLine adbPath, 'connect', '192.168.43.1:5555'
-    
-    doLast {
-        exec {
-            commandLine adbPath, 'shell', 'mkdir -p /sdcard/FIRST/paths /sdcard/FIRST/autos'
-        }
-        exec {
-            commandLine adbPath, 'push', 'src/main/assets/pathplanner/paths/.', '/sdcard/FIRST/paths/'
-        }
-        exec {
-            commandLine adbPath, 'push', 'src/main/assets/pathplanner/autos/.', '/sdcard/FIRST/autos/'
-        }
-        println "Paths and autos successfully pushed to robot!"
-    }
-}
-
-tasks.whenTaskAdded { task ->
-    if (task.name == 'installDebug') {
-        task.dependsOn pushPaths
     }
 }
 

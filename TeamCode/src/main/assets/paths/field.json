@@ -100,13 +100,22 @@
   ],
   "apriltags": [
     {
-      "id": 11,
-      "x": -1.7387872817460455,
-      "y": 1.7738022269681102,
-      "z": 0.5,
-      "yaw": 25.0,
-      "editorId": "apriltag_1783179251027",
-      "locked": false
+      "id": 20,
+      "x": -1.48266658,
+      "y": -1.4133195,
+      "z": 0.7493,
+      "yaw": 144.0499447,
+      "editorId": "decode_blue_target_20",
+      "locked": true
+    },
+    {
+      "id": 24,
+      "x": -1.48266658,
+      "y": 1.4133195,
+      "z": 0.7493,
+      "yaw": 35.950059,
+      "editorId": "decode_red_target_24",
+      "locked": true
     }
   ],
   "elementTypes": [

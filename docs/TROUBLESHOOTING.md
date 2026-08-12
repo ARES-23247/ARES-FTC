@@ -69,24 +69,29 @@ Autonomous saves the final pose and alliance through `PoseStorage`; the main Tel
 
 ## Autonomous
 
-### “Failed to load dynamic path”
+### Generated auto is BLOCKED/FAILED
 
 Confirm:
 
-- the class's `pathName` matches `TeamCode/src/main/assets/pathplanner/autos/<name>.auto` exactly;
-- every path referenced by the auto exists under `pathplanner/paths`;
-- the files were packaged or pushed after their last edit;
-- JSON is valid for the parser version in ARESLib.
+- `.ares/autonomous-catalog.json` references an existing `.ares/routines/<id>.aresroutine`;
+- `GeneratedAresProject.kt` matches the project (`:TeamCode:verifyAresProject`);
+- every named action has hardware-backed capability on this robot;
+- starting/target poses and complete drive sweeps clear field boundaries and blocking obstacles.
 
-The autonomous base intentionally waits for start, displays the error, performs a full safety stop, and exits without running a partial sequence.
+The autonomous base reports the validation/routine failure, performs a full safety stop, invalidates
+pose handoff, and exits without running a partial sequence.
 
 ### Auto starts from the wrong side
 
-Call `configureAlliance(robot, Alliance.RED/BLUE)` before execution. It dispatches the alliance and resets the corresponding pose before ARESLib mirrors the path. Also confirm the physical robot is placed at the path's declared starting pose.
+Select the correct alliance during INIT (or check the locked validation OpMode). The generated
+catalog starting pose is mirrored once at the FTC boundary. Also confirm the physical robot is
+placed at the displayed starting pose.
 
 ### Auto stops after one loop error
 
-This is fail-safe behavior. A loop exception clears the task executor and stops all registered season/drivetrain outputs; it does not retry stale targets. Read the `LOOP_ERROR` telemetry/log and fix the underlying missing hardware, invalid path, or controller exception.
+This is fail-safe behavior. A loop exception cancels the active routine and stops all registered
+season/drivetrain outputs; it does not retry stale targets. Read the reported failure and fix the
+underlying missing hardware, invalid sweep, or controller exception.
 
 ## Mechanisms and safety
 
@@ -114,11 +119,15 @@ Do not resume operation until the restrained-hardware stop test passes.
 
 ### Dashboard shows duplicate or missing topics
 
-Use NT4 keys without a leading slash, for example `ARES/Input/heartbeat`. Publishing `/ARES/Input/heartbeat` from custom code creates an inconsistent contract even though current server/client boundaries normalize canonical keys.
+Use NT4 keys without a leading slash, for example `ARES/Input/driveFrame`. Publishing a leading-slash duplicate from custom code creates an inconsistent contract even though current server/client boundaries normalize canonical keys.
 
 ### Remote drive stops despite an apparent connection
 
-Remote drive is heartbeat-gated. Verify the dashboard is updating `ARES/Input/heartbeat`, that the laptop and Robot Controller are on the same network, and that port `5810` is reachable. A stale heartbeat intentionally commands zero field-relative velocity.
+Remote drive accepts only exact v2 `ARES/Input/driveFrame` arrays. Verify the publisher uses a
+positive session nonce, increasing sequence, nondecreasing client monotonic time, integral known
+flags, and publishes a neutral-first frame. A 200 ms receiver-side lease intentionally commands
+zero velocity even if NT4 still retains the last moving frame. Flag bit 4 selects field-relative
+(`1`) or robot-relative (`0`) axes consistently with the simulator.
 
 ### Logs are not in the cloud
 
@@ -128,7 +137,7 @@ The robot never uploads directly. Connect the ARES Analytics desktop application
 
 - `AAA Blank Null OpMode`: hardware-free control-system isolation; useful for distinguishing app/lifecycle issues from I2C or power trouble.
 - `ARES Drivetrain Diagnostic`: discovers and individually powers drive motors; use on blocks.
-- `ARES Live Tuning TeleOp`: exercises live tuning; do not use as the first test after a hardware/sign change.
-- `ARES Remote Drive (NT4)`: tests dashboard input and heartbeat fail-safe.
+- `ARES Live Tuning TeleOp`: dedicated calibration surface; it still requires a fresh enable token while command is `STOP`.
+- `ARES Remote Drive (NT4)`: tests the atomic v2 frame and 200 ms receiver lease.
 
 When a problem remains ambiguous, capture the exact OpMode, hardware-map names, Driver Station error, local log, last valid sensor values, and whether the same behavior occurs in simulation.

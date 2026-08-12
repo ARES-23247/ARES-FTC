@@ -4,7 +4,6 @@ package org.firstinspires.ftc.teamcode.generated
 
 import com.areslib.codegen.CapabilityArgumentReader
 import com.areslib.routine.AutonomousCatalogEntry
-import com.areslib.routine.AutonomousRoutineEntryPoint
 import com.areslib.routine.RoutineDocument
 import com.areslib.routine.RoutineDriveMarker
 import com.areslib.routine.RoutineDriveStep
@@ -12,26 +11,6 @@ import com.areslib.routine.RoutinePose
 import com.areslib.routine.RoutineRuntimeBindings
 import com.areslib.routine.RoutineStep
 import com.areslib.routine.RoutineStepKind
-import com.areslib.routine.RoutineManager
-import com.areslib.routine.RoutineStartPolicy
-import com.areslib.input.AnalogBinding
-import com.areslib.input.AnalogBindingListener
-import com.areslib.input.AnalogEmissionPolicy
-import com.areslib.input.AnalogZone
-import com.areslib.input.AnalogZoneListener
-import com.areslib.input.AxisThresholdSource
-import com.areslib.input.AxisTransform
-import com.areslib.input.BindingReleaseReason
-import com.areslib.input.ButtonSuppressionState
-import com.areslib.input.ChordSource
-import com.areslib.input.ControllerBindingRuntime
-import com.areslib.input.DigitalBinding
-import com.areslib.input.DigitalBindingListener
-import com.areslib.input.DigitalBindingTiming
-import com.areslib.input.RawButtonSource
-import com.areslib.input.SuppressibleButtonSource
-import com.areslib.input.SuppressingButtonChordSource
-import com.areslib.input.ThresholdDirection
 import com.areslib.sequencer.Task
 import com.areslib.state.RobotState
 
@@ -119,17 +98,12 @@ interface GeneratedAresProjectCapabilities {
     fun createDriveTask(step: RoutineDriveStep): Task? = null
 }
 
-/** Robot scheduler boundary used by generated direct-action controller bindings. */
-fun interface GeneratedAresProjectControlTaskSink {
-    fun submit(bindingId: String, task: Task)
-}
-
 /** Generated from the project's checked-in ARES documents. Do not edit by hand. */
 object GeneratedAresProject {
-    const val GENERATOR_VERSION: Int = 3
+    const val GENERATOR_VERSION: Int = 4
     const val CATALOG_SHA256: String = "efae98af6ae95fc69616265aabfac616cbae6cfd7cc1e0bd71ed2e24485e8f74"
-    const val CONTENT_SHA256: String = "dc164ea21062efbb7ecba1294e6873731e3917c73ea2a39f1a449aa41a08eb53"
-    const val SOURCE_SHA256: String = "d5b5859edf1909a83e609c7d8a4e51bee8af3ba6a4755e4489a4fedd852c13b9"
+    const val CONTENT_SHA256: String = "1f724031bd2a1848484cb59870166dd14f76d3ea3a4c2df56d49a622692e8116"
+    const val SOURCE_SHA256: String = "d42e4f6f7cd07582959a4aec042c5e02810aa36d39a8d9f28d7c59265020f916"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -143,40 +117,6 @@ object GeneratedAresProject {
     val knownConditionKeys: Set<String> = emptySet()
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
-        "new-routine-e0d35bd4" to RoutineDocument(
-            schemaVersion = 1,
-            documentId = "new-routine-e0d35bd4",
-            revision = 1,
-            parentContentHash = null,
-            name = "New Routine",
-            description = null,
-            steps = listOf(
-                RoutineStep(
-                    kind = RoutineStepKind.DRIVE_TO,
-                    drive = RoutineDriveStep(
-                        target = RoutinePose(
-                            xMeters = -0.5681932250976562,
-                            yMeters = -0.15872606735229491,
-                            headingRadians = 0.0,
-                        ),
-                        motionPresetKey = "balanced",
-                        preferredEngineKey = null,
-                    ),
-                ),
-                RoutineStep(
-                    kind = RoutineStepKind.DRIVE_TO,
-                    drive = RoutineDriveStep(
-                        target = RoutinePose(
-                            xMeters = -1.4791425636291504,
-                            yMeters = -0.5129841676712036,
-                            headingRadians = 0.0,
-                        ),
-                        motionPresetKey = "balanced",
-                        preferredEngineKey = null,
-                    ),
-                ),
-            ),
-        ),
         "test-auto" to RoutineDocument(
             schemaVersion = 1,
             documentId = "test-auto",
@@ -218,8 +158,6 @@ object GeneratedAresProject {
             ),
         ),
     )
-
-    val autonomousEntryPoints: Map<String, AutonomousRoutineEntryPoint> = linkedMapOf()
 
     val autonomousEntries: List<AutonomousCatalogEntry> = listOf(
         AutonomousCatalogEntry(
@@ -507,20 +445,4 @@ object GeneratedAresProject {
             },
         )
 
-    val knownControlSchemeIds: Set<String> = emptySet()
-
-    /**
-     * Builds one allocation-free update runtime per controller slot. Suppressing chords are
-     * ordered before constituent buttons and raise their effective press debounce to the chord
-     * window, preventing a near-simultaneous chord from leaking a single-button action.
-     */
-    @Suppress("UNUSED_PARAMETER")
-    fun createControllerRuntimes(
-        schemeId: String,
-        registry: GeneratedAresProjectCapabilities,
-        routineManager: RoutineManager,
-        taskSink: GeneratedAresProjectControlTaskSink,
-    ): Map<String, ControllerBindingRuntime> {
-        throw IllegalArgumentException("Unknown control scheme '$schemeId'")
-    }
 }

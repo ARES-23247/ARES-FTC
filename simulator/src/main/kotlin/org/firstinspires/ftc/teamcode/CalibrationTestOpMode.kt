@@ -16,6 +16,8 @@ class CalibrationTestOpMode : LinearOpMode() {
         robot.isLiveTuningEnabled = true
 
         waitForStart()
+        // Match the physical tuning OpMode: calibration ownership does not exist during INIT.
+        robot.enableCalibrationMode()
         try {
             while (opModeIsActive()) {
                 flywheel.refresh()
@@ -23,7 +25,10 @@ class CalibrationTestOpMode : LinearOpMode() {
                 Thread.sleep(20L)
             }
         } finally {
-            flywheel.safe()
+            runCatching { robot.disableCalibrationMode() }
+            robot.sysIdFlywheelIO = null
+            robot.isLiveTuningEnabled = false
+            runCatching { flywheel.safe() }
             robot.close()
         }
     }

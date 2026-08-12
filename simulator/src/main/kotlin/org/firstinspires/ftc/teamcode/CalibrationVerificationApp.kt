@@ -52,27 +52,15 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     }
     println("Connected to simulator NT4 server.")
 
-    // Driver Station control and heartbeat topics use canonical names without leading slashes.
+    // Driver Station and dedicated calibration topics use canonical names without leading slashes.
     val cmdPub = ntInst.getStringTopic("ARES/DriverStation/Command").publish()
     val selectPub = ntInst.getStringTopic("ARES/DriverStation/SelectedOpMode").publish()
-    
-    val heartbeatPub = ntInst.getIntegerTopic("ARES/Input/heartbeat").publish()
-    val teleopPub = ntInst.getBooleanTopic("ARES/Input/isTeleopMode").publish()
-
-    // A changing heartbeat keeps the remote-input watchdog armed during long calibration routines.
-    val running = java.util.concurrent.atomic.AtomicBoolean(true)
-    val heartbeatThread = thread(isDaemon = true, name = "ARES-Calibration-Heartbeat") {
-        var count = 0L
-        while (running.get()) {
-            heartbeatPub.set(count++)
-            teleopPub.set(true)
-            try {
-                Thread.sleep(50)
-            } catch (_: InterruptedException) {
-                break
-            }
-        }
-    }
+    val calCmdPub = ntInst.getStringTopic("SysId/Command").publish()
+    val enableTokenPub = ntInst.getStringTopic("SysId/EnableToken").publish()
+    val armedSub = ntInst.getBooleanTopic(
+        com.areslib.telemetry.TelemetryTopicNormalizer.toWireTopic("SysId/Armed")
+    ).subscribe(false)
+    calCmdPub.set("STOP")
 
     // Follow the same INIT then START lifecycle as the desktop Driver Station.
     selectPub.set("org.firstinspires.ftc.teamcode.CalibrationTestOpMode")
@@ -80,12 +68,19 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     println("Sent INIT command.")
     Thread.sleep(3000)
 
+    // Calibration mode is intentionally absent throughout INIT. START first, allow the OpMode to
+    // snapshot retained input as stale, and only then publish the fresh neutral enable token.
     cmdPub.set("START")
     println("Sent START command.")
-    Thread.sleep(1500)
+    ntInst.flush()
+    Thread.sleep(250L)
+    enableTokenPub.set("calibration-verification-${System.nanoTime()}")
+    ntInst.flush()
+    val armDeadline = System.currentTimeMillis() + 3000L
+    while (!armedSub.get() && System.currentTimeMillis() < armDeadline) Thread.sleep(25L)
+    val calibrationArmed = armedSub.get()
 
     // Calibration command/status/data contract shared with ARES Analytics.
-    val calCmdPub = ntInst.getStringTopic("SysId/Command").publish()
     // WPILib's client-facing topic namespace includes the root slash used in server announcements.
     // Robot and dashboard code still normalize stored/published keys to no leading slash.
     val calStatusSub = ntInst.getStringTopic(
@@ -97,7 +92,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
 
     fun runCalibrationTest(command: String, expectedStatus: String) {
         println("\n--- Testing: $command (Expecting Status: $expectedStatus) ---")
-        
+
+        check(armedSub.get()) { "Calibration controller disarmed before $command" }
         // Trigger and allow for NT4 topic announcement plus the robot's next control loop.
         calCmdPub.set(command)
         ntInst.flush()
@@ -155,6 +151,7 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     // Hardware-affecting routines are deliberately serialized.
     var succeeded = false
     try {
+        check(calibrationArmed) { "Verification Failed: dedicated calibration OpMode did not arm" }
         runCalibrationTest("START_PINPOINT_SPIN", "PINPOINT_SPIN")
         runCalibrationTest("START_TRACK_WIDTH_SPIN", "TRACK_WIDTH_SPIN")
         runCalibrationTest("START_LINEAR_DRIVE", "LINEAR_DRIVE")
@@ -177,19 +174,12 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     } catch (e: Exception) {
         e.printStackTrace()
     } finally {
-        running.set(false)
-        heartbeatThread.interrupt()
-        try {
-            heartbeatThread.join(1000L)
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-        }
         try { cmdPub.set("STOP") } catch (_: Exception) {}
         calCmdPub.close()
+        enableTokenPub.close()
+        armedSub.close()
         calStatusSub.close()
         calDataSub.close()
-        heartbeatPub.close()
-        teleopPub.close()
         cmdPub.close()
         selectPub.close()
         ntInst.close()
