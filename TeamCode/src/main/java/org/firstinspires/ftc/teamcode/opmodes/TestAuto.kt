@@ -5,7 +5,7 @@ import com.areslib.state.Alliance
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 
 
-/** Red-alliance validation entry point for the shared native `test-auto` asset. */
+/** Red-alliance validation entry point for the generated `test-auto` routine. */
 @Autonomous(name = "TestAuto - RED", group = "ARES")
 class TestAutoRed : AresAutoBase() {
     override val lockedAutonomousEntryId = "test-auto"

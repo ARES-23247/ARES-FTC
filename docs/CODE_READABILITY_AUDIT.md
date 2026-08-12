@@ -57,7 +57,6 @@ No Gradle task was run during this pass because other agents were editing integr
 |---|---|
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/hardware/FtcFlywheelIO.kt` | Documented cache validity, encoder units, recoverable reads, velocity-to-open-loop fallback, voltage compensation, and registry safety. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/hardware/FtcIntakeIO.kt` | Documented absent pivot, once-per-frame cached reads, current validity, voltage fallback, and crash safety; simplified voltage validation. |
-| `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/hardware/SeasonInterfaces.kt` | Explained why team-package aliases exist while ARESLib owns IO contracts. |
 
 ### OpModes and facade
 
@@ -66,14 +65,12 @@ No Gradle task was run during this pass because other agents were editing integr
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESAuto.kt` | Identified asset and alliance role. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESMecanumDiagnostic.kt` | Added restrained-hardware safety contract; extracted equivalent motor alias lookup; removed variable-name comments. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESMecanumTeleOp.kt` | Corrected outdated hardware description and documented pose restoration, alliance transform, and optional indicators. |
-| `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESRemoteDriveOpMode.kt` | Documented heartbeat watchdog, canonical NT4 keys, reset units/defaults, and zero-output failure behavior; removed unused callback names and placeholder comments. |
+| `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESRemoteDriveOpMode.kt` | Documented the atomic command watchdog, canonical NT4 keys, and zero-output failure behavior. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/AresRobot.kt` | Replaced inaccurate “drive-only” claim with composition/lifecycle/safety contract; documented optional mechanisms and facade APIs; simplified stall guard. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/ARESTuningTeleOp.kt` | Clarified local NT4 tuning scope and red-alliance initialization. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/IntakeShootTeleOp.kt` | Clarified Redux command flow and telemetry-only unwired feed trigger; removed numbered/noise comments. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/NullOpMode.kt` | Clarified its hardware-isolation purpose and no-output guarantee. |
-| `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/TeamStateStorage.kt` | Documented process lifetime and unspecified lift unit. |
 | `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/TestAuto.kt` | Removed unused imports and documented red/blue mirroring roles. |
-| `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/TestPathAuto.kt` | Clarified compatibility-helper status and marker behavior; made static path metadata `const`. |
 
 ### Controllers and subsystems
 
@@ -90,7 +87,7 @@ No Gradle task was run during this pass because other agents were editing integr
 
 | File | Rationale |
 |---|---|
-| `simulator/src/main/kotlin/org/firstinspires/ftc/teamcode/CalibrationVerificationApp.kt` | Documented independent NT4 E2E role, lifecycle sequence, wall-clock rationale, heartbeat, bounded waits, and serialized routines. |
+| `simulator/src/main/kotlin/org/firstinspires/ftc/teamcode/CalibrationVerificationApp.kt` | Documented independent NT4 E2E role, lifecycle sequence, fresh calibration-token handshake, bounded waits, and serialized routines. |
 | `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/ARESTests.kt` | Replaced placeholder narration with the allocation-free fallback contract. |
 | `TeamCode/src/test/kotlin/org/firstinspires/ftc/teamcode/AresRobotTest.kt` | Removed generated local-variable KDoc, documented test scope, and placed the unchecked-cast suppression at its source. |
 | `TeamCode/src/test/kotlin/org/firstinspires/ftc/teamcode/AresTeleOpBaseTest.kt` | Removed extensive placeholder KDoc and explained SDK reflection/desktop lifecycle purpose. |

@@ -19,7 +19,7 @@ object HardwareConstants {
     const val IMU_BNO055 = "imu"
     const val VISION_LIMELIGHT = "limelight"
 
-    // Encoder ticks per motor revolution and safe open-loop reference speed.
+    // Encoder ticks per motor revolution and nominal-12-V feedforward reference speed.
     const val FLYWHEEL_TICKS_PER_REV = 28.0
     const val FLYWHEEL_MAX_RPM = 6000.0
 }

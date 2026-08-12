@@ -1,6 +1,6 @@
 # ARES FTC
 
-ARES FTC is team 23247's Kotlin robot application for the 2025–2026 **DECODE** season. It is the FTC season layer in the larger ARES robotics workspace: this repository owns the robot-specific hardware bindings, controls, OpModes, and PathPlanner assets, while reusable state, math, localization, path following, safety, telemetry, and simulation live in the sibling [ARESLib-Kotlin](../ARESLib-Kotlin/) repository.
+ARES FTC is team 23247's Kotlin robot application for the 2025–2026 **DECODE** season. It is the FTC season layer in the larger ARES robotics workspace: this repository owns the robot-specific hardware bindings, controls, OpModes, generated ARES routines, and field assets, while reusable state, math, localization, path following, safety, telemetry, and simulation live in the sibling [ARESLib-Kotlin](../ARESLib-Kotlin/) repository.
 
 The project is based on FTC SDK 11.1. `FtcRobotController/` remains upstream SDK application code; team-owned robot code belongs in `TeamCode/`.
 
@@ -24,7 +24,7 @@ ARES-FTC/
 │       │   ├── hardware/     FTC SDK implementations of season mechanism IO
 │       │   ├── opmodes/      Driver Station entry points and robot facade
 │       │   └── subsystems/   Sensor-to-state and state-to-output controllers
-│       └── assets/           Field data and PathPlanner paths/autos
+│       └── assets/           Canonical field data and derived Limelight map
 ├── simulator/                Desktop JVM launcher using real TeamCode + FTC mocks
 ├── FtcRobotController/       Upstream FTC SDK application module
 ├── .ares/                    Canonical routines, action/auto catalogs, and controller mappings
@@ -99,7 +99,7 @@ From PowerShell in this repository:
 # Run a headless simulation through the Android module's classpath
 .\gradlew.bat :TeamCode:runSim
 
-# Install the debug app; installDebug also pushes PathPlanner paths/autos
+# Install the debug app (generated routines are compiled into the APK)
 .\gradlew.bat :TeamCode:installDebug
 ```
 

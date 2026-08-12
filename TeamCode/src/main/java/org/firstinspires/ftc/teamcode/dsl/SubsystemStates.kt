@@ -7,8 +7,7 @@ import com.areslib.state.SuperstructureState
  * Immutable DECODE mechanism state stored in [SuperstructureState.custom].
  *
  * Targets express commanded intent; measured values are observations dispatched by subsystem
- * reads. RPM is motor revolutions per minute. Lift values retain the mechanism's configured
- * distance unit until physical lift IO defines a canonical unit.
+ * reads. RPM is motor revolutions per minute.
  */
 data class SeasonSuperstructureState(
     /** Whether the intake roller is commanded on. */
@@ -20,11 +19,7 @@ data class SeasonSuperstructureState(
     /** Most recently accepted flywheel observation in motor RPM. */
     val flywheelCurrentRPM: Double = 0.0,
     /** Whether [flywheelCurrentRPM] came from a fresh finite hardware observation. */
-    val flywheelVelocityValid: Boolean = false,
-    /** Reserved lift target; no physical lift IO is currently registered. */
-    val liftTargetHeight: Double = 0.0,
-    /** Process-local lift observation carried from Auto to TeleOp. */
-    val liftHeight: Double = 0.0
+    val flywheelVelocityValid: Boolean = false
 ) : SubsystemState
 
 /**

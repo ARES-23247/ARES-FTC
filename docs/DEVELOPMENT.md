@@ -106,28 +106,10 @@ The build fails if generated Kotlin is stale. See [Routines, autonomous selectio
 controls](ROUTINES_AND_CONTROLS.md) for the student workflow, action discovery, controller mapping,
 and FTC runtime limitations.
 
-### Legacy PathPlanner assets
-
-PathPlanner assets live in:
-
-```text
-TeamCode/src/main/assets/pathplanner/paths/*.path
-TeamCode/src/main/assets/pathplanner/autos/*.auto
-```
-
-These assets remain for compatibility and focused path tests. New ARES routines own their drive
-goals directly and do not require a separate path file. A legacy autonomous class's `pathName`
-property still matches the `.auto` filename, and every referenced legacy path must exist.
-
-To push assets without installing an APK:
-
-```powershell
-.\gradlew.bat :TeamCode:pushPaths
-```
-
-The task connects ADB to `192.168.43.1:5555`, creates `/sdcard/FIRST/paths` and `/sdcard/FIRST/autos`, and pushes the respective asset directories. `:TeamCode:installDebug` depends on `pushPaths`, so a normal debug install updates paths automatically.
-
-The separate `TeamCode/src/main/assets/paths` directory contains field/obstacle/AprilTag data; it is not the PathPlanner `paths` directory pushed by `pushPaths`.
+`TeamCode/src/main/assets/paths/field.json` is the canonical FTC field contract used by Auto,
+TeleOp localization, obstacle preflight, and simulation. `apriltags.fmap` is a checked derivative
+for Limelight upload and is guarded by a unit test against the field document. There is no loose
+PathPlanner/`.aresauto` deployment path or ADB push task.
 
 ## Deploy
 
@@ -138,7 +120,7 @@ adb connect 192.168.43.1:5555
 .\gradlew.bat :TeamCode:installDebug
 ```
 
-For a manually built APK, find the debug artifact under `TeamCode/build/outputs/apk/debug/` and use `adb install -r <apk>`. Prefer the Gradle install task because it also updates autonomous assets.
+For a manually built APK, find the debug artifact under `TeamCode/build/outputs/apk/debug/` and use `adb install -r <apk>`. Generated autonomous code and field assets are already packaged in the APK.
 
 Before enabling a competition OpMode:
 

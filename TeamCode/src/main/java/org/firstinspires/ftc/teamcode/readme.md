@@ -24,19 +24,19 @@ driver intent. Each receiver exposes named `robot`, `driver`, `operator`, and `t
 The iterative base owns SDK lifecycle callbacks, gamepad snapshots, periodic `robot.update(...)`, and
 idempotent close.
 
-For autonomous, extend `AresAutoBase` and declare the routine explicitly:
+For autonomous, extend `AresAutoBase`; the base selects entries from the checked-in generated ARES
+catalog. A narrow validation mode may lock one entry/alliance:
 
 ```kotlin
-override fun defineAuto() = auto {
-    pathPlannerAuto("TestAuto")
-    alliance(Alliance.RED)
-}
+override val lockedAutonomousEntryId = "test-auto"
+override val lockedAutonomousAlliance = Alliance.RED
 ```
 
-The iterative base preflights the complete auto before START, seeds localization, refreshes hardware
-during INIT, enforces the FTC runtime limit, stops on completion/failure, persists a usable final pose,
-and closes hardware. Missing auto names, alliances, start poses, paths, or named commands block arming
-with a corrective Driver Station message.
+The iterative base preflights the complete routine and swept robot footprint before START, seeds
+localization, refreshes hardware during INIT, enforces the FTC runtime limit, stops on
+completion/failure, persists a pose only after confirmed completion, and closes hardware. Missing
+routines, invalid poses, obstacles, or unavailable named-command capabilities block arming with a
+corrective Driver Station message.
 
 Do not copy an FTC sample's direct motor-write loop into a competition OpMode. Driver bindings should call the robot facade or dispatch `RobotAction`; registered subsystems translate immutable state to outputs.
 

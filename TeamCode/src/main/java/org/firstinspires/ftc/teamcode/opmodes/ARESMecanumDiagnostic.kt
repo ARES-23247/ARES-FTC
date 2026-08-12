@@ -34,6 +34,7 @@ class ARESMecanumDiagnostic : LinearOpMode(), PhotonEnabledOpMode {
 
         waitForStart()
 
+        var lastTelemetryMs = 0L
         try {
             while (opModeIsActive()) {
                 val flPower = if (gamepad1.a) 0.4 else 0.0 // Cross / A
@@ -46,19 +47,28 @@ class ARESMecanumDiagnostic : LinearOpMode(), PhotonEnabledOpMode {
                 rl?.power = rlPower
                 rr?.power = rrPower
 
-                telemetry.addData("--- Raw Motor Controls ---", "")
-                telemetry.addData("Hold Cross/A (FL)", flPower)
-                telemetry.addData("Hold Circle/B (FR)", frPower)
-                telemetry.addData("Hold Square/X (RL)", rlPower)
-                telemetry.addData("Hold Triangle/Y (RR)", rrPower)
-                telemetry.update()
+                val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
+                if (nowMs - lastTelemetryMs >= TELEMETRY_PERIOD_MS) {
+                    lastTelemetryMs = nowMs
+                    telemetry.addData("--- Raw Motor Controls ---", "")
+                    telemetry.addData("Hold Cross/A (FL)", flPower)
+                    telemetry.addData("Hold Circle/B (FR)", frPower)
+                    telemetry.addData("Hold Square/X (RL)", rlPower)
+                    telemetry.addData("Hold Triangle/Y (RR)", rrPower)
+                    telemetry.update()
+                }
                 sleep(20)
             }
         } finally {
-            fl?.power = 0.0
-            fr?.power = 0.0
-            rl?.power = 0.0
-            rr?.power = 0.0
+            // One failed controller must not prevent the remaining three from receiving zero.
+            runCatching { fl?.power = 0.0 }
+            runCatching { fr?.power = 0.0 }
+            runCatching { rl?.power = 0.0 }
+            runCatching { rr?.power = 0.0 }
         }
+    }
+
+    private companion object {
+        const val TELEMETRY_PERIOD_MS = 100L
     }
 }

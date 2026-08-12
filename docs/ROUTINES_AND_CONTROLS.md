@@ -13,8 +13,6 @@ Canonical inputs live at the repository root:
 .ares/action-catalog.json
 .ares/autonomous-catalog.json
 .ares/routines/<id>.aresroutine
-.ares/controllers/<id>.arescontroller
-.ares/controls/<id>.arescontrols
 ```
 
 `project.json` is the shared source of truth for FTC coordinates, field dimensions, and the
@@ -27,8 +25,9 @@ invoke the same routine as a teleop macro. This is the supported replacement for
 file and a separate auto file for one behavior.
 
 The action catalog is automatically loaded by Analytics. Each key must have a matching typed
-implementation in the FTC generated-project capabilities. Keep the catalog, runtime factory, and
-their contract test synchronized when adding an action.
+implementation in the FTC generated-project capabilities. At runtime, only actions backed by
+hardware discovered on that robot instance are registered; a routine requiring absent hardware is
+rejected instead of silently completing a no-op.
 
 ## Generate and verify Kotlin
 
@@ -71,35 +70,11 @@ Routines are authored in the repository's canonical field coordinate convention:
 CCW-positive radians, `0 = +X`. Alliance transformation happens once at the FTC runtime boundary;
 do not add a second mirror in a routine or drivetrain controller.
 
-## Teleop control schemes
+## Teleop controls
 
-An `AresTeleOpBase` may name a generated control scheme. The FTC binding host maps logical slots as:
-
-| Scheme slot | FTC device |
-| --- | --- |
-| `driver`, `gamepad1`, `controller1`, or `0` | `gamepad1` |
-| `operator`, `gamepad2`, `controller2`, or `1` | `gamepad2` |
-
-Any other slot fails during initialization. Per-loop input is copied through
-`FtcInputFrameAdapter`, then the shared allocation-conscious binding runtime applies debounce,
-hold/repeat/cooldown, chords, and analog policies.
-
-The standard FTC SDK buttons and axes are supported. The Flydigi Vader 5 Pro can be drawn and
-configured in Analytics, but its vendor-only extra buttons are usable on the Control Hub only when
-the FTC Android/gamepad event path exposes them. Desktop GLFW learning does not establish the FTC
-raw index. Learn and verify the `FTC` mapping explicitly; retain a standard-control fallback for
-match-critical behavior.
-
-Macros do not need a separate implementation: make a reusable routine and bind the desired event
-to it. Bindings can start, restart, queue, run in parallel, toggle/cancel, or explicitly cancel a
-routine.
-
-## Legacy assets
-
-PathPlanner assets and `.aresauto` import remain available for migration and focused compatibility
-tests. New ARES autonomous work should use `.ares/routines` and the autonomous catalog. The APK
-contains generated Kotlin, so canonical routine deployment does not depend on pushing loose path or
-auto files to the Control Hub.
+This season project has no generated controller scheme. Competition TeleOps declare their FTC SDK
+bindings directly in `controls { ... }`, and reusable autonomous behavior lives in `.ares/routines`.
+There is no legacy generated-control runner or loose PathPlanner/`.aresauto` import path.
 
 ## Pre-match checklist
 

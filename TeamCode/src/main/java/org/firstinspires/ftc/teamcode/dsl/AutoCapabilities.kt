@@ -41,12 +41,6 @@ object FtcAutoCapabilities {
         category = "Shooter"
     )
 
-    private val mechanismDescriptors = listOf(
-        INTAKE_COLLECT,
-        INTAKE_STOP,
-        FLYWHEEL_PREPARE,
-        FLYWHEEL_STOP
-    )
     private val primaryIndicatorDescriptors = IndicatorLightColor.entries.associateWith { color ->
         indicatorDescriptor(color, primary = true)
     }
@@ -54,60 +48,61 @@ object FtcAutoCapabilities {
         indicatorDescriptor(color, primary = false)
     }
 
-    /** Complete runtime catalog that must match `ares/auto-capabilities.json`. */
-    val descriptors: List<NamedCommandDescriptor> = mechanismDescriptors +
-        primaryIndicatorDescriptors.values + secondaryIndicatorDescriptors.values
+    /** Registers only mechanism actions backed by hardware discovered for this robot instance. */
+    fun registerMechanismActions(intakeAvailable: Boolean, flywheelAvailable: Boolean) {
+        if (intakeAvailable) {
+            registerStateAction(
+                INTAKE_COLLECT
+            ) { state ->
+                RobotAction.UpdateSubsystemState(
+                    state.superstructure.season.copy(
+                        intakeActive = true,
+                        flywheelActive = false,
+                        flywheelTargetRPM = 0.0
+                    )
+                )
+            }
+            registerStateAction(
+                INTAKE_STOP
+            ) { state ->
+                RobotAction.UpdateSubsystemState(state.superstructure.season.copy(intakeActive = false))
+            }
+        }
 
-    /** Registers fresh task factories. Calling this again safely replaces prior registrations. */
-    fun register() {
-        registerStateAction(
-            INTAKE_COLLECT
-        ) { state ->
-            RobotAction.UpdateSubsystemState(
-                state.superstructure.season.copy(
-                    intakeActive = true,
-                    flywheelActive = false,
-                    flywheelTargetRPM = 0.0
+        if (flywheelAvailable) {
+            registerStateAction(
+                FLYWHEEL_PREPARE
+            ) { state ->
+                val targetRpm = state.tuning.flywheelTargetRpmPreset
+                    .takeIf(Double::isFinite)
+                    ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
+                    ?: 0.0
+                RobotAction.UpdateSubsystemState(
+                    state.superstructure.season.copy(
+                        intakeActive = false,
+                        flywheelActive = targetRpm > 0.0,
+                        flywheelTargetRPM = targetRpm
+                    )
                 )
-            )
-        }
-        registerStateAction(
-            INTAKE_STOP
-        ) { state ->
-            RobotAction.UpdateSubsystemState(state.superstructure.season.copy(intakeActive = false))
-        }
-        registerStateAction(
-            FLYWHEEL_PREPARE
-        ) { state ->
-            val targetRpm = state.tuning.flywheelTargetRpmPreset
-                .takeIf(Double::isFinite)
-                ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
-                ?: 0.0
-            RobotAction.UpdateSubsystemState(
-                state.superstructure.season.copy(
-                    intakeActive = false,
-                    flywheelActive = targetRpm > 0.0,
-                    flywheelTargetRPM = targetRpm
+            }
+            registerStateAction(
+                FLYWHEEL_STOP
+            ) { state ->
+                RobotAction.UpdateSubsystemState(
+                    state.superstructure.season.copy(
+                        flywheelActive = false,
+                        flywheelTargetRPM = 0.0
+                    )
                 )
-            )
-        }
-        registerStateAction(
-            FLYWHEEL_STOP
-        ) { state ->
-            RobotAction.UpdateSubsystemState(
-                state.superstructure.season.copy(
-                    flywheelActive = false,
-                    flywheelTargetRPM = 0.0
-                )
-            )
+            }
         }
     }
 
     /**
      * Registers indicator actions after optional hardware discovery is complete.
      *
-     * Missing lights retain their advertised command as a safe no-op, so an auto remains portable
-     * between the competition robot and simulator configurations with fewer optional devices.
+     * Missing lights are absent from the live capability registry. A routine that requires one is
+     * rejected instead of falsely completing a no-op action.
      */
     fun registerIndicatorActions(primaryAvailable: Boolean, secondaryAvailable: Boolean) {
         IndicatorLightColor.entries.forEach { color ->
@@ -141,15 +136,12 @@ object FtcAutoCapabilities {
         available: Boolean,
         color: IndicatorLightColor
     ) {
+        if (!available) return
         NamedCommands.register(descriptor) {
             object : Task {
                 override val name: String = descriptor.displayName
                 override fun initialize(state: RobotState): List<RobotAction> =
-                    if (available) {
-                        listOf(RobotAction.SetIndicatorLight(hardwareName, color.position))
-                    } else {
-                        emptyList()
-                    }
+                    listOf(RobotAction.SetIndicatorLight(hardwareName, color.position))
 
                 override fun isCompleted(state: RobotState, elapsedMs: Long): Boolean = true
             }

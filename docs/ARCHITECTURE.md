@@ -12,7 +12,7 @@ ARES-FTC owns:
 - physical configuration names and mechanism constants;
 - FTC SDK implementations of intake and flywheel IO;
 - DECODE superstructure state and driver bindings;
-- current-season paths, autos, field assets, and named mechanism commands.
+- current-season generated routines, field assets, and named mechanism commands.
 
 ARESLib-Kotlin owns:
 
@@ -33,7 +33,7 @@ If code is usable unchanged by another season or league, it probably belongs in 
 - zero, one, or two indicator-light subsystems;
 - an optional Prism RGB subsystem using I2C first, then PWM fallback.
 
-Intake, flywheel, and lighting failures are isolated during initialization and reported through telemetry. The base drivetrain remains available when optional season hardware is absent. Named indicator and Prism commands are registered even when hardware is absent; they intentionally become no-ops so an autonomous file does not crash solely because optional lighting failed to initialize.
+Intake, flywheel, and lighting failures are isolated during initialization and reported through telemetry. The base drivetrain remains available when optional season hardware is absent. The live named-command registry contains only capabilities backed by discovered hardware, so a routine requiring a missing mechanism/light is rejected instead of silently completing a no-op.
 
 ## Redux data flow
 
@@ -114,8 +114,8 @@ Season motor IO currently registers itself with `HardwareRegistry` as `Intake` o
 
 The power manager supplies a scale in `[0, 1]`:
 
-- Intake voltage is scaled by the brownout factor and temporarily limited to 60% while the flywheel is spooling.
-- Flywheel target RPM is not reduced during ordinary brownout scaling because target speed determines shot behavior. A scale of exactly zero is the lifecycle emergency-stop signal and commands zero RPM.
+- Intake voltage is scaled by the brownout factor. Intake and flywheel outputs both fail closed if an invalid state requests them simultaneously.
+- Flywheel target RPM is not reduced during ordinary brownout scaling because target speed determines shot behavior. A scale of exactly zero is the lifecycle emergency-stop signal and commands zero applied voltage.
 - Prism brightness is reduced with the power scale.
 - Indicator lights preserve their commanded state except for their own output behavior.
 
@@ -123,20 +123,16 @@ Do not scale position or velocity targets merely to enforce a power cap. Bound t
 
 ## Autonomous failure handling
 
-`AresAutoBase` delegates to ARESLib's `FtcMecanumAutoBase` and adds team-specific alliance configuration and state persistence.
+`AresAutoBase` consumes only the Kotlin generated from the repository-root `.ares` project. During
+INIT it selects an enabled catalog entry, resolves alliance geometry once, validates every reachable
+drive target and complete swept robot footprint, then seeds Redux and Pinpoint to the same pose.
 
-The base autonomous lifecycle:
-
-1. Builds the robot and loads the named `.auto` plus its first path.
-2. Mirrors the start pose for the selected alliance.
-3. Hard-resets Redux pose and Pinpoint to the same start pose.
-4. Waits for start and runs the task executor while the OpMode is active.
-5. On normal completion, clears the executor, stops all drivetrain and season outputs, and persists pose for TeleOp.
-6. On path-load failure, it displays the failure, waits for start, performs a safe stop, and aborts without moving.
-7. On a loop/task failure, it latches the abort, stops all outputs, clears the executor so stale actions cannot resume a mechanism, and exits the loop.
-8. A top-level failure also performs a best-effort safe stop, and `closeRobot` always runs from `finally`.
-
-`AresAutoBase.closeRobot` copies alliance and pose-related season transition data before closing. TeleOp restores a valid `PoseStorage` pose/alliance or defaults to red. Never bypass `configureAlliance` in an alliance-specific autonomous: its dispatch and pose reset must agree before path mirroring.
+START retains the accepted routine execution ID. Completion is recognized only from a matching
+Redux terminal lifecycle record. FAILED/CANCELLED tasks report failure, cancel remaining work,
+neutralize registered outputs, and invalidate `PoseStorage`; an executor becoming empty without a
+matching terminal record also fails. A final pose/alliance is handed to TeleOp only after confirmed
+COMPLETED status. The shared TeleOp lifecycle centrally restores a valid pose/alliance or defaults
+to red.
 
 ## Coordinates and alliance handling
 
@@ -162,9 +158,9 @@ For field-centric driving on blue, `AresDriveController` negates both processed 
 | Limelight | `limelight` |
 | Intake | `intake` |
 | Flywheel | `shooter` |
-| Primary indicator | First present of `indicator`, `indicator1`, `indicator_1`, `light1`, `light_1`, `led1` |
-| Secondary indicator | `indicator2`, `indicator_2`, `second_indicator`, `indicatorLight2`, `light2`, `light_2`, `led2`, or `led_2`; otherwise another servo whose name resembles an indicator/light/LED |
-| Prism RGB | `prism`, `prism_driver`, `gobilda_prism`, or `prism_led`; initialized as I2C address `0x38` before PWM fallback |
+| Primary indicator | `indicator` |
+| Secondary indicator | `indicator2` |
+| Prism RGB | `prism`; initialized as I2C address `0x38` before same-name PWM fallback |
 
 Right-side drive motors (`fr`, `rr`) are reversed in the team facade. Rear motors are named `rl`
 and `rr` in production and diagnostics; alternate rear-motor aliases are not supported.
@@ -173,6 +169,10 @@ Flywheel conversion defaults to 28 encoder ticks/revolution and 6000 RPM maximum
 
 ## Telemetry and networking
 
-The robot publishes through ARESLib. NT4 topic names are canonicalized without a leading slash. Remote-drive input therefore uses topics such as `ARES/Input/heartbeat`, not `/ARES/Input/heartbeat`.
+The robot publishes through ARESLib. NT4 topic names are canonicalized without a leading slash.
+Physical remote drive consumes only `ARES/Input/driveFrame` v2 as an exact `double[8]`, requires a
+neutral-first session handshake, honors bit 4 as field-relative (`1`) versus robot-relative (`0`),
+and expires on a 200 ms receiver-time lease. Scalar axes, heartbeat, and v1 frames are not
+supported.
 
 The robot is offline-first. It serves logs locally for the desktop analytics app to pull. Cloud sync belongs on the laptop; do not add cloud credentials or upload calls to TeamCode.

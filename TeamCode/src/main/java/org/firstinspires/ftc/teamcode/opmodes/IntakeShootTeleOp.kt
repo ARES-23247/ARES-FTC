@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.dsl.*
 @TeleOp(name = "Intake & Shoot TeleOp", group = "ARES")
 class IntakeShootTeleOp : AresTeleOpBase() {
     private var prevTriggerState = false
+    private var lastTelemetryMs = 0L
 
     override fun define() = teleOp {
 
@@ -49,8 +50,13 @@ class IntakeShootTeleOp : AresTeleOpBase() {
 
             // Read one immutable snapshot so telemetry fields describe the same reducer state.
             val state = robot.base.store.state
-            robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
-            robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
+            val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
+            if (nowMs - lastTelemetryMs >= TELEMETRY_PERIOD_MS) {
+                lastTelemetryMs = nowMs
+                robot.addTelemetry("Intake", if (state.superstructure.season.intakeActive) "ACTIVE" else "INACTIVE")
+                robot.addTelemetry("Shooter", if (state.superstructure.season.flywheelActive) "ACTIVE" else "INACTIVE")
+                robot.addTelemetry("Inventory", "Check the ARES-Analytics Sim UI")
+            }
 
             // Feed is not wired; report only the rising edge to avoid repetitive telemetry churn.
             val currentTriggerState = driver.rightTrigger.value > state.tuning.driverTriggerThreshold
@@ -59,7 +65,10 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             }
             prevTriggerState = currentTriggerState
 
-            robot.addTelemetry("Inventory", "Check the ARES-Analytics Sim UI")
         }
+    }
+
+    private companion object {
+        const val TELEMETRY_PERIOD_MS = 100L
     }
 }

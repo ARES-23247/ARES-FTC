@@ -1,19 +1,12 @@
 package org.firstinspires.ftc.teamcode
 
-import org.firstinspires.ftc.teamcode.opmodes.TestPathAuto
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Focused contract tests for hardware-map constants and the direct TestPath compatibility helper.
+ * Focused contract tests for canonical hardware-map constants.
  */
 class AresRobotTest {
-    @Test
-    fun testTestPathAutoMetadata() {
-        assertEquals("TestPath", TestPathAuto.pathName)
-    }
-
     @Test
     fun testHardwareConstants() {
         assertEquals("fl", org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_LEFT)
@@ -23,20 +16,5 @@ class AresRobotTest {
         assertEquals("pinpoint", org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT)
         assertEquals("imu", org.firstinspires.ftc.teamcode.config.HardwareConstants.IMU_BNO055)
         assertEquals("limelight", org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT)
-    }
-    @Test
-    fun testTestPathAutoBuildFollower() {
-        val follower = org.mockito.Mockito.mock(com.areslib.pathing.HolonomicPathFollower::class.java)
-        var triggered = false
-        val eventMap = mapOf("marker1" to { triggered = true })
-
-        TestPathAuto.buildPathFollower(follower, eventMap)
-
-        @Suppress("UNCHECKED_CAST")
-        val argumentCaptor = org.mockito.ArgumentCaptor.forClass(Function1::class.java) as org.mockito.ArgumentCaptor<(String) -> Unit>
-        org.mockito.Mockito.verify(follower).onEventTriggered = argumentCaptor.capture()
-        
-        argumentCaptor.value.invoke("marker1")
-        assertTrue(triggered)
     }
 }

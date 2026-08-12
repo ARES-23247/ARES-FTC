@@ -13,6 +13,9 @@ dependencies {
     implementation("edu.wpi.first.ntcore:ntcore-java:$wpiVersion")
     implementation("edu.wpi.first.wpilibj:wpilibj-java:$wpiVersion")
     implementation("edu.wpi.first.wpiutil:wpiutil-java:$wpiVersion")
+
+    testImplementation(kotlin("test"))
+    testImplementation("junit:junit:4.13.2")
 }
 
 sourceSets {

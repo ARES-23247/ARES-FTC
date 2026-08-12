@@ -1,12 +1,6 @@
 package org.firstinspires.ftc.teamcode
 
 import com.areslib.action.RobotAction
-import com.areslib.ftc.input.FtcButtonIndex
-import com.areslib.input.BindingReleaseReason
-import com.areslib.input.ControllerBindingRuntime
-import com.areslib.input.DigitalBinding
-import com.areslib.input.DigitalBindingListener
-import com.areslib.input.RawButtonSource
 import com.areslib.math.geometry.Pose2d
 import com.areslib.math.geometry.Rotation2d
 import com.areslib.routine.AutonomousCatalogEntry
@@ -16,14 +10,22 @@ import com.areslib.routine.RoutinePose
 import com.areslib.routine.RoutineStep
 import com.areslib.sequencer.Task
 import com.areslib.sequencer.TaskExecutor
+import com.areslib.sequencer.TaskStateMachine
+import com.areslib.sequencer.TaskStatus
 import com.areslib.state.Alliance
+import com.areslib.state.DriveState
+import com.areslib.state.ObstacleType
+import com.areslib.state.RobotFieldObstacle
 import com.areslib.state.RobotState
-import com.areslib.telemetry.GamepadState
-import com.qualcomm.robotcore.hardware.Gamepad
+import com.areslib.math.estimation.PoseEstimatorState
+import org.firstinspires.ftc.teamcode.dsl.FtcDelegateStatusBridge
+import org.firstinspires.ftc.teamcode.dsl.FtcDriveMotionKind
 import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
-import org.firstinspires.ftc.teamcode.dsl.FtcGeneratedControllerRunner
+import org.firstinspires.ftc.teamcode.dsl.FtcRotateToHeadingTask
+import org.firstinspires.ftc.teamcode.dsl.classifyFtcDriveMotion
 import org.firstinspires.ftc.teamcode.dsl.composeFtcDriveLifecycle
 import org.firstinspires.ftc.teamcode.dsl.isFtcRobotPoseWithinField
+import org.firstinspires.ftc.teamcode.dsl.isFtcRobotSweepCollisionFree
 import org.firstinspires.ftc.teamcode.dsl.validateFtcAutonomousBounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,38 +33,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FtcGeneratedRuntimeTest {
-    @Test
-    fun `extended snapshot and keyboard buttons reach generated bindings`() {
-        val m1 = RecordingBindingListener()
-        val f1 = RecordingBindingListener()
-        val runtime = ControllerBindingRuntime(
-            digitalBindings = listOf(
-                DigitalBinding(RawButtonSource(FtcButtonIndex.M1), listener = m1),
-                DigitalBinding(RawButtonSource(FtcButtonIndex.F1), listener = f1),
-            ),
-            nanoTime = { 1L },
-        )
-        val runner = FtcGeneratedControllerRunner(
-            gamepad1 = Gamepad().apply { id = 0 },
-            gamepad2 = Gamepad().apply { id = 1 },
-            runtimes = mapOf("driver" to runtime),
-        )
-
-        // A newly connected controller must report neutral once before bindings arm.
-        runner.update(GamepadState(), GamepadState())
-        runner.update(GamepadState(m1 = true), GamepadState())
-        assertEquals(1, m1.presses)
-        assertEquals(0, f1.presses)
-
-        assertTrue(runner.onKeyDown("driver", 131))
-        runner.update(GamepadState(m1 = true), GamepadState())
-        assertEquals(1, f1.presses)
-        assertTrue(runner.onKeyUp("driver", 131))
-        runner.update(GamepadState(), GamepadState())
-        assertEquals(1, f1.releases)
-        assertFalse(runner.onKeyDown("driver", 99))
-    }
-
     @Test
     fun `drive is deadline for during actions and arrival starts afterward`() {
         val drive = RecordingTask("drive", completeAtMs = 10L)
@@ -129,21 +99,92 @@ class FtcGeneratedRuntimeTest {
             routines = routines,
             envelope = FtcFieldEnvelope(3.6576, 3.6576, 0.45, 0.45),
             selectedAlliance = Alliance.RED,
+            obstacles = emptyList(),
         )
 
         assertEquals(1, errors.size)
         assertTrue(errors.single().contains("drive target leaves"))
     }
 
-    private class RecordingBindingListener : DigitalBindingListener {
-        var presses = 0
-        var releases = 0
-        override fun onPress() {
-            presses++
-        }
-        override fun onRelease(heldForNanos: Long, reason: BindingReleaseReason) {
-            releases++
-        }
+    @Test
+    fun `same pose is immediate while same position with new heading rotates`() {
+        val start = Pose2d(0.2, -0.3, Rotation2d(0.25))
+
+        assertEquals(FtcDriveMotionKind.IMMEDIATE, classifyFtcDriveMotion(start, start))
+        assertEquals(
+            FtcDriveMotionKind.ROTATE,
+            classifyFtcDriveMotion(start, Pose2d(start.x, start.y, Rotation2d(1.0))),
+        )
+        assertEquals(
+            FtcDriveMotionKind.TRANSLATE,
+            classifyFtcDriveMotion(start, Pose2d(start.x + 0.1, start.y, start.heading)),
+        )
+    }
+
+    @Test
+    fun `heading-only task commands CCW rotation and always emits a zero ending`() {
+        val task = FtcRotateToHeadingTask(targetHeadingRadians = 1.0, maxOmegaRadiansPerSecond = 2.0)
+        val state = RobotState(
+            drive = DriveState(
+                poseEstimator = PoseEstimatorState(estimatedPoseHeading = 0.25),
+                measuredAngularVelocityRadiansPerSecond = 0.0,
+            )
+        )
+        task.initialize(state)
+
+        val moving = task.execute(state, 0L).single() as RobotAction.JoystickDriveIntent
+        assertEquals(0.0, moving.targetXVelocity, 0.0)
+        assertEquals(0.0, moving.targetYVelocity, 0.0)
+        assertTrue(moving.targetAngularVelocity > 0.0)
+        val stopped = task.end(state, interrupted = true).single() as RobotAction.JoystickDriveIntent
+        assertEquals(0.0, stopped.targetAngularVelocity, 0.0)
+    }
+
+    @Test
+    fun `swept footprint rejects an obstacle between safe endpoints`() {
+        val envelope = FtcFieldEnvelope(4.0, 4.0, 0.4, 0.4)
+        val start = Pose2d(-1.0, 0.0, Rotation2d())
+        val end = Pose2d(1.0, 0.0, Rotation2d())
+        val obstacle = RobotFieldObstacle(
+            id = "center",
+            x = 0.0,
+            y = 0.0,
+            width = 0.2,
+            height = 0.8,
+            isBlocking = true,
+            obstacleType = ObstacleType.BLOCKING,
+        )
+
+        assertTrue(isFtcRobotPoseWithinField(start, envelope))
+        assertTrue(isFtcRobotPoseWithinField(end, envelope))
+        assertFalse(isFtcRobotSweepCollisionFree(start, end, envelope, listOf(obstacle)))
+        assertTrue(isFtcRobotSweepCollisionFree(start, end, envelope, emptyList()))
+    }
+
+    @Test
+    fun `drive wrapper mirrors first failed or cancelled child status once`() {
+        val state = RobotState()
+        val failedOwner = RecordingTask("failed-owner", Long.MAX_VALUE)
+        val failedChild = RecordingTask("failed-child", Long.MAX_VALUE)
+        failedOwner.initialize(state)
+        failedChild.initialize(state)
+        val failedBridge = FtcDelegateStatusBridge(failedOwner)
+        TaskStateMachine.markFailed(failedChild)
+        assertEquals(TaskStatus.FAILED, failedBridge.propagate(failedChild))
+        assertEquals(TaskStatus.FAILED, TaskStateMachine.getStatus(failedOwner))
+        TaskStateMachine.transitionTo(failedChild, TaskStatus.CANCELLED)
+        failedBridge.propagate(failedChild)
+        assertEquals("A later observation cannot replace the first terminal propagation", TaskStatus.FAILED, failedBridge.terminalStatus)
+        assertEquals(TaskStatus.FAILED, TaskStateMachine.getStatus(failedOwner))
+
+        val cancelledOwner = RecordingTask("cancelled-owner", Long.MAX_VALUE)
+        val cancelledChild = RecordingTask("cancelled-child", Long.MAX_VALUE)
+        cancelledOwner.initialize(state)
+        cancelledChild.initialize(state)
+        TaskStateMachine.transitionTo(cancelledChild, TaskStatus.CANCELLED)
+        val cancelledBridge = FtcDelegateStatusBridge(cancelledOwner)
+        assertEquals(TaskStatus.CANCELLED, cancelledBridge.propagate(cancelledChild))
+        assertEquals(TaskStatus.CANCELLED, TaskStateMachine.getStatus(cancelledOwner))
     }
 
     private class RecordingTask(

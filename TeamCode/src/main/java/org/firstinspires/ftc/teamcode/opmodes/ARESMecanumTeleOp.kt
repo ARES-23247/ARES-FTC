@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
-import org.firstinspires.ftc.teamcode.dsl.season
 
 /**
  * Primary field-centric driver OpMode for the four-motor DECODE robot.
@@ -56,16 +55,6 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         }
 
         setup {
-            // PoseStorage survives OpMode changes in one RC process, not a reboot.
-            if (com.areslib.util.PoseStorage.hasValidPose) {
-                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.util.PoseStorage.alliance))
-            } else {
-                robot.base.store.dispatch(com.areslib.action.RobotAction.SetAlliance(com.areslib.state.Alliance.RED))
-            }
-
-            val seasonState = robot.base.store.state.superstructure.season.copy(liftHeight = org.firstinspires.ftc.teamcode.opmodes.TeamStateStorage.liftHeight)
-            robot.base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState))
-
             robot.base.mecanumIO.slewRateLimit = 4.0 // Ramp up to full speed in 0.25 seconds
         }
         

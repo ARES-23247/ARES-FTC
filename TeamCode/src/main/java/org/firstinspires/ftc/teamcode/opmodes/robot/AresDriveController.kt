@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.robot
 
 import com.areslib.ftc.FtcMecanumRobot
+import com.areslib.ftc.FtcTeleopDriveFrame
 import com.areslib.state.Alliance
 import kotlin.math.pow
 
@@ -71,8 +72,10 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     }
 
     /**
-     * Reads normalized FTC gamepad axes and commands field-relative motion. FTC stick Y and
-     * right-stick rotation are negative in SDK coordinates, hence those two negations.
+     * Reads normalized FTC gamepad axes and commands the frame selected by
+     * [FtcMecanumRobot.teleopDriveFrame]. FTC stick Y and right-stick rotation are negative in SDK
+     * coordinates, hence those two negations. Alliance mirroring applies only to field-relative
+     * translation; robot-relative controls retain the robot's physical forward/left axes.
      */
     fun driveWithGamepad(driver: com.areslib.telemetry.AresGamepad, useHeadingLock: Boolean = true) {
         val px = processAxis(-driver.leftStickY.value.toDouble())
@@ -80,11 +83,18 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         val prot = processAxis(-driver.rightStickX.value.toDouble())
         smoothTransition(px, py, prot)
 
-        // Both translation axes must be mirrored for the blue driver perspective.
-        val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
-        val outX = if (blueAlliance) -smoothX else smoothX
-        val outY = if (blueAlliance) -smoothY else smoothY
-        base.mecanumDrive.driveFieldRelativeNormalized(outX, outY, smoothRot, useHeadingLock)
+        when (base.teleopDriveFrame) {
+            FtcTeleopDriveFrame.FIELD_RELATIVE -> {
+                // Both translation axes must be mirrored for the blue driver perspective.
+                val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
+                val outX = if (blueAlliance) -smoothX else smoothX
+                val outY = if (blueAlliance) -smoothY else smoothY
+                base.mecanumDrive.driveFieldRelativeNormalized(outX, outY, smoothRot, useHeadingLock)
+            }
+            FtcTeleopDriveFrame.ROBOT_RELATIVE -> {
+                base.mecanumDrive.driveRobotRelativeNormalized(smoothX, smoothY, smoothRot)
+            }
+        }
     }
 
     /** Requests ARESLib target-space alignment to a specific AprilTag ID. */
