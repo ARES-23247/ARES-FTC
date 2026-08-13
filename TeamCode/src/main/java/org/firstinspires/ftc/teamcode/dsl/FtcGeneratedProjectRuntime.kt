@@ -175,7 +175,7 @@ private class FtcRoutineDriveTask(
             )
         ) { "Drive sweep intersects a blocking obstacle or field boundary" }
         val maximumVelocity = robot.base.mecanumIO.maxWheelSpeedMetersPerSecond * preset.speedScale
-        val maximumAcceleration = state.tuning.pathAccelerationLimit * preset.accelerationScale
+        val maximumAcceleration = state.tuning.drive.pathAccelerationLimit * preset.accelerationScale
         val motionKind = classifyFtcDriveMotion(start, target)
         val generatedPath = if (motionKind == FtcDriveMotionKind.TRANSLATE) {
             PathPlannerParser.generatePath(

@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-val aresVersion = providers.gradleProperty("aresVersion").orElse("4.0.0").get()
+val aresVersion = providers.gradleProperty("aresVersion").orElse("5.0.0").get()
 val aresSimulatorRuntime = when {
     System.getProperty("os.name").contains("windows", ignoreCase = true) -> "simulator-runtime-windows"
     System.getProperty("os.name").contains("mac", ignoreCase = true) -> "simulator-runtime-macos"
@@ -32,6 +32,7 @@ sourceSets {
         java.srcDirs(
             "../TeamCode/src/main/java",
             "../TeamCode/build/generated/ares/main/kotlin",
+            "../TeamCode/build/generated/ares/drivebase/kotlin",
             "src/main/kotlin",
         )
     }

@@ -59,7 +59,7 @@ class IntakeShootTeleOp : AresTeleOpBase() {
             }
 
             // Feed is not wired; report only the rising edge to avoid repetitive telemetry churn.
-            val currentTriggerState = driver.rightTrigger.value > state.tuning.driverTriggerThreshold
+            val currentTriggerState = driver.rightTrigger.value > state.tuning.driver.triggerThreshold
             if (currentTriggerState && !prevTriggerState) {
                 robot.addTelemetry("Feed", "RT held (feed not wired)")
             }
