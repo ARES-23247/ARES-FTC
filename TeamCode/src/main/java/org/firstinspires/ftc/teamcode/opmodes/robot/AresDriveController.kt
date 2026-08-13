@@ -27,7 +27,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         } else {
             (magnitude - DEFAULT_DEADZONE) / (1.0 - DEFAULT_DEADZONE) * kotlin.math.sign(boundedInput)
         }
-        val exponent = base.store.state.tuning.driverDeadbandExponent
+        val exponent = base.store.state.tuning.driver.deadbandExponent
             .let { if (it > 0.0) it else DEFAULT_CURVE_EXPONENT }
         return kotlin.math.sign(deadzoned) * kotlin.math.abs(deadzoned).pow(exponent)
     }

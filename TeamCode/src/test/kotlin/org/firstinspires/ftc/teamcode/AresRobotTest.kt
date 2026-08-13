@@ -4,17 +4,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Focused contract tests for canonical hardware-map constants.
+ * Focused contract tests for generated canonical drivebase configuration.
  */
 class AresRobotTest {
     @Test
-    fun testHardwareConstants() {
-        assertEquals("fl", org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_LEFT)
-        assertEquals("fr", org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_FRONT_RIGHT)
-        assertEquals("rl", org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_LEFT)
-        assertEquals("rr", org.firstinspires.ftc.teamcode.config.HardwareConstants.MOTOR_BACK_RIGHT)
-        assertEquals("pinpoint", org.firstinspires.ftc.teamcode.config.HardwareConstants.ODOMETRY_PINPOINT)
-        assertEquals("imu", org.firstinspires.ftc.teamcode.config.HardwareConstants.IMU_BNO055)
-        assertEquals("limelight", org.firstinspires.ftc.teamcode.config.HardwareConstants.VISION_LIMELIGHT)
+    fun testCanonicalDrivebaseConfiguration() {
+        assertEquals("fl", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_FL.HARDWARE_ID)
+        assertEquals("fr", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_FR.HARDWARE_ID)
+        assertEquals("rl", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_RL.HARDWARE_ID)
+        assertEquals("rr", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_RR.HARDWARE_ID)
+        assertEquals("pinpoint", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_PINPOINT.HARDWARE_ID)
+        assertEquals("imu", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_IMU.HARDWARE_ID)
+        assertEquals("limelight", org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_LIMELIGHT.HARDWARE_ID)
     }
 }

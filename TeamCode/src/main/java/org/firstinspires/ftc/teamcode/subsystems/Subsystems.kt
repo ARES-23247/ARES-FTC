@@ -75,7 +75,7 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
         val season = state.superstructure.season
         val active = season.intakeActive && !season.flywheelActive && season.flywheelTargetRPM == 0.0
         val safeScale = scale.takeIf { it.isFinite() }?.coerceIn(0.0, 1.0) ?: 0.0
-        val nominalVoltage = state.tuning.intakeNominalVoltage.takeIf { it.isFinite() } ?: 0.0
+        val nominalVoltage = state.tuning.subsystem.ftc.intakeNominalVoltage.takeIf { it.isFinite() } ?: 0.0
         val voltage = if (active && !stalled) nominalVoltage * safeScale else 0.0
         io.setRollerVoltage(voltage)
     }

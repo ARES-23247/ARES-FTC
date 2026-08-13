@@ -57,7 +57,7 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
         if (now - lastShooterToggleTimeMs < TOGGLE_DEBOUNCE_MS) return
         lastShooterToggleTimeMs = now
         if (season.intakeActive) return
-        val configuredTarget = base.store.state.tuning.flywheelTargetRpmPreset
+        val configuredTarget = base.store.state.tuning.subsystem.ftc.flywheelTargetRpmPreset
         val currentTarget = configuredTarget.takeIf { it.isFinite() }
             ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
             ?: 0.0

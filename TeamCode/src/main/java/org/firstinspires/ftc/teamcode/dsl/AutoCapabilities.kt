@@ -84,7 +84,7 @@ object FtcAutoCapabilities {
             registerStateAction(
                 FLYWHEEL_PREPARE
             ) { state ->
-                val targetRpm = state.tuning.flywheelTargetRpmPreset
+                val targetRpm = state.tuning.subsystem.ftc.flywheelTargetRpmPreset
                     .takeIf(Double::isFinite)
                     ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
                     ?: 0.0

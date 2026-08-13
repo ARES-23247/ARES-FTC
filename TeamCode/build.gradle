@@ -21,12 +21,14 @@ apply plugin: 'org.jetbrains.kotlinx.kover'
 // starters stay under src/ and are protected by the generator's ownership/diff contract.
 def generatedAresSubsystemMainDir = file("${buildDir}/generated/ares/main/kotlin")
 def generatedAresSubsystemTestDir = file("${buildDir}/generated/ares/test/kotlin")
+def generatedAresDrivebaseMainDir = file("${buildDir}/generated/ares/drivebase/kotlin")
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
     sourceSets {
         main.java.srcDir generatedAresSubsystemMainDir
+        main.java.srcDir generatedAresDrivebaseMainDir
         test.java.srcDir generatedAresSubsystemTestDir
     }
 
@@ -53,7 +55,7 @@ configurations {
     aresCodegen
 }
 
-def aresVersion = providers.gradleProperty('aresVersion').getOrElse('4.0.0')
+def aresVersion = providers.gradleProperty('aresVersion').getOrElse('5.0.0')
 def aresSimulatorRuntime = System.getProperty('os.name').toLowerCase().contains('windows')
     ? 'simulator-runtime-windows'
     : (System.getProperty('os.name').toLowerCase().contains('mac')
@@ -142,6 +144,10 @@ def subsystemCodegenArgs = [
     "--subsystems-generated-test-output", generatedAresSubsystemTestDir.absolutePath,
     "--subsystems-package", "org.firstinspires.ftc.teamcode.subsystems",
 ]
+def drivebaseCodegenArgs = [
+    "--drivebase-output", generatedAresDrivebaseMainDir.absolutePath,
+    "--drivebase-package", "org.firstinspires.ftc.teamcode.generated.drivebase",
+]
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"
     description = "Generate checked-in project Kotlin and disposable subsystem plumbing; never replace starters."
@@ -152,6 +158,7 @@ tasks.register("generateAresProject", JavaExec) {
         "--package", "org.firstinspires.ftc.teamcode.generated",
         "--platform", "FTC"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
 }
 
 tasks.register("prepareAresSubsystemPlumbing", JavaExec) {
@@ -165,6 +172,7 @@ tasks.register("prepareAresSubsystemPlumbing", JavaExec) {
         "--platform", "FTC",
         "--subsystems-only"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
 }
 
 tasks.register("previewSubsystemChanges", JavaExec) {
@@ -179,6 +187,7 @@ tasks.register("previewSubsystemChanges", JavaExec) {
         "--subsystems-only",
         "--preview-subsystem-starters"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
 }
 
 tasks.register("generateSubsystemStarters", JavaExec) {
@@ -193,6 +202,7 @@ tasks.register("generateSubsystemStarters", JavaExec) {
         "--subsystems-only",
         "--apply-subsystem-starters"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
 }
 
 tasks.register("replaceSubsystemStarters", JavaExec) {
@@ -207,6 +217,7 @@ tasks.register("replaceSubsystemStarters", JavaExec) {
         "--subsystems-only",
         "--apply-subsystem-starters"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
     doFirst {
         def token = providers.gradleProperty("ares.subsystemReplacementToken").orNull
         if (token == null || token.trim().isEmpty()) {
@@ -231,6 +242,7 @@ tasks.register("verifyAresProject", JavaExec) {
         "--platform", "FTC",
         "--check"
     args subsystemCodegenArgs
+    args drivebaseCodegenArgs
 }
 
 tasks.matching { task -> task.name.startsWith("compile") && task.name.endsWith("Kotlin") }.configureEach {

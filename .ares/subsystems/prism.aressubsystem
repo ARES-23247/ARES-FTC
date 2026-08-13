@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "documentId": "prism",
   "uid": "prism",
   "displayName": "Prism lights",
@@ -45,6 +45,7 @@
       "maximumOutput": 2500.0
     }
   ],
+  "tuningParameters": [],
   "template": "ADVANCED_CUSTOM",
   "implementation": {
     "kind": "HAND_AUTHORED",
