@@ -1,13 +1,16 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "documentId": "indicator-lights",
-  "name": "IndicatorLightSubsystem",
+  "uid": "indicator-lights",
+  "displayName": "Indicator lights",
+  "kotlinTypeName": "IndicatorLightSubsystem",
   "description": "Two optional goBILDA RGB indicator lights controlled through immutable Redux state and servo-compatible IO.",
   "platform": "FTC",
   "revision": 1,
   "hardware": [
     {
       "hardwareId": "primaryIndicator",
+      "uid": "primaryIndicator",
       "displayName": "Primary indicator light",
       "kind": "POSITIONAL_SERVO",
       "connection": { "hardwareMapName": "indicator" },
@@ -17,6 +20,7 @@
     },
     {
       "hardwareId": "secondaryIndicator",
+      "uid": "secondaryIndicator",
       "displayName": "Secondary indicator light",
       "kind": "POSITIONAL_SERVO",
       "connection": { "hardwareMapName": "indicator2" },
@@ -28,6 +32,7 @@
   "stateFields": [
     {
       "fieldId": "primaryPosition",
+      "uid": "primaryPosition",
       "displayName": "Primary color position",
       "type": "DOUBLE",
       "role": "TARGET",
@@ -38,6 +43,7 @@
     },
     {
       "fieldId": "secondaryPosition",
+      "uid": "secondaryPosition",
       "displayName": "Secondary color position",
       "type": "DOUBLE",
       "role": "TARGET",
@@ -50,19 +56,23 @@
   "controlLoops": [
     {
       "loopId": "primaryColorOutput",
+      "uid": "primaryColorOutput",
       "displayName": "Primary indicator color",
       "strategy": "SERVO_POSITION",
       "actuatorId": "primaryIndicator",
       "targetFieldId": "primaryPosition",
+      "feedforward": { "kind": "NONE" },
       "minimumOutput": 0.0,
       "maximumOutput": 1.0
     },
     {
       "loopId": "secondaryColorOutput",
+      "uid": "secondaryColorOutput",
       "displayName": "Secondary indicator color",
       "strategy": "SERVO_POSITION",
       "actuatorId": "secondaryIndicator",
       "targetFieldId": "secondaryPosition",
+      "feedforward": { "kind": "NONE" },
       "minimumOutput": 0.0,
       "maximumOutput": 1.0
     }
@@ -120,7 +130,7 @@
   ],
   "safety": {
     "feedbackTimeoutMs": null,
-    "requiresHoming": false,
+    "homing": { "method": "NONE" },
     "requiresCalibration": false,
     "requiresConfigurationHealth": false,
     "requiresCurrentMonitoring": false,

@@ -1,13 +1,16 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "documentId": "prism",
-  "name": "PrismSubsystem",
+  "uid": "prism",
+  "displayName": "Prism lights",
+  "kotlinTypeName": "PrismSubsystem",
   "description": "Optional goBILDA Prism RGB LED driver with named effects, PWM/I2C adapters, and power-aware brightness limiting.",
   "platform": "FTC",
   "revision": 1,
   "hardware": [
     {
       "hardwareId": "prismDriver",
+      "uid": "prismDriver",
       "displayName": "goBILDA Prism",
       "kind": "POSITIONAL_SERVO",
       "connection": { "hardwareMapName": "prism" },
@@ -19,6 +22,7 @@
   "stateFields": [
     {
       "fieldId": "pulseWidthUs",
+      "uid": "pulseWidthUs",
       "displayName": "Effect pulse width",
       "type": "INT",
       "role": "TARGET",
@@ -31,10 +35,12 @@
   "controlLoops": [
     {
       "loopId": "effectOutput",
+      "uid": "effectOutput",
       "displayName": "Prism effect output",
       "strategy": "SERVO_POSITION",
       "actuatorId": "prismDriver",
       "targetFieldId": "pulseWidthUs",
+      "feedforward": { "kind": "NONE" },
       "minimumOutput": 500.0,
       "maximumOutput": 2500.0
     }
@@ -83,7 +89,7 @@
   ],
   "safety": {
     "feedbackTimeoutMs": null,
-    "requiresHoming": false,
+    "homing": { "method": "NONE" },
     "requiresCalibration": false,
     "requiresConfigurationHealth": false,
     "requiresCurrentMonitoring": false,

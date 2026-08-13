@@ -16,7 +16,7 @@ On Windows, the settings script can detect a standard JDK 17 or Android Studio's
 Normal builds use immutable Maven Central artifacts constrained by the ARES BOM:
 
 ```text
-org.aresfirst.ares:{core,codegen,ftc-hardware,simulator,ftc-mocks,simulator-runtime-*}:3.0.0
+org.aresfirst.ares:{core,codegen,ftc-hardware,simulator,ftc-mocks,simulator-runtime-*}:4.0.0
 ```
 
 The sibling checkout is not selected automatically. Library developers can compile against exact shared source with `-ParesUseSiblingLib=true`; student and release builds use the pinned binaries.
