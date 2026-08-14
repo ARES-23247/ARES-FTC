@@ -81,6 +81,20 @@ class AresDriveControllerTest {
     }
 
     @Test
+    fun testRobotCentricDriveBlueAllianceDoesNotMirror() {
+        val base = setupMockRobot(Alliance.BLUE)
+        val controller = AresDriveController(base)
+        
+        controller.driveRobotCentric(0.5, 0.5, 0.1)
+        
+        Mockito.verify(base).driveRobotCentric(
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4),
+            org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.1), 1e-6)
+        )
+    }
+
+    @Test
     fun testZeroJoystickInputProducesZeroOutput() {
         val base = setupMockRobot()
         val controller = AresDriveController(base)
