@@ -533,4 +533,31 @@ class FtcHardwareTest {
         Mockito.verify(io, Mockito.times(2)).setAppliedVoltage(0.0)
         Mockito.verify(io, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
     }
+
+    @Test
+    fun intakeSubsystemClampsScaleAndZerosVoltageOnStall() {
+        val io = Mockito.mock(com.areslib.hardware.actuator.IntakeIO::class.java)
+        val subsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(io)
+        val activeState = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    intakeActive = true,
+                    flywheelActive = false,
+                    flywheelTargetRPM = 0.0
+                )
+            )
+        )
+
+        // Valid active state with 0.5 scale -> nominal 12.0 * 0.5 = 6.0V
+        subsystem.writeOutputs(activeState, 0.5)
+        Mockito.verify(io).setRollerVoltage(6.0)
+
+        // Oversized scale > 1.0 clamped to 1.0 -> 12.0V
+        subsystem.writeOutputs(activeState, 1.5)
+        Mockito.verify(io).setRollerVoltage(12.0)
+
+        // Negative scale clamped to 0.0 -> 0.0V
+        subsystem.writeOutputs(activeState, -0.5)
+        Mockito.verify(io, Mockito.atLeastOnce()).setRollerVoltage(0.0)
+    }
 }
