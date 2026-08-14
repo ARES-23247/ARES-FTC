@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "revision": 38,
+  "revision": 26,
   "id": "ftc-2025-2026-decode",
   "name": "2025-2026 DECODE",
   "gameYear": "2025-2026",
   "fieldType": "ftc",
+  "allianceSymmetry": "mirrored",
   "widthMeters": 3.6576,
   "heightMeters": 3.6576,
   "xAxisDirection": "up",
   "yAxisDirection": "left",
   "redDriverStation": "south",
   "blueDriverStation": "north",
-  "allianceSymmetry": "mirrored",
   "obstacles": [
     {
       "id": "poly_1783296118778",
