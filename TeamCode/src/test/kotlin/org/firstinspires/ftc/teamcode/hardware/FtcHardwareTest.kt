@@ -8,6 +8,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
 import com.areslib.hardware.CurrentSourceSampler
 import com.areslib.hardware.actuator.FlywheelIO
+import com.areslib.Store
+import com.areslib.reducer.rootReducer
 import com.areslib.state.RobotState
 import com.areslib.state.SuperstructureState
 import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
@@ -504,5 +506,75 @@ class FtcHardwareTest {
         Mockito.verify(intake).setRollerVoltage(0.0)
         Mockito.verify(flywheel).setAppliedVoltage(0.0)
         Mockito.verify(flywheel, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
+    }
+
+    @Test
+    fun flywheelZeroOrNegativeTargetRpmZerosAppliedVoltage() {
+        val io = Mockito.mock(FlywheelIO::class.java)
+        val subsystem = FlywheelSubsystem(io)
+        val stateZero = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = 0.0
+                )
+            )
+        )
+        val stateNegative = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = -500.0
+                )
+            )
+        )
+
+        subsystem.writeOutputs(stateZero, 1.0)
+        subsystem.writeOutputs(stateNegative, 1.0)
+
+        Mockito.verify(io, Mockito.times(2)).setAppliedVoltage(0.0)
+        Mockito.verify(io, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
+    }
+
+    @Test
+    fun intakeSubsystemClampsScaleAndZerosVoltageOnStall() {
+        val io = Mockito.mock(com.areslib.hardware.actuator.IntakeIO::class.java)
+        Mockito.`when`(io.rollerCurrentAmps).thenReturn(9.0)
+        Mockito.`when`(io.rollerCurrentValid).thenReturn(true)
+        val subsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(io)
+        val activeState = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    intakeActive = true,
+                    flywheelActive = false,
+                    flywheelTargetRPM = 0.0
+                )
+            )
+        )
+
+        // Valid active state with 0.5 scale -> nominal 12.0 * 0.5 = 6.0V
+        subsystem.writeOutputs(activeState, 0.5)
+        Mockito.verify(io).setRollerVoltage(6.0)
+
+        // Oversized scale > 1.0 clamped to 1.0 -> 12.0V
+        subsystem.writeOutputs(activeState, 1.5)
+        Mockito.verify(io).setRollerVoltage(12.0)
+
+        // Negative scale clamped to 0.0 -> 0.0V
+        subsystem.writeOutputs(activeState, -0.5)
+        Mockito.verify(io, Mockito.atLeastOnce()).setRollerVoltage(0.0)
+
+        // A fresh overcurrent sample must persist for the complete dwell before it latches.
+        val store = Store(activeState, ::rootReducer)
+        subsystem.readSensors(store, 1_000L)
+        assertFalse(subsystem.stalled)
+        subsystem.readSensors(store, 1_249L)
+        assertFalse(subsystem.stalled)
+        subsystem.readSensors(store, 1_250L)
+        assertTrue(subsystem.stalled)
+
+        Mockito.clearInvocations(io)
+        subsystem.writeOutputs(activeState, 1.0)
+        Mockito.verify(io).setRollerVoltage(0.0)
     }
 }
