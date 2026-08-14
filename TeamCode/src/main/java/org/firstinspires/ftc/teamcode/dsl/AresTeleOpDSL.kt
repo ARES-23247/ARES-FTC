@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.dsl
 
 import com.areslib.ftc.dsl.FtcTeleOpBase
 import com.areslib.ftc.dsl.FtcTeleOpBuilder
+import com.areslib.ftc.input.FtcInputFrameAdapter
 import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.input.InputFrame
 import com.areslib.telemetry.GamepadState
 import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 
@@ -12,13 +14,40 @@ import org.firstinspires.ftc.teamcode.opmodes.AresRobot
  * guarantees [AresRobot.close] on exit.
  */
 abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>(), PhotonEnabledOpMode {
-    override fun buildRobot() = AresRobot(hardwareMap, telemetry)
+    private val driverFrame = InputFrame()
+    private val operatorFrame = InputFrame()
+    private var driverAdapter: FtcInputFrameAdapter? = null
+    private var operatorAdapter: FtcInputFrameAdapter? = null
+    private var generatedRuntime: FtcGeneratedProjectRuntime? = null
+
+    override fun buildRobot() = AresRobot(hardwareMap, telemetry).also { robot ->
+        generatedRuntime = FtcGeneratedProjectRuntime(robot)
+        robot.addTelemetry("ARES/Controls/Source", requireNotNull(generatedRuntime).controlsSource)
+    }
 
     override fun getBaseRobot(robot: AresRobot) = robot.base
 
     override fun updateRobot(robot: AresRobot, g1: GamepadState, g2: GamepadState) = robot.update(g1, g2)
 
-    override fun closeRobot(robot: AresRobot) = robot.close()
+    override fun updateProjectControls(robot: AresRobot, g1: GamepadState, g2: GamepadState) {
+        val driver = driverAdapter ?: FtcInputFrameAdapter(gamepad1, g1).also { driverAdapter = it }
+        val operator = operatorAdapter ?: FtcInputFrameAdapter(gamepad2, g2).also { operatorAdapter = it }
+        val nowNanos = com.areslib.util.RobotClock.nanoTime()
+        driver.sampleInto(driverFrame, nowNanos)
+        operator.sampleInto(operatorFrame, nowNanos)
+        requireNotNull(generatedRuntime).updateControls(driverFrame, operatorFrame, nowNanos)
+    }
+
+    override fun cancelProjectControls(robot: AresRobot) {
+        generatedRuntime?.cancelAll("FTC TeleOp stopped")
+    }
+
+    override fun closeRobot(robot: AresRobot) {
+        generatedRuntime = null
+        driverAdapter = null
+        operatorAdapter = null
+        robot.close()
+    }
 
     /** Builds a validated definition whose receiver exposes the concrete season facade. */
     fun teleOp(block: FtcTeleOpBuilder<AresRobot>.() -> Unit): FtcTeleOpBuilder<AresRobot> =

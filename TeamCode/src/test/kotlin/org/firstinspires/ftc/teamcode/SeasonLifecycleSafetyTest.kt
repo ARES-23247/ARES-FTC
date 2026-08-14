@@ -166,6 +166,22 @@ class SeasonLifecycleSafetyTest {
     }
 
     @Test
+    fun indicatorLightSubsystemWritesDispatchedServoPosition() {
+        val events = mutableListOf<String>()
+        val io = RecordingIndicatorIO(events)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val store = Store(RobotState(), ::rootReducer)
+        val greenPos = com.areslib.hardware.actuator.IndicatorLightColor.GREEN.position
+        store.dispatch(RobotAction.SetIndicatorLight("indicator", greenPos))
+
+        subsystem.readSensors(store, 100L)
+        subsystem.writeOutputs(store.state, 1.0)
+
+        assertEquals(listOf("position:$greenPos"), events)
+        subsystem.close()
+    }
+
+    @Test
     fun prismLifecycleAppliesReduxPresetWithBoundedBrightnessAndCloses() {
         val io = MockPrismDriverIO()
         val subsystem = PrismSubsystem(io, configuredMaxBrightness = 80)
@@ -184,6 +200,22 @@ class SeasonLifecycleSafetyTest {
             PrismPwmPreset.SOLID_RED.pulseWidthUs,
             io.currentPulseWidthUs,
         )
+    }
+
+    @Test
+    fun prismSubsystemClampsEffortScaleToUnitRange() {
+        val io = MockPrismDriverIO()
+        val subsystem = PrismSubsystem(io, configuredMaxBrightness = 100)
+        val store = Store(RobotState(), ::rootReducer)
+        store.dispatch(RobotAction.SetPrismDriver("prism", 1200))
+
+        subsystem.readSensors(store, 0L)
+        subsystem.writeOutputs(store.state, 1.5)
+        assertEquals(100, io.maxBrightnessPercent)
+
+        subsystem.writeOutputs(store.state, -0.5)
+        assertEquals(0, io.maxBrightnessPercent)
+        subsystem.close()
     }
 
     @Test

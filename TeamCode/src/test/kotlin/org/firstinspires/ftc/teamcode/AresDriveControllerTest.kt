@@ -137,4 +137,23 @@ class AresDriveControllerTest {
             org.mockito.AdditionalMatchers.eq(expectedSmoothed(0.5), 1e-4)
         )
     }
+
+    @Test
+    fun testEmaConvergenceOverConsecutiveSteps() {
+        val base = setupMockRobot(Alliance.RED)
+        val controller = AresDriveController(base)
+
+        // Drive with constant 0.5 input for 20 frames
+        repeat(20) {
+            controller.driveFieldCentric(0.5, 0.0, 0.0)
+        }
+
+        // After 20 frames with alpha=0.4, EMA converges to steady-state processAxis(0.5)
+        val expectedSteadyState = (0.5 - 0.05) / 0.95 // = 0.473684
+        Mockito.verify(base, Mockito.atLeastOnce()).driveFieldCentric(
+            org.mockito.AdditionalMatchers.eq(expectedSteadyState, 1e-3),
+            org.mockito.AdditionalMatchers.eq(0.0, 1e-6),
+            org.mockito.AdditionalMatchers.eq(0.0, 1e-6)
+        )
+    }
 }
