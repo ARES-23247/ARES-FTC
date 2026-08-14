@@ -227,4 +227,68 @@ class AresAutoBaseTest {
             invalidExcessive.init()
         }
     }
+
+    @Test
+    fun `TestAutoBlue and TestAutoRed initialize with locked alliances and 30s max runtime`() {
+        val (mockHardwareMap, mockTelemetry) = createMockHardwareMap()
+
+        // 1. Verify TestAutoBlue initializes with locked BLUE alliance
+        val blueOpMode = TestAutoBlue().apply {
+            hardwareMap = mockHardwareMap
+            telemetry = mockTelemetry
+            gamepad1 = Gamepad()
+            gamepad2 = Gamepad()
+        }
+        attachMockOpModeServices(blueOpMode)
+        try {
+            blueOpMode.init()
+            assertNotNull("FtcBaseRobot active instance should be initialized for TestAutoBlue", FtcBaseRobot.activeInstance)
+            assertEquals(Alliance.BLUE, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
+        } finally {
+            blueOpMode.stop()
+            assertNull(FtcBaseRobot.activeInstance)
+            NT4Instance.defaultInstance.closeServer()
+            com.areslib.hardware.HardwareRegistry.clear()
+        }
+
+        // 2. Verify TestAutoRed initializes with locked RED alliance
+        val redOpMode = TestAutoRed().apply {
+            hardwareMap = mockHardwareMap
+            telemetry = mockTelemetry
+            gamepad1 = Gamepad()
+            gamepad2 = Gamepad()
+        }
+        attachMockOpModeServices(redOpMode)
+        try {
+            redOpMode.init()
+            assertNotNull("FtcBaseRobot active instance should be initialized for TestAutoRed", FtcBaseRobot.activeInstance)
+            assertEquals(Alliance.RED, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
+        } finally {
+            redOpMode.stop()
+            assertNull(FtcBaseRobot.activeInstance)
+            NT4Instance.defaultInstance.closeServer()
+            com.areslib.hardware.HardwareRegistry.clear()
+        }
+
+        // 3. Verify maximum allowable runtime of exactly 30.0 seconds initializes without throwing
+        val maxBoundaryOpMode = object : AresAutoBase() {
+            override val maximumRuntimeSeconds = 30.0
+            init {
+                hardwareMap = mockHardwareMap
+                telemetry = mockTelemetry
+                gamepad1 = Gamepad()
+                gamepad2 = Gamepad()
+            }
+        }
+        attachMockOpModeServices(maxBoundaryOpMode)
+        try {
+            maxBoundaryOpMode.init()
+            assertNotNull("FtcBaseRobot active instance should be initialized for 30.0s max runtime", FtcBaseRobot.activeInstance)
+        } finally {
+            maxBoundaryOpMode.stop()
+            assertNull(FtcBaseRobot.activeInstance)
+            NT4Instance.defaultInstance.closeServer()
+            com.areslib.hardware.HardwareRegistry.clear()
+        }
+    }
 }
