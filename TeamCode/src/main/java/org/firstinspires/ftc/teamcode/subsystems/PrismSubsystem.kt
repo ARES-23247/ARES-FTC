@@ -25,14 +25,12 @@ class PrismSubsystem(
     var configuredMaxBrightness: Int = 75
 ) : Subsystem {
 
-    private var cachedPulseWidthUs: Int = -1
-
     override fun readSensors(store: Store, timestampMs: Long) {
-        cachedPulseWidthUs = store.state.superstructure.prismDrivers[name] ?: -1
+        // Write-only actuator subsystem; no hardware sensors to poll.
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        val targetPulseWidthUs = cachedPulseWidthUs
+        val targetPulseWidthUs = state.superstructure.prismDrivers[name] ?: return
         if (targetPulseWidthUs < 0) return
 
         // Preserve the selected effect while shedding nonessential LED power.
