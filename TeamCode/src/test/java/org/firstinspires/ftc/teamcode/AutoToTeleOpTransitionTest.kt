@@ -56,10 +56,28 @@ class AutoToTeleOpTransitionTest {
         // Simulate what ARESMecanumTeleOp.setup reads:
         //   if (PoseStorage.hasValidPose) dispatch(SetAlliance(PoseStorage.alliance))
         val restoredAlliance = if (PoseStorage.hasValidPose) PoseStorage.alliance else Alliance.RED
-
         assertEquals(
             "TeleOp should restore the alliance persisted by Autonomous",
             Alliance.BLUE, restoredAlliance
         )
+    }
+
+    @Test
+    fun testTeleOpFallbackWhenNoAutoPosePersisted() {
+        // Driver runs TeleOp directly without running Auto
+        PoseStorage.hasValidPose = false
+
+        val initialPose = if (PoseStorage.hasValidPose) {
+            PoseStorage.currentPose
+        } else {
+            Pose2d(0.0, 0.0, Rotation2d(0.0))
+        }
+
+        val initialAlliance = if (PoseStorage.hasValidPose) PoseStorage.alliance else Alliance.RED
+
+        assertEquals(0.0, initialPose.x, 1e-4)
+        assertEquals(0.0, initialPose.y, 1e-4)
+        assertEquals(0.0, initialPose.heading.radians, 1e-4)
+        assertEquals(Alliance.RED, initialAlliance)
     }
 }
