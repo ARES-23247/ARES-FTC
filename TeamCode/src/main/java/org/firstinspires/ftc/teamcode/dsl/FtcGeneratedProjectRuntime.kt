@@ -27,6 +27,7 @@ import com.areslib.state.RobotState
 import com.areslib.util.RobotClock
 import org.firstinspires.ftc.teamcode.generated.GeneratedAresProject
 import org.firstinspires.ftc.teamcode.generated.GeneratedAresProjectCapabilities
+import org.firstinspires.ftc.teamcode.generated.GeneratedAresProjectControlTaskSink
 import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 import kotlin.math.hypot
 
@@ -35,7 +36,7 @@ internal class FtcGeneratedProjectRuntime(
     private val robot: AresRobot,
     private val autonomousEntry: AutonomousCatalogEntry? = null,
     private val selectedAlliance: com.areslib.state.Alliance = robot.base.store.state.drive.alliance,
-) : GeneratedAresProjectCapabilities {
+) : GeneratedAresProjectCapabilities, GeneratedAresProjectControlTaskSink {
     private val directTaskExecutor = TaskExecutor()
 
     val routineManager = RoutineManager(
@@ -45,21 +46,55 @@ internal class FtcGeneratedProjectRuntime(
     ).also { manager ->
         manager.replaceDocuments(GeneratedAresProject.routines.values)
     }
+    private val controllerRuntimesByPort = GeneratedAresProject.createControllerRuntimes(
+        schemeId = GeneratedAresProject.DEFAULT_CONTROL_SCHEME_ID,
+        registry = this,
+        routineManager = routineManager,
+        taskSink = this,
+    ).also { runtimes ->
+        require(runtimes.keys.all { it == DRIVER_PORT || it == OPERATOR_PORT }) {
+            "FTC generated controls may use only Driver Station ports 0 and 1"
+        }
+    }
+
+    /** Samples the two FTC Driver Station ports through reusable frames, then runs submitted tasks. */
+    fun updateControls(
+        driverFrame: com.areslib.input.InputFrame,
+        operatorFrame: com.areslib.input.InputFrame,
+        nowNanos: Long,
+    ) {
+        controllerRuntimesByPort[DRIVER_PORT]?.update(driverFrame, nowNanos)
+        controllerRuntimesByPort[OPERATOR_PORT]?.update(operatorFrame, nowNanos)
+        updateTasks()
+    }
+
+    override fun submit(bindingId: String, task: Task) {
+        require(bindingId.isNotBlank()) { "Generated FTC binding ID must not be blank" }
+        directTaskExecutor.addTask(task)
+    }
 
     /** Runs generated routine tasks and controller-submitted one-shot tasks once per robot frame. */
     fun updateTasks() {
-        val state = robot.base.store.state
-        val actions = directTaskExecutor.update(state, RobotClock.currentTimeMillis())
-        for (index in actions.indices) robot.base.store.dispatch(actions[index])
-        routineManager.update()
+        if (directTaskExecutor.size > 0) {
+            val state = robot.base.store.state
+            val actions = directTaskExecutor.update(state, RobotClock.currentTimeMillis())
+            for (index in actions.indices) robot.base.store.dispatch(actions[index])
+        }
+        if (routineManager.activeCount > 0 || routineManager.queuedCount > 0) routineManager.update()
     }
 
     /** Disable/stop safety hook. Cleanup actions are dispatched before lifecycle cancellation. */
     fun cancelAll(reason: String) {
+        controllerRuntimesByPort.values.forEach { it.cancel() }
         val actions = directTaskExecutor.cancelAll(robot.base.store.state)
         for (index in actions.indices) robot.base.store.dispatch(actions[index])
         routineManager.cancelAll(reason)
     }
+
+    val controlsSource: String
+        get() = GeneratedAresProject.DEFAULT_CONTROL_SCHEME_ID?.let { scheme ->
+            "generated:$scheme:${GeneratedAresProject.CONTENT_SHA256}"
+        } ?: "hand-authored-only"
 
     override fun createDriveTask(step: RoutineDriveStep): Task {
         requireFtcDriveActionsAvailable(step)
@@ -118,6 +153,11 @@ internal class FtcGeneratedProjectRuntime(
     private fun command(key: String): Task = requireNotNull(
         NamedCommands.create(CommandKey(key), RobotClock.currentTimeMillis()),
     ) { "Generated action '$key' was not registered by the FTC robot" }
+
+    private companion object {
+        const val DRIVER_PORT: Int = 0
+        const val OPERATOR_PORT: Int = 1
+    }
 }
 
 /** Rejects unavailable hardware-backed actions while the routine request is still compiling. */
