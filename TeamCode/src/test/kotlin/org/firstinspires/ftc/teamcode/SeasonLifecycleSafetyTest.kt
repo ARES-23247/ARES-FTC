@@ -203,6 +203,22 @@ class SeasonLifecycleSafetyTest {
     }
 
     @Test
+    fun prismSubsystemClampsEffortScaleToUnitRange() {
+        val io = MockPrismDriverIO()
+        val subsystem = PrismSubsystem(io, configuredMaxBrightness = 100)
+        val store = Store(RobotState(), ::rootReducer)
+        store.dispatch(RobotAction.SetPrismDriver("prism", 1200))
+
+        subsystem.readSensors(store, 0L)
+        subsystem.writeOutputs(store.state, 1.5)
+        assertEquals(100, io.maxBrightnessPercent)
+
+        subsystem.writeOutputs(store.state, -0.5)
+        assertEquals(0, io.maxBrightnessPercent)
+        subsystem.close()
+    }
+
+    @Test
     fun autonomousAbortSafetyStopsSeasonOutputsBeforePlatformHardware() {
         val wrapper = Mockito.mock(AresRobot::class.java)
         val base = Mockito.mock(FtcMecanumRobot::class.java)
