@@ -505,4 +505,32 @@ class FtcHardwareTest {
         Mockito.verify(flywheel).setAppliedVoltage(0.0)
         Mockito.verify(flywheel, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
     }
+
+    @Test
+    fun flywheelZeroOrNegativeTargetRpmZerosAppliedVoltage() {
+        val io = Mockito.mock(FlywheelIO::class.java)
+        val subsystem = FlywheelSubsystem(io)
+        val stateZero = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = 0.0
+                )
+            )
+        )
+        val stateNegative = RobotState(
+            superstructure = SuperstructureState(
+                custom = SeasonSuperstructureState(
+                    flywheelActive = true,
+                    flywheelTargetRPM = -500.0
+                )
+            )
+        )
+
+        subsystem.writeOutputs(stateZero, 1.0)
+        subsystem.writeOutputs(stateNegative, 1.0)
+
+        Mockito.verify(io, Mockito.times(2)).setAppliedVoltage(0.0)
+        Mockito.verify(io, Mockito.never()).setVelocityRpm(Mockito.anyDouble(), Mockito.anyDouble())
+    }
 }
