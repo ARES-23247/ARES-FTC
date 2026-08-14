@@ -8,16 +8,20 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import com.areslib.hardware.HardwareRegistry
 import com.areslib.hardware.CurrentSourceSampler
 import com.areslib.hardware.actuator.FlywheelIO
+import com.areslib.hardware.actuator.IndicatorLightColor
+import com.areslib.hardware.actuator.IndicatorLightIO
 import com.areslib.state.RobotState
 import com.areslib.state.SuperstructureState
 import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
 import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem
+import org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.AdditionalMatchers
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito
 import com.areslib.control.tuning.PIDFCoefficients
 import com.areslib.control.tuning.SimpleFeedforwardCoeffs
@@ -622,4 +626,89 @@ class FtcHardwareTest {
         subsystem.writeOutputs(activeState, -0.5)
         Mockito.verify(io, Mockito.atLeastOnce()).setRollerVoltage(0.0)
     }
+
+    @Test
+    fun indicatorLightSubsystemMissingTargetDoesNotInvokeIo() {
+        val io = Mockito.mock(IndicatorLightIO::class.java)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                indicatorLights = emptyMap()
+            )
+        )
+
+        subsystem.writeOutputs(state, 1.0)
+
+        Mockito.verify(io, Mockito.never()).setPosition(Mockito.anyDouble())
+    }
+
+    @Test
+    fun indicatorLightSubsystemNaNTargetDoesNotInvokeIo() {
+        val io = Mockito.mock(IndicatorLightIO::class.java)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                indicatorLights = mapOf("indicator" to Double.NaN)
+            )
+        )
+
+        subsystem.writeOutputs(state, 1.0)
+
+        Mockito.verify(io, Mockito.never()).setPosition(Mockito.anyDouble())
+    }
+
+    @Test
+    fun indicatorLightSubsystemValidTargetPositionDispatchesExactPosition() {
+        val io = Mockito.mock(IndicatorLightIO::class.java)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val greenPosition = IndicatorLightColor.GREEN.position
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                indicatorLights = mapOf("indicator" to greenPosition)
+            )
+        )
+
+        subsystem.writeOutputs(state, 1.0)
+
+        Mockito.verify(io).setPosition(greenPosition)
+    }
+
+    @Test
+    fun indicatorLightSubsystemOutOfBoundsPositionClampedToOne() {
+        val io = Mockito.mock(IndicatorLightIO::class.java)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                indicatorLights = mapOf("indicator" to 1.5)
+            )
+        )
+
+        subsystem.writeOutputs(state, 1.0)
+
+        Mockito.verify(io).setPosition(1.0)
+    }
+
+    @Test
+    fun indicatorLightSubsystemNegativeTargetPositionComputesDynamicRainbowPosition() {
+        val io = Mockito.mock(IndicatorLightIO::class.java)
+        val subsystem = IndicatorLightSubsystem(io, "indicator")
+        val state = RobotState(
+            superstructure = SuperstructureState(
+                indicatorLights = mapOf("indicator" to IndicatorLightColor.RAINBOW.position)
+            )
+        )
+
+        subsystem.writeOutputs(state, 1.0)
+
+        val captor = ArgumentCaptor.forClass(Double::class.java)
+        Mockito.verify(io).setPosition(captor.capture())
+        val captured = captor.value
+        val minPos = IndicatorLightColor.RED.position
+        val maxPos = IndicatorLightColor.PURPLE.position
+        assertTrue(
+            "Rainbow position $captured must be within [$minPos, $maxPos]",
+            captured in minPos..maxPos
+        )
+    }
 }
+
