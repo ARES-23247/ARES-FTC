@@ -217,4 +217,23 @@ class AresSuperstructureControllerTest {
         assertFalse(state2.flywheelActive)
         assertEquals(0.0, state2.flywheelTargetRPM, 1e-4)
     }
+
+    @Test
+    fun testToggleAllianceDebounceBlocksRapidSuccessiveCalls() {
+        val robot = createRobotWithStore(alliance = Alliance.RED)
+        val controller = AresSuperstructureController(robot)
+
+        // First call toggles RED -> BLUE
+        controller.toggleAlliance()
+        assertEquals(Alliance.BLUE, robot.store.state.drive.alliance)
+
+        // Second call at same timestamp should be debounced and ignored
+        controller.toggleAlliance()
+        assertEquals(Alliance.BLUE, robot.store.state.drive.alliance)
+
+        // Advancing clock past 200ms allows toggle BLUE -> RED
+        RobotClock.setMockTimeMs(1_300L)
+        controller.toggleAlliance()
+        assertEquals(Alliance.RED, robot.store.state.drive.alliance)
+    }
 }
