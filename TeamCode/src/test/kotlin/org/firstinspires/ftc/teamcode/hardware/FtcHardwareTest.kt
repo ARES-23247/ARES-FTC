@@ -284,6 +284,68 @@ class FtcHardwareTest {
     }
 
     @Test
+    fun intakeClampsRollerPowerToUnitIntervalAndHandlesZeroPowerCleanly() {
+        val mockMotor = Mockito.mock(DcMotorEx::class.java)
+        val hardwareMap = createMockHardwareMap("intake", mockMotor).hardwareMap
+        val io = FtcIntakeIO(hardwareMap)
+
+        // Positive saturation (> 12.0V) clamps to 1.0
+        io.setRollerVoltage(24.0)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(1.0, 1e-9)
+        assertTrue(io.outputApplied)
+
+        // Negative saturation (< -12.0V) clamps to -1.0
+        io.setRollerVoltage(-24.0)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(-1.0, 1e-9)
+        assertTrue(io.outputApplied)
+
+        // Linear scaling in range
+        io.setRollerVoltage(6.0)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.5, 1e-9)
+        assertTrue(io.outputApplied)
+
+        io.setRollerVoltage(-6.0)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(-0.5, 1e-9)
+        assertTrue(io.outputApplied)
+
+        // Zero power write cleanly stops motor and marks output unapplied
+        io.setRollerVoltage(0.0)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.0, 1e-9)
+        assertFalse(io.outputApplied)
+
+        // Subsequent zero power call is clean and redundant write avoided
+        Mockito.clearInvocations(mockMotor)
+        io.setRollerVoltage(0.0)
+        Mockito.verifyNoInteractions(mockMotor)
+        assertFalse(io.outputApplied)
+
+        // Non-finite voltages (NaN, Infinity) fall back cleanly to 0.0 power
+        io.setRollerVoltage(12.0)
+        assertTrue(io.outputApplied)
+        Mockito.clearInvocations(mockMotor)
+
+        io.setRollerVoltage(Double.NaN)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.0, 1e-9)
+        assertFalse(io.outputApplied)
+
+        io.setRollerVoltage(12.0)
+        assertTrue(io.outputApplied)
+        Mockito.clearInvocations(mockMotor)
+
+        io.setRollerVoltage(Double.POSITIVE_INFINITY)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.0, 1e-9)
+        assertFalse(io.outputApplied)
+
+        io.setRollerVoltage(12.0)
+        assertTrue(io.outputApplied)
+        Mockito.clearInvocations(mockMotor)
+
+        io.setRollerVoltage(Double.NEGATIVE_INFINITY)
+        Mockito.verify(mockMotor).power = AdditionalMatchers.eq(0.0, 1e-9)
+        assertFalse(io.outputApplied)
+    }
+
+    @Test
     fun flywheelVelocityCacheInvalidatesThenRecoversAfterTransientReadFailure() {
         val mockMotor = Mockito.mock(DcMotorEx::class.java)
         val hardwareMap = createMockHardwareMap("shooter", mockMotor).hardwareMap
