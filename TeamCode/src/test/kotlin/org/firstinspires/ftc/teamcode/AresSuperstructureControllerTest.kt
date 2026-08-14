@@ -77,6 +77,40 @@ class AresSuperstructureControllerTest {
     }
 
     @Test
+    fun intakeStopInsideDebounceWindowIsAlwaysHonored() {
+        val robot = createRobotWithStore(intakeActive = false)
+        val controller = AresSuperstructureController(robot)
+
+        controller.toggleIntake()
+        assertTrue(robot.store.state.superstructure.season.intakeActive)
+
+        RobotClock.setMockTimeMs(1_199L)
+        controller.toggleIntake()
+
+        assertFalse("Stopping intake must never be delayed by debounce", robot.store.state.superstructure.season.intakeActive)
+    }
+
+    @Test
+    fun toggleIntakeStartIsDebounced() {
+        val robot = createRobotWithStore(intakeActive = true)
+        val controller = AresSuperstructureController(robot)
+
+        // Stop intake at t = 1000ms
+        controller.toggleIntake()
+        assertFalse(robot.store.state.superstructure.season.intakeActive)
+
+        // Rapid start attempt within 200ms debounce window should be ignored
+        RobotClock.setMockTimeMs(1_150L)
+        controller.toggleIntake()
+        assertFalse("Rapid start attempt within 200ms debounce window must be ignored", robot.store.state.superstructure.season.intakeActive)
+
+        // Advancing clock past 200ms allows intake to start
+        RobotClock.setMockTimeMs(1_250L)
+        controller.toggleIntake()
+        assertTrue("Intake should start after debounce window elapses", robot.store.state.superstructure.season.intakeActive)
+    }
+
+    @Test
     fun testToggleShooterTurnsShooterOn() {
         val robot = createRobotWithStore(flywheelActive = false)
         val controller = AresSuperstructureController(robot)
