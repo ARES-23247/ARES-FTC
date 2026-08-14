@@ -53,6 +53,13 @@ A mechanism normally needs:
 
 Hardware reads belong in `refresh()` and happen after REV bulk caches are cleared. Property getters must return the cached fields. `safe()` and `close()` must drive outputs to their safe state. Register the IO with `HardwareRegistry` and register the subsystem with `base.registerSubsystem(...)`; these serve different but complementary lifecycle roles.
 
+Subsystems described by `.ares/subsystems/*.aressubsystem` are different only at the composition
+boundary: the build creates `GeneratedSubsystemRegistry` under `TeamCode/build/generated/ares`, and
+`AresRobot` installs every returned subsystem into that same lifecycle automatically. Edit the
+descriptor or a `GENERATED STARTER` source file, never the registry. Required generated hardware
+fails startup visibly; optional hardware may be skipped only when its descriptor declares it
+optional. Hand-authored subsystems remain explicit registrations in `AresRobot`.
+
 Do not use an ad-hoc console scaffolder. The repository's capability-oriented generator and a
 complete manual checklist are documented in
 [SUBSYSTEM_AUTHORING.md](../../../../../../../../docs/SUBSYSTEM_AUTHORING.md). Its preview/apply flow

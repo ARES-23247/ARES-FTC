@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.areslib.ftc.FtcMecanumRobot
+import com.areslib.subsystem.Subsystem
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM
@@ -14,6 +15,20 @@ import org.firstinspires.ftc.teamcode.dsl.season
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
+import org.firstinspires.ftc.teamcode.subsystems.GeneratedSubsystemRegistry
+
+/**
+ * Installs generator-owned subsystem plumbing into the same lifecycle used by hand-authored
+ * season mechanisms. Required generated factories are intentionally allowed to fail startup;
+ * optional-device policy belongs in the generated registry and must not be weakened here.
+ */
+internal fun installGeneratedSubsystems(
+    hardwareMap: HardwareMap,
+    register: (Subsystem) -> Unit,
+    createAll: (HardwareMap) -> List<Subsystem> = GeneratedSubsystemRegistry::createAll,
+): List<Subsystem> = createAll(hardwareMap).also { subsystems ->
+    subsystems.forEach(register)
+}
 
 /**
  * Composition root for the FTC season layer over ARESLib's [FtcMecanumRobot].
@@ -184,6 +199,18 @@ class AresRobot(
         // Registrations are process-global. Clear the previous OpMode's optional hardware catalog
         // before discovering this robot instance so missing devices cannot inherit stale commands.
         com.areslib.pathing.NamedCommands.clear()
+
+        // GENERATED - DO NOT EDIT registry entries still use the normal subsystem lifecycle:
+        // readSensors -> immutable Redux state -> writeOutputs -> safe/close on every exit path.
+        try {
+            installGeneratedSubsystems(hardwareMap, base::registerSubsystem)
+        } catch (failure: Throwable) {
+            // The facade constructor cannot return a partially initialized robot. The generated
+            // registry rolls back its own subsystem list; close the already-created shared robot
+            // services before propagating the required-device failure to the OpMode.
+            runCatching { base.close() }.exceptionOrNull()?.let(failure::addSuppressed)
+            throw failure
+        }
 
         try {
             val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap) {
