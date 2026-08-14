@@ -13,9 +13,6 @@ import com.areslib.subsystem.Subsystem
  * keyed by [name] and writes the corresponding servo position to hardware.
  *
  * The subsystem is write-only — there are no sensors to read.
- * [readSensors] snapshots Redux intent so [writeOutputs] follows the same lifecycle stage as
- * sensor-backed subsystems. If no indicator light entry exists in state for this [name],
- * the light is left at its current position (no-op).
  *
  * @param io The hardware IO implementation (real FTC or mock).
  * @param name The hardware map name used to look up the target position in Redux state.
@@ -25,15 +22,13 @@ class IndicatorLightSubsystem(
     private val name: String
 ) : Subsystem {
 
-    private var cachedPosition: Double = Double.NaN
-
     override fun readSensors(store: Store, timestampMs: Long) {
-        cachedPosition = store.state.superstructure.indicatorLights[name] ?: Double.NaN
+        // Write-only actuator subsystem; no hardware sensors to poll.
     }
 
     override fun writeOutputs(state: RobotState, scale: Double) {
-        if (cachedPosition.isNaN()) return
-        val targetPosition = cachedPosition
+        val targetPosition = state.superstructure.indicatorLights[name] ?: return
+        if (targetPosition.isNaN()) return
         if (targetPosition < 0.0) {
             // Negative is the RAINBOW sentinel; RobotClock keeps replay deterministic.
             val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
