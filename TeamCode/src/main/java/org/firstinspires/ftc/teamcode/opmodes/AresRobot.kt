@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
 import org.firstinspires.ftc.teamcode.subsystems.GeneratedSubsystemRegistry
+import org.firstinspires.ftc.teamcode.subsystems.superstructure.GeneratedSuperstructureRegistry
 
 /**
  * Installs generator-owned subsystem plumbing into the same lifecycle used by hand-authored
@@ -27,6 +28,14 @@ internal fun installGeneratedSubsystems(
     createAll: (HardwareMap) -> List<Subsystem> = GeneratedSubsystemRegistry::createAll,
 ): List<Subsystem> = createAll(hardwareMap).also { subsystems ->
     subsystems.forEach(register)
+}
+
+/** Installs generated Redux coordinators after their generated subsystem dependencies. */
+internal fun installGeneratedSuperstructures(
+    register: (Subsystem) -> Unit,
+    createAll: () -> List<Subsystem> = GeneratedSuperstructureRegistry::createAll,
+): List<Subsystem> = createAll().also { superstructures ->
+    superstructures.forEach(register)
 }
 
 /**
@@ -172,6 +181,7 @@ class AresRobot(
         // readSensors -> immutable Redux state -> writeOutputs -> safe/close on every exit path.
         try {
             installGeneratedSubsystems(hardwareMap, base::registerSubsystem)
+            installGeneratedSuperstructures(base::registerSubsystem)
         } catch (failure: Throwable) {
             // The facade constructor cannot return a partially initialized robot. The generated
             // registry rolls back its own subsystem list; close the already-created shared robot
