@@ -37,6 +37,13 @@ Each drivetrain adapter supplies a finite cached current sample. FTC electrical 
 shared aggregate 20 A software-fuse/current-budget model, with Floodgate data taking authority when
 available. This robot does not claim a controller-enforced per-motor current limit.
 
+Invalid drivetrain commands and failed motor writes latch all four outputs at neutral. The latch is
+shown as `Drive/OutputFaultLatched` and as plain Driver Station text. In **Controller Bindings**,
+search for **Recover drive after a fault** and bind it to a deliberate button or chord. Release the
+drive controls before invoking it. Recovery succeeds only when Redux drive intent is neutral,
+calibration does not own the motors, and all four motors accept a neutral write. Ordinary stop/safe
+calls never silently clear the latch.
+
 Typed tuning publishes only declared parameters. Live-safe values require an armed calibration
 session; calibration-only values additionally require explicit UID authorization. Restart/rebuild
 and read-only values never mutate at runtime. The consumer explicitly accepts only parameters it

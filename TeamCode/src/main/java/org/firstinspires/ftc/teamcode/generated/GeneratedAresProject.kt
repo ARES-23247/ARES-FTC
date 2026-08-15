@@ -36,9 +36,9 @@ fun interface GeneratedAresProjectControlTaskSink {
 /** Generated from the project's checked-in ARES documents. Do not edit by hand. */
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 7
-    const val CATALOG_SHA256: String = "754f20f33b603a25bea1ed471a2132814f119bb37c63dbf0f496f40c40bdee6a"
-    const val CONTENT_SHA256: String = "6835a1b0948a49f065c66458e4bbe6ef5df119b1cb9c7bcec4150ff973cdd108"
-    const val SOURCE_SHA256: String = "45e4111293cbf537956064bd11785bd49f6db7e2a3560053ffd6cdec5a1e4ca2"
+    const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
+    const val CONTENT_SHA256: String = "c13f499e6a2b59444cd51385177352fbc4c94a087476d729708ab92aba524788"
+    const val SOURCE_SHA256: String = "4aff89b2d8550704581652b326f56b5f8a2dbc8ed3fa736548ea1b2529baed77"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -48,7 +48,7 @@ object GeneratedAresProject {
     const val FIELD_LENGTH_METERS: Double = 3.6576
     const val FIELD_WIDTH_METERS: Double = 3.6576
 
-    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
+    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "drivetrain.recoverNeutral", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
     val knownConditionKeys: Set<String> = emptySet()
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
@@ -407,6 +407,14 @@ object GeneratedAresProject {
                         )
                         registry.createActionTask(key, arguments)
                     }
+                    "drivetrain.recoverNeutral" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "drivetrain.recoverNeutral",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.createActionTask(key, arguments)
+                    }
                     "flywheel.prepare" -> {
                         CapabilityArgumentReader(
                             capabilityKey = "flywheel.prepare",
@@ -482,6 +490,7 @@ object GeneratedAresProject {
                     "SetSecondIndicatorColor_VIOLET" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_WHITE" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_YELLOW" -> setOf("indicator.secondary")
+                    "drivetrain.recoverNeutral" -> setOf("drivetrain")
                     "flywheel.prepare" -> setOf("flywheel", "intake")
                     "flywheel.stop" -> setOf("flywheel")
                     "intake.collect" -> setOf("flywheel", "intake")

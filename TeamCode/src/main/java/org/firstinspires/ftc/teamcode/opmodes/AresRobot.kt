@@ -263,6 +263,7 @@ class AresRobot(
             intakeAvailable = intakeSubsystem != null,
             flywheelAvailable = flywheelSubsystem != null
         )
+        FtcAutoCapabilities.registerDriveRecovery(base::recoverDriveOutputWithNeutral)
         // Simulator game-piece interaction consumes only cached commands that actually reached
         // season IO after interlocks, brownout scaling, and fault latches. Dashboard intent is not
         // authoritative for mechanism state.

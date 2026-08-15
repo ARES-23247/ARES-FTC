@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
   "projectId": "team23247-gobilda",
-  "revision": 1,
+  "revision": 2,
   "actions": [
+    {"key":"drivetrain.recoverNeutral","displayName":"Recover drive after a fault","description":"Requires released drive controls, writes neutral to all four motors, then clears the drive fault latch.","category":"Drive safety","parameters":[],"resources":[{"resourceKey":"drivetrain","access":"EXCLUSIVE"}],"allowedContexts":["TELEOP","TEST"]},
     {"key":"intake.collect","displayName":"Collect game piece","description":"Starts the intake and safely stops the flywheel.","category":"Intake","parameters":[],"resources":[{"resourceKey":"intake","access":"EXCLUSIVE"},{"resourceKey":"flywheel","access":"EXCLUSIVE"}],"allowedContexts":["AUTONOMOUS","TELEOP","TEST"]},
     {"key":"intake.stop","displayName":"Stop intake","description":"Stops the intake roller.","category":"Intake","parameters":[],"resources":[{"resourceKey":"intake","access":"EXCLUSIVE"}],"allowedContexts":["AUTONOMOUS","TELEOP","TEST"]},
     {"key":"flywheel.prepare","displayName":"Prepare flywheel","description":"Stops the intake and spins the flywheel to the configured match preset.","category":"Shooter","parameters":[],"resources":[{"resourceKey":"intake","access":"EXCLUSIVE"},{"resourceKey":"flywheel","access":"EXCLUSIVE"}],"allowedContexts":["AUTONOMOUS","TELEOP","TEST"]},
