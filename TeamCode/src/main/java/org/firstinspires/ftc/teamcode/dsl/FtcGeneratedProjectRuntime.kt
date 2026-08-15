@@ -111,48 +111,13 @@ internal class FtcGeneratedProjectRuntime(
         return FtcRoutineDriveTask(robot, step, target, preset)
     }
 
-    override fun actionSetIndicatorColorBLUE() = command("SetIndicatorColor_BLUE")
-    override fun actionSetIndicatorColorCYAN() = command("SetIndicatorColor_CYAN")
-    override fun actionSetIndicatorColorGREEN() = command("SetIndicatorColor_GREEN")
-    override fun actionSetIndicatorColorOFF() = command("SetIndicatorColor_OFF")
-    override fun actionSetIndicatorColorORANGE() = command("SetIndicatorColor_ORANGE")
-    override fun actionSetIndicatorColorPURPLE() = command("SetIndicatorColor_PURPLE")
-    override fun actionSetIndicatorColorRAINBOW() = command("SetIndicatorColor_RAINBOW")
-    override fun actionSetIndicatorColorRED() = command("SetIndicatorColor_RED")
-    override fun actionSetIndicatorColorVIOLET() = command("SetIndicatorColor_VIOLET")
-    override fun actionSetIndicatorColorWHITE() = command("SetIndicatorColor_WHITE")
-    override fun actionSetIndicatorColorYELLOW() = command("SetIndicatorColor_YELLOW")
-    override fun actionSetPrismPresetEMERGENCYLIGHTS() = command("SetPrismPreset_EMERGENCY_LIGHTS")
-    override fun actionSetPrismPresetFTCTIMER() = command("SetPrismPreset_FTC_TIMER")
-    override fun actionSetPrismPresetRAINBOWFULLCOLOR() = command("SetPrismPreset_RAINBOW_FULL_COLOR")
-    override fun actionSetPrismPresetSOLIDBLUE() = command("SetPrismPreset_SOLID_BLUE")
-    override fun actionSetPrismPresetSOLIDCYAN() = command("SetPrismPreset_SOLID_CYAN")
-    override fun actionSetPrismPresetSOLIDGREEN() = command("SetPrismPreset_SOLID_GREEN")
-    override fun actionSetPrismPresetSOLIDOFF() = command("SetPrismPreset_SOLID_OFF")
-    override fun actionSetPrismPresetSOLIDORANGE() = command("SetPrismPreset_SOLID_ORANGE")
-    override fun actionSetPrismPresetSOLIDPURPLE() = command("SetPrismPreset_SOLID_PURPLE")
-    override fun actionSetPrismPresetSOLIDRED() = command("SetPrismPreset_SOLID_RED")
-    override fun actionSetPrismPresetSOLIDWHITE() = command("SetPrismPreset_SOLID_WHITE")
-    override fun actionSetPrismPresetSOLIDYELLOW() = command("SetPrismPreset_SOLID_YELLOW")
-    override fun actionSetSecondIndicatorColorBLUE() = command("SetSecondIndicatorColor_BLUE")
-    override fun actionSetSecondIndicatorColorCYAN() = command("SetSecondIndicatorColor_CYAN")
-    override fun actionSetSecondIndicatorColorGREEN() = command("SetSecondIndicatorColor_GREEN")
-    override fun actionSetSecondIndicatorColorOFF() = command("SetSecondIndicatorColor_OFF")
-    override fun actionSetSecondIndicatorColorORANGE() = command("SetSecondIndicatorColor_ORANGE")
-    override fun actionSetSecondIndicatorColorPURPLE() = command("SetSecondIndicatorColor_PURPLE")
-    override fun actionSetSecondIndicatorColorRAINBOW() = command("SetSecondIndicatorColor_RAINBOW")
-    override fun actionSetSecondIndicatorColorRED() = command("SetSecondIndicatorColor_RED")
-    override fun actionSetSecondIndicatorColorVIOLET() = command("SetSecondIndicatorColor_VIOLET")
-    override fun actionSetSecondIndicatorColorWHITE() = command("SetSecondIndicatorColor_WHITE")
-    override fun actionSetSecondIndicatorColorYELLOW() = command("SetSecondIndicatorColor_YELLOW")
-    override fun actionFlywheelPrepare() = command("flywheel.prepare")
-    override fun actionFlywheelStop() = command("flywheel.stop")
-    override fun actionIntakeCollect() = command("intake.collect")
-    override fun actionIntakeStop() = command("intake.stop")
-
-    private fun command(key: String): Task = requireNotNull(
-        NamedCommands.create(CommandKey(key), RobotClock.currentTimeMillis()),
-    ) { "Generated action '$key' was not registered by the FTC robot" }
+    /** Resolves hand-authored actions without coupling this adapter to generated method names. */
+    override fun createActionTask(actionKey: String, arguments: Map<String, String>): Task? {
+        require(arguments.isEmpty()) {
+            "FTC named action '$actionKey' does not accept arguments; use a generated subsystem capability"
+        }
+        return NamedCommands.create(CommandKey(actionKey), RobotClock.currentTimeMillis())
+    }
 
     private companion object {
         const val DRIVER_PORT: Int = 0

@@ -12,6 +12,8 @@ import com.areslib.routine.RoutinePose
 import com.areslib.routine.AutonomousCatalogEntry
 import com.areslib.routine.RoutineDocument
 import com.areslib.routine.RoutineStep
+import com.areslib.sequencer.TaskStateMachine
+import com.areslib.sequencer.TaskStatus
 import com.areslib.state.Alliance
 import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
 import org.firstinspires.ftc.teamcode.dsl.validateFtcAutonomousBounds
@@ -60,6 +62,24 @@ class FtcAutoCapabilitiesTest {
         val action = task.initialize(com.areslib.state.RobotState()).single() as RobotAction.SetPrismDriver
         assertEquals("prism", action.name)
         assertEquals(PrismPwmPreset.RAINBOW_FULL_COLOR.pulseWidthUs, action.pulseWidthUs)
+    }
+
+    @Test
+    fun `drive recovery capability reports failed and successful neutral attempts`() {
+        var shouldRecover = false
+        FtcAutoCapabilities.registerDriveRecovery { shouldRecover }
+        val key = FtcAutoCapabilities.DRIVE_RECOVER_NEUTRAL.key
+        assertTrue(NamedCommands.contains(key))
+
+        val rejected = requireNotNull(NamedCommands.create(key, 0L))
+        rejected.initialize(com.areslib.state.RobotState())
+        assertEquals(TaskStatus.FAILED, TaskStateMachine.getStatus(rejected))
+
+        shouldRecover = true
+        val recovered = requireNotNull(NamedCommands.create(key, 1L))
+        recovered.initialize(com.areslib.state.RobotState())
+        assertTrue(recovered.isCompleted(com.areslib.state.RobotState(), 0L))
+        assertEquals(TaskStatus.RUNNING, TaskStateMachine.getStatus(recovered))
     }
 
     @Test

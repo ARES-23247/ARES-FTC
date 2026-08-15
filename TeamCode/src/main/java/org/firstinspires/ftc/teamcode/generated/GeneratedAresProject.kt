@@ -16,121 +16,13 @@ import com.areslib.input.ControllerBindingRuntime
 import com.areslib.sequencer.Task
 import com.areslib.state.RobotState
 
-/** Typed robot implementations for every capability in the generated catalog. */
+/** Stable robot boundary for capabilities referenced by generated project documents. */
 interface GeneratedAresProjectCapabilities {
-    /** Implements action key SetIndicatorColor_BLUE. */
-    fun actionSetIndicatorColorBLUE(): Task
+    /** Creates a hand-authored or season action by its catalog key, or null when unavailable. */
+    fun createActionTask(actionKey: String, arguments: Map<String, String>): Task? = null
 
-    /** Implements action key SetIndicatorColor_CYAN. */
-    fun actionSetIndicatorColorCYAN(): Task
-
-    /** Implements action key SetIndicatorColor_GREEN. */
-    fun actionSetIndicatorColorGREEN(): Task
-
-    /** Implements action key SetIndicatorColor_OFF. */
-    fun actionSetIndicatorColorOFF(): Task
-
-    /** Implements action key SetIndicatorColor_ORANGE. */
-    fun actionSetIndicatorColorORANGE(): Task
-
-    /** Implements action key SetIndicatorColor_PURPLE. */
-    fun actionSetIndicatorColorPURPLE(): Task
-
-    /** Implements action key SetIndicatorColor_RAINBOW. */
-    fun actionSetIndicatorColorRAINBOW(): Task
-
-    /** Implements action key SetIndicatorColor_RED. */
-    fun actionSetIndicatorColorRED(): Task
-
-    /** Implements action key SetIndicatorColor_VIOLET. */
-    fun actionSetIndicatorColorVIOLET(): Task
-
-    /** Implements action key SetIndicatorColor_WHITE. */
-    fun actionSetIndicatorColorWHITE(): Task
-
-    /** Implements action key SetIndicatorColor_YELLOW. */
-    fun actionSetIndicatorColorYELLOW(): Task
-
-    /** Implements action key SetPrismPreset_EMERGENCY_LIGHTS. */
-    fun actionSetPrismPresetEMERGENCYLIGHTS(): Task
-
-    /** Implements action key SetPrismPreset_FTC_TIMER. */
-    fun actionSetPrismPresetFTCTIMER(): Task
-
-    /** Implements action key SetPrismPreset_RAINBOW_FULL_COLOR. */
-    fun actionSetPrismPresetRAINBOWFULLCOLOR(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_BLUE. */
-    fun actionSetPrismPresetSOLIDBLUE(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_CYAN. */
-    fun actionSetPrismPresetSOLIDCYAN(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_GREEN. */
-    fun actionSetPrismPresetSOLIDGREEN(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_OFF. */
-    fun actionSetPrismPresetSOLIDOFF(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_ORANGE. */
-    fun actionSetPrismPresetSOLIDORANGE(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_PURPLE. */
-    fun actionSetPrismPresetSOLIDPURPLE(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_RED. */
-    fun actionSetPrismPresetSOLIDRED(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_WHITE. */
-    fun actionSetPrismPresetSOLIDWHITE(): Task
-
-    /** Implements action key SetPrismPreset_SOLID_YELLOW. */
-    fun actionSetPrismPresetSOLIDYELLOW(): Task
-
-    /** Implements action key SetSecondIndicatorColor_BLUE. */
-    fun actionSetSecondIndicatorColorBLUE(): Task
-
-    /** Implements action key SetSecondIndicatorColor_CYAN. */
-    fun actionSetSecondIndicatorColorCYAN(): Task
-
-    /** Implements action key SetSecondIndicatorColor_GREEN. */
-    fun actionSetSecondIndicatorColorGREEN(): Task
-
-    /** Implements action key SetSecondIndicatorColor_OFF. */
-    fun actionSetSecondIndicatorColorOFF(): Task
-
-    /** Implements action key SetSecondIndicatorColor_ORANGE. */
-    fun actionSetSecondIndicatorColorORANGE(): Task
-
-    /** Implements action key SetSecondIndicatorColor_PURPLE. */
-    fun actionSetSecondIndicatorColorPURPLE(): Task
-
-    /** Implements action key SetSecondIndicatorColor_RAINBOW. */
-    fun actionSetSecondIndicatorColorRAINBOW(): Task
-
-    /** Implements action key SetSecondIndicatorColor_RED. */
-    fun actionSetSecondIndicatorColorRED(): Task
-
-    /** Implements action key SetSecondIndicatorColor_VIOLET. */
-    fun actionSetSecondIndicatorColorVIOLET(): Task
-
-    /** Implements action key SetSecondIndicatorColor_WHITE. */
-    fun actionSetSecondIndicatorColorWHITE(): Task
-
-    /** Implements action key SetSecondIndicatorColor_YELLOW. */
-    fun actionSetSecondIndicatorColorYELLOW(): Task
-
-    /** Implements action key flywheel.prepare. */
-    fun actionFlywheelPrepare(): Task
-
-    /** Implements action key flywheel.stop. */
-    fun actionFlywheelStop(): Task
-
-    /** Implements action key intake.collect. */
-    fun actionIntakeCollect(): Task
-
-    /** Implements action key intake.stop. */
-    fun actionIntakeStop(): Task
+    /** Creates a hand-authored condition predicate by its catalog key, or null when unavailable. */
+    fun createCondition(conditionKey: String, arguments: Map<String, String>): ((RobotState) -> Boolean)? = null
 
     /** Platform trajectory adapter; returning null rejects a drive step safely. */
     fun createDriveTask(step: RoutineDriveStep): Task? = null
@@ -143,10 +35,10 @@ fun interface GeneratedAresProjectControlTaskSink {
 
 /** Generated from the project's checked-in ARES documents. Do not edit by hand. */
 object GeneratedAresProject {
-    const val GENERATOR_VERSION: Int = 6
-    const val CATALOG_SHA256: String = "754f20f33b603a25bea1ed471a2132814f119bb37c63dbf0f496f40c40bdee6a"
-    const val CONTENT_SHA256: String = "015df0289bf78d67237d16f4ac19494746864438c3978be92f6467fd71ee416b"
-    const val SOURCE_SHA256: String = "f49119f420a54fb28ceab25d650e9e7162e7e474155b4c36d988c6aa8433448a"
+    const val GENERATOR_VERSION: Int = 7
+    const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
+    const val CONTENT_SHA256: String = "c13f499e6a2b59444cd51385177352fbc4c94a087476d729708ab92aba524788"
+    const val SOURCE_SHA256: String = "4aff89b2d8550704581652b326f56b5f8a2dbc8ed3fa736548ea1b2529baed77"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -156,7 +48,7 @@ object GeneratedAresProject {
     const val FIELD_LENGTH_METERS: Double = 3.6576
     const val FIELD_WIDTH_METERS: Double = 3.6576
 
-    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
+    val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "drivetrain.recoverNeutral", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
     val knownConditionKeys: Set<String> = emptySet()
 
     val routines: Map<String, RoutineDocument> = linkedMapOf(
@@ -249,7 +141,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorBLUE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_CYAN" -> {
                         CapabilityArgumentReader(
@@ -257,7 +149,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorCYAN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_GREEN" -> {
                         CapabilityArgumentReader(
@@ -265,7 +157,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorGREEN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_OFF" -> {
                         CapabilityArgumentReader(
@@ -273,7 +165,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorOFF()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_ORANGE" -> {
                         CapabilityArgumentReader(
@@ -281,7 +173,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorORANGE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_PURPLE" -> {
                         CapabilityArgumentReader(
@@ -289,7 +181,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorPURPLE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_RAINBOW" -> {
                         CapabilityArgumentReader(
@@ -297,7 +189,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorRAINBOW()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_RED" -> {
                         CapabilityArgumentReader(
@@ -305,7 +197,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorRED()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_VIOLET" -> {
                         CapabilityArgumentReader(
@@ -313,7 +205,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorVIOLET()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_WHITE" -> {
                         CapabilityArgumentReader(
@@ -321,7 +213,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorWHITE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetIndicatorColor_YELLOW" -> {
                         CapabilityArgumentReader(
@@ -329,7 +221,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetIndicatorColorYELLOW()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_EMERGENCY_LIGHTS" -> {
                         CapabilityArgumentReader(
@@ -337,7 +229,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetEMERGENCYLIGHTS()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_FTC_TIMER" -> {
                         CapabilityArgumentReader(
@@ -345,7 +237,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetFTCTIMER()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_RAINBOW_FULL_COLOR" -> {
                         CapabilityArgumentReader(
@@ -353,7 +245,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetRAINBOWFULLCOLOR()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_BLUE" -> {
                         CapabilityArgumentReader(
@@ -361,7 +253,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDBLUE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_CYAN" -> {
                         CapabilityArgumentReader(
@@ -369,7 +261,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDCYAN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_GREEN" -> {
                         CapabilityArgumentReader(
@@ -377,7 +269,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDGREEN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_OFF" -> {
                         CapabilityArgumentReader(
@@ -385,7 +277,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDOFF()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_ORANGE" -> {
                         CapabilityArgumentReader(
@@ -393,7 +285,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDORANGE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_PURPLE" -> {
                         CapabilityArgumentReader(
@@ -401,7 +293,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDPURPLE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_RED" -> {
                         CapabilityArgumentReader(
@@ -409,7 +301,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDRED()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_WHITE" -> {
                         CapabilityArgumentReader(
@@ -417,7 +309,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDWHITE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetPrismPreset_SOLID_YELLOW" -> {
                         CapabilityArgumentReader(
@@ -425,7 +317,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetPrismPresetSOLIDYELLOW()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_BLUE" -> {
                         CapabilityArgumentReader(
@@ -433,7 +325,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorBLUE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_CYAN" -> {
                         CapabilityArgumentReader(
@@ -441,7 +333,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorCYAN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_GREEN" -> {
                         CapabilityArgumentReader(
@@ -449,7 +341,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorGREEN()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_OFF" -> {
                         CapabilityArgumentReader(
@@ -457,7 +349,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorOFF()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_ORANGE" -> {
                         CapabilityArgumentReader(
@@ -465,7 +357,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorORANGE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_PURPLE" -> {
                         CapabilityArgumentReader(
@@ -473,7 +365,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorPURPLE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_RAINBOW" -> {
                         CapabilityArgumentReader(
@@ -481,7 +373,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorRAINBOW()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_RED" -> {
                         CapabilityArgumentReader(
@@ -489,7 +381,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorRED()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_VIOLET" -> {
                         CapabilityArgumentReader(
@@ -497,7 +389,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorVIOLET()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_WHITE" -> {
                         CapabilityArgumentReader(
@@ -505,7 +397,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorWHITE()
+                        registry.createActionTask(key, arguments)
                     }
                     "SetSecondIndicatorColor_YELLOW" -> {
                         CapabilityArgumentReader(
@@ -513,7 +405,15 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionSetSecondIndicatorColorYELLOW()
+                        registry.createActionTask(key, arguments)
+                    }
+                    "drivetrain.recoverNeutral" -> {
+                        CapabilityArgumentReader(
+                            capabilityKey = "drivetrain.recoverNeutral",
+                            arguments = arguments,
+                            allowedKeys = emptySet(),
+                        )
+                        registry.createActionTask(key, arguments)
                     }
                     "flywheel.prepare" -> {
                         CapabilityArgumentReader(
@@ -521,7 +421,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionFlywheelPrepare()
+                        registry.createActionTask(key, arguments)
                     }
                     "flywheel.stop" -> {
                         CapabilityArgumentReader(
@@ -529,7 +429,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionFlywheelStop()
+                        registry.createActionTask(key, arguments)
                     }
                     "intake.collect" -> {
                         CapabilityArgumentReader(
@@ -537,7 +437,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionIntakeCollect()
+                        registry.createActionTask(key, arguments)
                     }
                     "intake.stop" -> {
                         CapabilityArgumentReader(
@@ -545,7 +445,7 @@ object GeneratedAresProject {
                             arguments = arguments,
                             allowedKeys = emptySet(),
                         )
-                        registry.actionIntakeStop()
+                        registry.createActionTask(key, arguments)
                     }
                     else -> null
                 }
@@ -590,6 +490,7 @@ object GeneratedAresProject {
                     "SetSecondIndicatorColor_VIOLET" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_WHITE" -> setOf("indicator.secondary")
                     "SetSecondIndicatorColor_YELLOW" -> setOf("indicator.secondary")
+                    "drivetrain.recoverNeutral" -> setOf("drivetrain")
                     "flywheel.prepare" -> setOf("flywheel", "intake")
                     "flywheel.stop" -> setOf("flywheel")
                     "intake.collect" -> setOf("flywheel", "intake")

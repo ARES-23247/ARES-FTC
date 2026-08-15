@@ -9,19 +9,19 @@ profile:
   and localization calibration values. Hardware IDs and motor polarity are not tuning values;
   they live only in the physical descriptor.
 
-Gradle validates those documents and writes `GeneratedAresDrivebaseConfig.kt` and
-`GeneratedAresTuningConfig.kt` below `TeamCode/build/generated/ares/drivebase/kotlin`. Those files
-are mechanical plumbing: do not edit or commit them. `CanonicalDrivebaseConfig.kt` is the small,
-user-owned mapping from generated values into the shared robot constructor and immutable Redux
-state. It prevents the first periodic update from replacing constructor values with different
-defaults.
+Gradle validates those documents and writes `GeneratedAresDrivebaseConfig.kt`,
+`GeneratedAresTuningConfig.kt`, and `GeneratedAresFtcMecanumRuntimeConfig.kt` below
+`TeamCode/build/generated/ares/drivebase/kotlin`. Those files are deterministic mechanical
+plumbing: do not edit or commit them. The generated runtime creates the shared FTC drivetrain and
+maps the canonical profile into immutable Redux state. TeamCode no longer maintains a parallel
+handwritten constant adapter that could drift from the reviewed documents.
 
 ## Safe editing workflow
 
 1. Edit the descriptor when hardware identity, geometry, polarity, localization source, or safety
    behavior changes.
 2. Edit the canonical profile when a reviewed value changes. Keep units and bounds accurate.
-3. Run `gradlew :TeamCode:generateAresProject`, inspect the structured source/document diff, then
+3. Run `gradlew :TeamCode:generateAresProject`, inspect the structured document diff, then
    run TeamCode and simulator tests.
 4. For calibration-derived values, retain measured evidence and update its SHA-256 provenance.
 5. With the robot restrained, verify wheel direction, neutral/disabled behavior, current validity,
@@ -36,6 +36,13 @@ localization, telemetry, or simulation.
 Each drivetrain adapter supplies a finite cached current sample. FTC electrical protection is the
 shared aggregate 20 A software-fuse/current-budget model, with Floodgate data taking authority when
 available. This robot does not claim a controller-enforced per-motor current limit.
+
+Invalid drivetrain commands and failed motor writes latch all four outputs at neutral. The latch is
+shown as `Drive/OutputFaultLatched` and as plain Driver Station text. In **Controller Bindings**,
+search for **Recover drive after a fault** and bind it to a deliberate button or chord. Release the
+drive controls before invoking it. Recovery succeeds only when Redux drive intent is neutral,
+calibration does not own the motors, and all four motors accept a neutral write. Ordinary stop/safe
+calls never silently clear the latch.
 
 Typed tuning publishes only declared parameters. Live-safe values require an armed calibration
 session; calibration-only values additionally require explicit UID authorization. Restart/rebuild

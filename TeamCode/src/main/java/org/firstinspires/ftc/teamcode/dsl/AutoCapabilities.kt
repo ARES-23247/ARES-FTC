@@ -8,6 +8,7 @@ import com.areslib.pathing.NamedCommandDescriptor
 import com.areslib.pathing.NamedCommands
 import com.areslib.sequencer.StateActionTask
 import com.areslib.sequencer.Task
+import com.areslib.sequencer.TaskStateMachine
 import com.areslib.state.RobotState
 
 /**
@@ -40,6 +41,12 @@ object FtcAutoCapabilities {
         displayName = "Stop flywheel",
         description = "Stops closed-loop flywheel output and clears its speed target.",
         category = "Shooter"
+    )
+    val DRIVE_RECOVER_NEUTRAL = NamedCommandDescriptor(
+        key = CommandKey("drivetrain.recoverNeutral"),
+        displayName = "Recover drive after a fault",
+        description = "Requires released drive controls, writes neutral to all four motors, then clears the drive fault latch.",
+        category = "Drive safety"
     )
 
     private val primaryIndicatorDescriptors = IndicatorLightColor.entries.associateWith { color ->
@@ -105,6 +112,30 @@ object FtcAutoCapabilities {
                         flywheelTargetRPM = 0.0
                     )
                 )
+            }
+        }
+    }
+
+    /** Registers the explicit, neutral-first recovery required by the generated drive safety contract. */
+    fun registerDriveRecovery(recoverWithNeutral: () -> Boolean) {
+        NamedCommands.register(DRIVE_RECOVER_NEUTRAL) {
+            object : Task {
+                override val name: String = DRIVE_RECOVER_NEUTRAL.displayName
+                private var recovered = false
+
+                override fun initialize(state: RobotState): List<RobotAction> {
+                    super.initialize(state)
+                    recovered = recoverWithNeutral()
+                    if (!recovered) TaskStateMachine.markFailed(this)
+                    return emptyList()
+                }
+
+                override fun isCompleted(state: RobotState, elapsedMs: Long): Boolean = recovered
+
+                override fun releaseRuntimeState() {
+                    recovered = false
+                    super.releaseRuntimeState()
+                }
             }
         }
     }
