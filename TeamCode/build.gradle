@@ -147,6 +147,7 @@ def subsystemCodegenArgs = [
 def drivebaseCodegenArgs = [
     "--drivebase-output", generatedAresDrivebaseMainDir.absolutePath,
     "--drivebase-package", "org.firstinspires.ftc.teamcode.generated.drivebase",
+    "--ftc-zero-code-runtime",
 ]
 tasks.register("generateAresProject", JavaExec) {
     group = "ARES"

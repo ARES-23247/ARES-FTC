@@ -6,8 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_TICKS_PER_REV
-import org.firstinspires.ftc.teamcode.config.CanonicalDrivebaseConfig
-import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresDrivebaseConfig
+import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresFtcMecanumRuntimeConfig
 import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresTuningConfig
 import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
 import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
@@ -56,41 +55,7 @@ class AresRobot(
     val localTelemetry: Telemetry? = null
 ) {
     /** Shared drivetrain, Redux store, EKF, power, logging, telemetry, and hardware lifecycle. */
-    val base = FtcMecanumRobot(
-        hardwareMap = hardwareMap,
-        flName = GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_FL.HARDWARE_ID,
-        frName = GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_FR.HARDWARE_ID,
-        rlName = GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_RL.HARDWARE_ID,
-        rrName = GeneratedAresDrivebaseConfig.Components.FTC_MOTOR_RR.HARDWARE_ID,
-        flDirection = CanonicalDrivebaseConfig.frontLeftDirection,
-        frDirection = CanonicalDrivebaseConfig.frontRightDirection,
-        rlDirection = CanonicalDrivebaseConfig.rearLeftDirection,
-        rrDirection = CanonicalDrivebaseConfig.rearRightDirection,
-        pinpointName = GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_PINPOINT.HARDWARE_ID,
-        limelightName = GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_LIMELIGHT.HARDWARE_ID,
-        imuName = GeneratedAresDrivebaseConfig.Components.FTC_LOCALIZATION_IMU.HARDWARE_ID,
-        localTelemetry = localTelemetry,
-        trackWidthMeters = GeneratedAresDrivebaseConfig.TRACK_WIDTH_METERS,
-        wheelBaseMeters = GeneratedAresDrivebaseConfig.WHEEL_BASE_METERS,
-        headingGains = CanonicalDrivebaseConfig.initialTuningState().drive.headingGains,
-        headingDeadzoneDeg = CanonicalDrivebaseConfig.initialTuningState().drive.headingDeadzoneDeg,
-        driveFeedforward = CanonicalDrivebaseConfig.initialTuningState().drive.driveFeedforward,
-        useClosedLoopVelocity = GeneratedAresTuningConfig.Parameters.DRIVE_CLOSEDLOOPVELOCITY,
-        pathTranslationGains = CanonicalDrivebaseConfig.initialTuningState().drive.pathTranslationGains,
-        pathRotationGains = CanonicalDrivebaseConfig.initialTuningState().drive.pathRotationGains,
-        odomQx = CanonicalDrivebaseConfig.initialTuningState().localization.ekfNoise.qX,
-        odomQy = CanonicalDrivebaseConfig.initialTuningState().localization.ekfNoise.qY,
-        odomQtheta = CanonicalDrivebaseConfig.initialTuningState().localization.ekfNoise.qTheta,
-        pinpointXOffsetMm = GeneratedAresTuningConfig.Parameters.LOCALIZATION_PINPOINTXOFFSETMM,
-        pinpointYOffsetMm = GeneratedAresTuningConfig.Parameters.LOCALIZATION_PINPOINTYOFFSETMM,
-        pinpointEncoderResolution = CanonicalDrivebaseConfig.pinpointEncoderResolution,
-        pinpointXDirection = CanonicalDrivebaseConfig.pinpointXDirection,
-        pinpointYDirection = CanonicalDrivebaseConfig.pinpointYDirection,
-        pinpointIsCcwPositive = GeneratedAresTuningConfig.Parameters.LOCALIZATION_PINPOINTCCWPOSITIVE,
-        motorGains = CanonicalDrivebaseConfig.initialTuningState().drive.ftc.motorGains,
-        ticksPerMeter = GeneratedAresTuningConfig.Parameters.DRIVE_TICKSPERMETER,
-        initialTuningState = CanonicalDrivebaseConfig.initialTuningState(),
-    )
+    val base: FtcMecanumRobot = GeneratedAresFtcMecanumRuntimeConfig.createRobot(hardwareMap, localTelemetry)
 
     private val typedTuningRuntime = GeneratedAresTuningConfig.createRuntime()
 
@@ -132,10 +97,13 @@ class AresRobot(
                 )
             },
             onApplied = { parameterUid, _ ->
-                if (CanonicalDrivebaseConfig.supportsRuntimeParameter(parameterUid)) {
+                if (GeneratedAresFtcMecanumRuntimeConfig.supportsRuntimeParameter(parameterUid)) {
                     base.store.dispatch(
                         com.areslib.action.RobotAction.UpdateTuningState(
-                            CanonicalDrivebaseConfig.withRuntimeValues(base.store.state.tuning, typedTuningRuntime)
+                            GeneratedAresFtcMecanumRuntimeConfig.withRuntimeValues(
+                                base.store.state.tuning,
+                                typedTuningRuntime,
+                            )
                         )
                     )
                     true

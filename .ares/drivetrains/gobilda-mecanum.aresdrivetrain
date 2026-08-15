@@ -8,13 +8,13 @@
   "platform": "FTC",
   "components": [
     {"uid":"ftc.drivebase","displayName":"Mecanum drivebase","role":"OTHER","hardwareId":"mecanum"},
-    {"uid":"ftc.motor.fl","displayName":"Front-left drive motor","role":"DRIVE_MOTOR","hardwareId":"fl","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":0.225,"yMeters":0.225,"inverted":false},
-    {"uid":"ftc.motor.fr","displayName":"Front-right drive motor","role":"DRIVE_MOTOR","hardwareId":"fr","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":0.225,"yMeters":-0.225,"inverted":true},
-    {"uid":"ftc.motor.rl","displayName":"Rear-left drive motor","role":"DRIVE_MOTOR","hardwareId":"rl","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":-0.225,"yMeters":0.225,"inverted":false},
-    {"uid":"ftc.motor.rr","displayName":"Rear-right drive motor","role":"DRIVE_MOTOR","hardwareId":"rr","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":-0.225,"yMeters":-0.225,"inverted":true},
-    {"uid":"ftc.localization.pinpoint","displayName":"goBILDA Pinpoint","role":"ODOMETRY_SENSOR","hardwareId":"pinpoint","controllerModel":"goBILDA Pinpoint"},
-    {"uid":"ftc.localization.imu","displayName":"Control Hub IMU","role":"GYRO","hardwareId":"imu","controllerModel":"REV Control Hub IMU"},
-    {"uid":"ftc.localization.limelight","displayName":"Limelight 3A","role":"OTHER","hardwareId":"limelight"}
+    {"uid":"ftc.motor.fl","displayName":"Front-left drive motor","role":"DRIVE_MOTOR","hardwareId":"fl","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":0.225,"yMeters":0.225,"inverted":false,"required":true},
+    {"uid":"ftc.motor.fr","displayName":"Front-right drive motor","role":"DRIVE_MOTOR","hardwareId":"fr","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":0.225,"yMeters":-0.225,"inverted":true,"required":true},
+    {"uid":"ftc.motor.rl","displayName":"Rear-left drive motor","role":"DRIVE_MOTOR","hardwareId":"rl","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":-0.225,"yMeters":0.225,"inverted":false,"required":true},
+    {"uid":"ftc.motor.rr","displayName":"Rear-right drive motor","role":"DRIVE_MOTOR","hardwareId":"rr","controllerModel":"REV Control Hub DcMotorEx","encoderModel":"Integrated quadrature encoder","currentMeasurementRequired":true,"currentMeasurementAvailable":true,"xMeters":-0.225,"yMeters":-0.225,"inverted":true,"required":true},
+    {"uid":"ftc.localization.pinpoint","displayName":"goBILDA Pinpoint","role":"ODOMETRY_SENSOR","hardwareId":"pinpoint","controllerModel":"goBILDA Pinpoint","required":true},
+    {"uid":"ftc.localization.imu","displayName":"Control Hub IMU","role":"GYRO","hardwareId":"imu","controllerModel":"REV Control Hub IMU","required":false},
+    {"uid":"ftc.localization.limelight","displayName":"Limelight 3A","role":"OTHER","hardwareId":"limelight","required":false}
   ],
   "modules": [],
   "geometry": {
