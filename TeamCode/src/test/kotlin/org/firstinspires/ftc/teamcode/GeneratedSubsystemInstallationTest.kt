@@ -5,6 +5,7 @@ import com.areslib.state.RobotState
 import com.areslib.subsystem.Subsystem
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.teamcode.opmodes.installGeneratedSubsystems
+import org.firstinspires.ftc.teamcode.opmodes.installGeneratedSuperstructures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
@@ -39,6 +40,18 @@ class GeneratedSubsystemInstallationTest {
 
         assertSame(failure, thrown)
         assertEquals(emptyList<Subsystem>(), registered)
+    }
+
+    @Test
+    fun `generated superstructures register after their factories complete`() {
+        val first = RecordingSubsystem()
+        val second = RecordingSubsystem()
+        val registered = mutableListOf<Subsystem>()
+
+        val installed = installGeneratedSuperstructures(registered::add) { listOf(first, second) }
+
+        assertEquals(listOf(first, second), installed)
+        assertEquals(listOf(first, second), registered)
     }
 
     private class RecordingSubsystem : Subsystem {
