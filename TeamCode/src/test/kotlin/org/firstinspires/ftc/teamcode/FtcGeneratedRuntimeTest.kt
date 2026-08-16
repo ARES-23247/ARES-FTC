@@ -17,7 +17,7 @@ import com.areslib.state.DriveState
 import com.areslib.state.ObstacleType
 import com.areslib.state.RobotFieldObstacle
 import com.areslib.state.RobotState
-import com.areslib.math.estimation.PoseEstimatorState
+import com.areslib.math.estimation.PoseEstimatorSnapshot
 import org.firstinspires.ftc.teamcode.dsl.FtcDelegateStatusBridge
 import org.firstinspires.ftc.teamcode.dsl.FtcDriveMotionKind
 import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
@@ -126,7 +126,7 @@ class FtcGeneratedRuntimeTest {
         val task = FtcRotateToHeadingTask(targetHeadingRadians = 1.0, maxOmegaRadiansPerSecond = 2.0)
         val state = RobotState(
             drive = DriveState(
-                poseEstimator = PoseEstimatorState(estimatedPoseHeading = 0.25),
+                poseEstimator = PoseEstimatorSnapshot(estimatedPoseHeading = 0.25),
                 measuredAngularVelocityRadiansPerSecond = 0.0,
             )
         )

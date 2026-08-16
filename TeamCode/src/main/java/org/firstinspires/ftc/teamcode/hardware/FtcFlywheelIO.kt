@@ -166,7 +166,7 @@ class FtcFlywheelIO(
         cachedCurrentValid && readingAmps.isFinite() && readingAmps >= 0.0
 
     override val tempCelsius: Double
-        get() = 0.0
+        get() = Double.NaN
 
     override fun refresh() {
         try {

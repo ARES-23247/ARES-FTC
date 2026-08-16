@@ -22,8 +22,14 @@ import com.areslib.subsystem.Subsystem
 class PrismSubsystem(
     private val io: PrismDriverIO,
     private val name: String = "prism",
-    var configuredMaxBrightness: Int = 75
+    private val configuredMaxBrightness: Int = 75
 ) : Subsystem {
+
+    init {
+        require(configuredMaxBrightness in 0..100) {
+            "Prism maximum brightness must be in 0..100: $configuredMaxBrightness"
+        }
+    }
 
     override fun readSensors(store: Store, timestampMs: Long) {
         // Write-only actuator subsystem; no hardware sensors to poll.

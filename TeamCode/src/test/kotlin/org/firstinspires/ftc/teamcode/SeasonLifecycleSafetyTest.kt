@@ -218,6 +218,11 @@ class SeasonLifecycleSafetyTest {
         subsystem.close()
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun prismSubsystemRejectsInvalidConfiguredBrightness() {
+        PrismSubsystem(MockPrismDriverIO(), configuredMaxBrightness = 101)
+    }
+
     @Test
     fun autonomousAbortSafetyStopsSeasonOutputsBeforePlatformHardware() {
         val wrapper = Mockito.mock(AresRobot::class.java)
