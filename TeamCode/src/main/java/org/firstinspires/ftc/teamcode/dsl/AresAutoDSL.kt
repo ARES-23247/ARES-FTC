@@ -121,7 +121,14 @@ abstract class AresAutoBase : OpMode(), PhotonEnabledOpMode {
         }
         hardwareError = runCatching { activeRobot.update() }
             .exceptionOrNull()
-            ?.let { "Robot initialization failed: ${it.message ?: it::class.java.simpleName}" }
+            ?.let { failure ->
+                val detail = failure.message ?: failure::class.java.simpleName
+                if (activeRobot.fatalUpdateFailure != null) {
+                    "Robot failure latched; restart the OpMode: $detail"
+                } else {
+                    "Robot initialization failed: $detail"
+                }
+            }
         publishInitStatus()
     }
 

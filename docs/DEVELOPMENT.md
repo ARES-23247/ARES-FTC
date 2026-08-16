@@ -16,7 +16,7 @@ On Windows, the settings script can detect a standard JDK 17 or Android Studio's
 Normal builds use immutable Maven Central artifacts constrained by the ARES BOM:
 
 ```text
-org.aresfirst.ares:{core,codegen,ftc-hardware,simulator,ftc-mocks,simulator-runtime-*}:4.0.0
+org.aresfirst.ares:{core,codegen,ftc-hardware,simulator,ftc-mocks,simulator-runtime-*}:8.0.0
 ```
 
 The sibling checkout is not selected automatically. Library developers can compile against exact shared source with `-ParesUseSiblingLib=true`; student and release builds use the pinned binaries.
@@ -24,10 +24,12 @@ The sibling checkout is not selected automatically. Library developers can compi
 After changing ARESLib, validate the exact unpublished binary bundle through its isolated repository:
 
 ```powershell
+$candidate = "8.0.0-rc.<areslib-commit>"
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat apiCheck publishReleaseValidation
+.\gradlew.bat apiCheck publishReleaseValidation "-ParesVersion=$candidate"
 Pop-Location
-.\gradlew.bat :TeamCode:testDebugUnitTest -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
+$repository = ([Uri](Resolve-Path ..\ARESLib-Kotlin\build\release-repository)).AbsoluteUri
+.\gradlew.bat :TeamCode:testDebugUnitTest "-ParesVersion=$candidate" "-ParesRepository=$repository"
 ```
 
 ## Build and test
@@ -53,12 +55,14 @@ Tests use JUnit 4 and Mockito. OpMode classes are excluded from Kover's configur
 For an ARESLib change used by this repository, a practical validation sequence is:
 
 ```powershell
+$candidate = "8.0.0-rc.<areslib-commit>"
 Push-Location ..\ARESLib-Kotlin
 .\gradlew.bat :core:test :ftc-hardware:test :simulator:test
-.\gradlew.bat apiCheck publishReleaseValidation
+.\gradlew.bat apiCheck publishReleaseValidation "-ParesVersion=$candidate"
 Pop-Location
 
-.\gradlew.bat :TeamCode:testDebugUnitTest :TeamCode:assembleDebug -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
+$repository = ([Uri](Resolve-Path ..\ARESLib-Kotlin\build\release-repository)).AbsoluteUri
+.\gradlew.bat :TeamCode:testDebugUnitTest :TeamCode:assembleDebug "-ParesVersion=$candidate" "-ParesRepository=$repository"
 ```
 
 ## Desktop simulation

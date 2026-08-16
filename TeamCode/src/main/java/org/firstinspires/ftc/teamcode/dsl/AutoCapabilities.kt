@@ -8,6 +8,7 @@ import com.areslib.pathing.NamedCommandDescriptor
 import com.areslib.pathing.NamedCommands
 import com.areslib.sequencer.StateActionTask
 import com.areslib.sequencer.Task
+import com.areslib.sequencer.TaskResources
 import com.areslib.sequencer.TaskStateMachine
 import com.areslib.state.RobotState
 
@@ -22,31 +23,36 @@ object FtcAutoCapabilities {
         key = CommandKey("intake.collect"),
         displayName = "Collect game piece",
         description = "Starts the intake and safely stops the flywheel.",
-        category = "Intake"
+        category = "Intake",
+        requiredResources = TaskResources.INTAKE or TaskResources.FLYWHEEL
     )
     val INTAKE_STOP = NamedCommandDescriptor(
         key = CommandKey("intake.stop"),
         displayName = "Stop intake",
         description = "Stops the intake roller.",
-        category = "Intake"
+        category = "Intake",
+        requiredResources = TaskResources.INTAKE
     )
     val FLYWHEEL_PREPARE = NamedCommandDescriptor(
         key = CommandKey("flywheel.prepare"),
         displayName = "Prepare flywheel",
         description = "Stops the intake and spins the flywheel to the configured match preset.",
-        category = "Shooter"
+        category = "Shooter",
+        requiredResources = TaskResources.INTAKE or TaskResources.FLYWHEEL
     )
     val FLYWHEEL_STOP = NamedCommandDescriptor(
         key = CommandKey("flywheel.stop"),
         displayName = "Stop flywheel",
         description = "Stops closed-loop flywheel output and clears its speed target.",
-        category = "Shooter"
+        category = "Shooter",
+        requiredResources = TaskResources.FLYWHEEL
     )
     val DRIVE_RECOVER_NEUTRAL = NamedCommandDescriptor(
         key = CommandKey("drivetrain.recoverNeutral"),
         displayName = "Recover drive after a fault",
         description = "Requires released drive controls, writes neutral to all four motors, then clears the drive fault latch.",
-        category = "Drive safety"
+        category = "Drive safety",
+        requiredResources = TaskResources.DRIVE
     )
 
     private val primaryIndicatorDescriptors = IndicatorLightColor.entries.associateWith { color ->
@@ -61,7 +67,8 @@ object FtcAutoCapabilities {
                 key = CommandKey("SetPrismPreset_${choice.preset.name}"),
                 displayName = "Prism: ${choice.displayName}",
                 description = choice.description,
-                category = "Prism"
+                category = "Prism",
+                requiredResources = TaskResources.LIGHTING
             )
         }
     }
@@ -121,6 +128,7 @@ object FtcAutoCapabilities {
         NamedCommands.register(DRIVE_RECOVER_NEUTRAL) {
             object : Task {
                 override val name: String = DRIVE_RECOVER_NEUTRAL.displayName
+                override val requiredResources: Long = DRIVE_RECOVER_NEUTRAL.requiredResources
                 private var recovered = false
 
                 override fun initialize(state: RobotState): List<RobotAction> {
@@ -178,6 +186,7 @@ object FtcAutoCapabilities {
             NamedCommands.register(descriptor) {
                 object : Task {
                     override val name: String = descriptor.displayName
+                    override val requiredResources: Long = descriptor.requiredResources
 
                     override fun initialize(state: RobotState): List<RobotAction> =
                         listOf(RobotAction.SetPrismDriver("prism", choice.preset.pulseWidthUs))
@@ -193,7 +202,7 @@ object FtcAutoCapabilities {
         actionFactory: (com.areslib.state.RobotState) -> RobotAction
     ) {
         NamedCommands.register(descriptor) {
-            StateActionTask(descriptor.displayName, actionFactory)
+            StateActionTask(descriptor.displayName, descriptor.requiredResources, actionFactory)
         }
     }
 
@@ -207,6 +216,7 @@ object FtcAutoCapabilities {
         NamedCommands.register(descriptor) {
             object : Task {
                 override val name: String = descriptor.displayName
+                override val requiredResources: Long = descriptor.requiredResources
                 override fun initialize(state: RobotState): List<RobotAction> =
                     listOf(RobotAction.SetIndicatorLight(hardwareName, color.position))
 
@@ -231,7 +241,8 @@ object FtcAutoCapabilities {
             key = CommandKey("${keyPrefix}_${color.name}"),
             displayName = "$target light: $colorName",
             description = description,
-            category = "$target indicator"
+            category = "$target indicator",
+            requiredResources = TaskResources.LIGHTING
         )
     }
 

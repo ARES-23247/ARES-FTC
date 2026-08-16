@@ -72,6 +72,9 @@ class AresRobot(
     private val superstructureController = AresSuperstructureController(base)
     private val telemetryHelper = AresTelemetryHelper(base)
     private var fatalSeasonFailure: Throwable? = null
+    /** Latched frame failure; recovery requires constructing a new OpMode robot instance. */
+    val fatalUpdateFailure: Throwable?
+        get() = fatalSeasonFailure ?: base.fatalUpdateFailure
     private var closed = false
     private var intakeIO: org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO? = null
     private var flywheelIO: org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO? = null
@@ -315,7 +318,7 @@ class AresRobot(
     ) {
         // Check both latches before touching any actuator. A failed instance can only recover
         // through normal OpMode reconstruction.
-        val priorFailure = fatalSeasonFailure ?: base.fatalUpdateFailure
+        val priorFailure = fatalUpdateFailure
         if (priorFailure != null) {
             runCatching { base.safeAll() }
             runCatching { base.safeHardware() }

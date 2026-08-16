@@ -83,7 +83,7 @@ class FtcHardwareTest {
         assertEquals(3000.0, io.velocityRpm, 1e-6)
 
         assertEquals(0.0, io.currentAmps, 1e-6)
-        assertEquals(0.0, io.tempCelsius, 1e-6)
+        assertTrue(io.tempCelsius.isNaN())
 
         io.close()
         assertFalse(io.outputApplied)
