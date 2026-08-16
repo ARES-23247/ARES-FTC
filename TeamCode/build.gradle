@@ -71,6 +71,10 @@ dependencies {
     simRun platform("org.aresfirst.ares:ares-bom:$aresVersion")
     simRun 'org.aresfirst.ares:simulator'
     simRun "org.aresfirst.ares:$aresSimulatorRuntime"
+    // RobotCore carries an older Gson on the Android compile classpath. The desktop simulator
+    // decodes current ARES descriptors and therefore needs the current Gson API first on its
+    // isolated runtime classpath; this dependency is not packaged into the Robot Controller APK.
+    simRun 'com.google.code.gson:gson:2.10.1'
     aresCodegen platform("org.aresfirst.ares:ares-bom:$aresVersion")
     aresCodegen 'org.aresfirst.ares:codegen'
     aresCodegen 'com.google.code.gson:gson:2.10.1'
@@ -95,8 +99,15 @@ android.applicationVariants.all { variant ->
                 project.android.bootClasspath
             )
             
-            def appArgs = project.hasProperty("appArgs") ? project.property("appArgs").toString().split(" ") : []
+            // Convert the split array to a List before concatenation. Otherwise Groovy appends the
+            // String[] as one Java object and the launcher receives "[Ljava.lang.String;@...".
+            def appArgs = project.hasProperty("appArgs")
+                ? project.property("appArgs").toString().split(" ").toList()
+                : []
             args(["--headless"] + appArgs)
+            def summaryFile = file("${buildDir}/sim-run/ares_run_summary.json")
+            systemProperty 'ares.sim.summary.path', summaryFile.absolutePath
+            doFirst { summaryFile.parentFile.mkdirs() }
         }
         
         task("runVerification", type: JavaExec) {
@@ -113,12 +124,15 @@ android.applicationVariants.all { variant ->
             )
             
             args = []
+            def summaryFile = file("${buildDir}/verification/ares_run_summary.json")
+            systemProperty 'ares.sim.summary.path', summaryFile.absolutePath
+            doFirst { summaryFile.parentFile.mkdirs() }
         }
     }
 }
 
 configurations.configureEach { configuration ->
-    if (configuration.name != 'aresCodegen') {
+    if (configuration.name != 'aresCodegen' && configuration.name != 'simRun') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
         exclude group: 'org.java-websocket', module: 'Java-WebSocket'
         exclude group: 'com.google.code.gson', module: 'gson'
