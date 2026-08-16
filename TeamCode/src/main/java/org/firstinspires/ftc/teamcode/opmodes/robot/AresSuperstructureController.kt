@@ -59,7 +59,7 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
         if (season.intakeActive) return
         val configuredTarget = base.store.state.tuning.subsystem.ftc.flywheelTargetRpmPreset
         val currentTarget = configuredTarget.takeIf { it.isFinite() }
-            ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
+            ?.coerceIn(0.0, org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM)
             ?: 0.0
         base.store.dispatch(RobotAction.UpdateSubsystemState(
             state = season.copy(
@@ -83,6 +83,5 @@ class AresSuperstructureController(private val base: FtcMecanumRobot) {
 
     private companion object {
         const val TOGGLE_DEBOUNCE_MS = 200L
-        const val MAX_FLYWHEEL_RPM = 6000.0
     }
 }

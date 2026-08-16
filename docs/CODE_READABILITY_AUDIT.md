@@ -1,4 +1,9 @@
-# Code readability audit
+# CODE_READABILITY_AUDIT (dated 2026-08-10)
+
+> **Status (2026-08-16):** the "suspected defects" listed below have been resolved and are
+> retained for history only — do not re-fix them. Items 1-3, 5-7, and 9 were verified fixed;
+> the remaining notes informed later refactors. Consult current source before acting on
+> anything in this file.
 
 Date: 2026-08-10
 

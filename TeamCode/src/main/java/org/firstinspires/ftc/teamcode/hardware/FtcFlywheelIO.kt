@@ -11,7 +11,8 @@ import com.areslib.hardware.HardwareRegistry
  *
  * [refresh] is the only hardware sensor-read path. It snapshots encoder velocity and current
  * after REV bulk-cache clearing; bus voltage comes from the shared cached power-manager sample.
- * is cleared on a failed/non-finite read so stale RPM cannot masquerade as fresh feedback.
+ * Velocity validity is cleared on a failed/non-finite read so stale RPM cannot masquerade as
+ * fresh feedback.
  * If the controller rejects a velocity command, output stops immediately and remains disarmed
  * until a healthy feedback sample is followed by an explicit zero-output command. Reduced-effort
  * velocity requests use bounded software feedback only while the cached encoder sample is valid;

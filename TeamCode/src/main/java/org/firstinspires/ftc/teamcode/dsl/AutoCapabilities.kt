@@ -100,7 +100,7 @@ object FtcAutoCapabilities {
             ) { state ->
                 val targetRpm = state.tuning.subsystem.ftc.flywheelTargetRpmPreset
                     .takeIf(Double::isFinite)
-                    ?.coerceIn(0.0, MAX_FLYWHEEL_RPM)
+                    ?.coerceIn(0.0, org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM)
                     ?: 0.0
                 RobotAction.UpdateSubsystemState(
                     state.superstructure.season.copy(
@@ -246,7 +246,6 @@ object FtcAutoCapabilities {
         )
     }
 
-    private const val MAX_FLYWHEEL_RPM = 6000.0
 
     private data class PrismPresetChoice(
         val preset: PrismPwmPreset,
