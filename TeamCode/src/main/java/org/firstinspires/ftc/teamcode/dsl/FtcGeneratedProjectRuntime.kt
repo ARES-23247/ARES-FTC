@@ -171,14 +171,6 @@ private class FtcRoutineDriveTask(
         delegateEnded = false
         statusBridge.reset()
         val start = state.drive.poseEstimator.estimatedPose
-        require(
-            isFtcRobotSweepCollisionFree(
-                start,
-                target,
-                ftcFieldEnvelopeForRobot(robot),
-                com.areslib.state.RobotFieldManager.activeConfig.obstacles
-            )
-        ) { "Drive sweep intersects a blocking obstacle or field boundary" }
         val maximumVelocity = robot.base.mecanumIO.maxWheelSpeedMetersPerSecond * preset.speedScale
         val maximumAcceleration = state.tuning.drive.pathAccelerationLimit * preset.accelerationScale
         val motionKind = classifyFtcDriveMotion(start, target)
@@ -191,6 +183,27 @@ private class FtcRoutineDriveTask(
                 maxAccelerationMps2 = maximumAcceleration,
             )
         } else null
+        // Preflight the geometry the robot will actually drive: a Hermite spline through the
+        // same endpoints can bow away from the straight chord, so validating only the chord
+        // could approve a spline that clips an obstacle the chord safely bypasses.
+        if (generatedPath != null) {
+            require(
+                isFtcRobotPathSweepCollisionFree(
+                    generatedPath,
+                    ftcFieldEnvelopeForRobot(robot),
+                    com.areslib.state.RobotFieldManager.activeConfig.obstacles
+                )
+            ) { "Generated drive spline intersects a blocking obstacle or field boundary" }
+        } else {
+            require(
+                isFtcRobotSweepCollisionFree(
+                    start,
+                    target,
+                    ftcFieldEnvelopeForRobot(robot),
+                    com.areslib.state.RobotFieldManager.activeConfig.obstacles
+                )
+            ) { "Drive sweep intersects a blocking obstacle or field boundary" }
+        }
         val totalDistance = generatedPath?.points?.lastOrNull()?.distanceMeters ?: 0.0
         val events = step.markers.map { marker ->
             PathEvent(marker.actionKey, marker.progress * totalDistance)
@@ -428,7 +441,7 @@ internal fun isFtcRobotPoseWithinField(pose: Pose2d, envelope: FtcFieldEnvelope)
 }
 
 /**
- * Conservatively validates the complete straight-line translation sweep against field geometry.
+ * Conservatively validates a straight-line translation sweep against field geometry.
  *
  * The rectangular robot is enclosed by its circumscribed circle, so inflating each blocking
  * polygon by that radius is safe for every interpolated heading. This can reject a tight-but-valid
@@ -464,6 +477,30 @@ internal fun isFtcRobotSweepCollisionFree(
     return true
 }
 
+/**
+ * Validates the actual sampled geometry of a generated path against field obstacles/bounds.
+ *
+ * [com.areslib.pathing.Path] points are sampled at <= 5 cm spacing by the Hermite generator,
+ * so sweeping every consecutive sample pair with [isFtcRobotSweepCollisionFree] approximates
+ * the driven spline closely enough that a bow-around-an-obstacle cannot pass preflight while
+ * the chord check alone would have approved it.
+ */
+internal fun isFtcRobotPathSweepCollisionFree(
+    path: com.areslib.pathing.Path,
+    envelope: FtcFieldEnvelope,
+    obstacles: List<com.areslib.state.RobotFieldObstacle>,
+): Boolean {
+    val points = path.points
+    if (points.isEmpty()) return false
+    var previous = points.first().pose
+    for (index in 1 until points.size) {
+        val current = points[index].pose
+        if (!isFtcRobotSweepCollisionFree(previous, current, envelope, obstacles)) return false
+        previous = current
+    }
+    return true
+}
+
 private fun obstacleVertices(
     obstacle: com.areslib.state.RobotFieldObstacle,
 ): List<com.areslib.state.RobotFieldPoint> {
@@ -490,7 +527,7 @@ private fun obstacleVertices(
     )
 }
 
-private fun pointInPolygon(
+internal fun pointInPolygon(
     x: Double,
     y: Double,
     vertices: List<com.areslib.state.RobotFieldPoint>,
@@ -509,7 +546,7 @@ private fun pointInPolygon(
     return inside
 }
 
-private fun segmentsIntersect(
+internal fun segmentsIntersect(
     ax: Double, ay: Double, bx: Double, by: Double,
     cx: Double, cy: Double, dx: Double, dy: Double,
 ): Boolean {
@@ -537,7 +574,7 @@ private fun segmentsIntersect(
 
 private const val GEOMETRY_EPSILON = 1e-9
 
-private fun segmentDistance(
+internal fun segmentDistance(
     ax: Double, ay: Double, bx: Double, by: Double,
     cx: Double, cy: Double, dx: Double, dy: Double,
 ): Double = kotlin.math.min(
