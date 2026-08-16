@@ -65,11 +65,14 @@ Subsystem sensor observations follow the same rule. For example, `FlywheelSubsys
 
 The effective `AresRobot.update()` order is:
 
-1. `base.readSensors()`
+1. `base.update(gamepad1, gamepad2)` — the once-per-frame shared refresh
    - clears REV Lynx bulk caches once for the frame;
    - calls drivetrain/platform input refresh;
    - invokes `HardwareRegistry.refreshAll()`, which refreshes registered season IO;
-   - reads Pinpoint (or the IMU fallback), dispatches the pose observation, and updates vision.
+   - reads Pinpoint (or the IMU fallback), dispatches the pose observation, and updates vision;
+   - computes this frame's power/brownout scale, applies loop pacing, drivetrain logic,
+     EKF-related platform work, and platform telemetry.
+   A shared-update exception skips every season write and its safety stop remains final.
 2. `base.readAllSensors(timestamp)`
    - invokes every registered season subsystem's `readSensors` against the just-refreshed IO caches;
    - sensor observations may dispatch actions.
@@ -78,11 +81,8 @@ The effective `AresRobot.update()` order is:
    - if intake was active, the facade dispatches state that disables it.
 4. `base.writeAllOutputs(base.powerManager.powerScale)`
    - writes every season subsystem from one immutable state snapshot;
-   - uses the previously calculated power scale for this output pass.
-5. `base.update(gamepads)`
-   - does not repeat sensor reads in the same frame because the base tracks that sampling already occurred;
-   - applies loop pacing and updates power/brownout state, drivetrain logic, EKF-related platform work, and telemetry.
-6. Driver Station telemetry is refreshed.
+   - applies the power scale computed in step 1 to every season mechanism in the same frame.
+5. Driver Station telemetry is refreshed.
 
 The pre-read is deliberate. Reordering `readAllSensors` before `base.readSensors` consumes stale season caches. Moving hardware reads into a property getter causes duplicate bus transactions and defeats bulk caching. Writing outputs after a fatal base update can re-enable a motor that `safeHardware()` just stopped, which is why season outputs are written before entering the base update's internal failure boundary.
 

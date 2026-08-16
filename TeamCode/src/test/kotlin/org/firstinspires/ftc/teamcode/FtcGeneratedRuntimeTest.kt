@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode
 import com.areslib.action.RobotAction
 import com.areslib.math.geometry.Pose2d
 import com.areslib.math.geometry.Rotation2d
+import com.areslib.math.geometry.Translation2d
+import com.areslib.pathing.PathPlannerParser
 import com.areslib.routine.AutonomousCatalogEntry
 import com.areslib.routine.RoutineDocument
 import com.areslib.routine.RoutineDriveStep
@@ -16,6 +18,7 @@ import com.areslib.state.Alliance
 import com.areslib.state.DriveState
 import com.areslib.state.ObstacleType
 import com.areslib.state.RobotFieldObstacle
+import com.areslib.state.RobotFieldPoint
 import com.areslib.state.RobotState
 import com.areslib.math.estimation.PoseEstimatorSnapshot
 import org.firstinspires.ftc.teamcode.dsl.FtcDelegateStatusBridge
@@ -24,8 +27,12 @@ import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
 import org.firstinspires.ftc.teamcode.dsl.FtcRotateToHeadingTask
 import org.firstinspires.ftc.teamcode.dsl.classifyFtcDriveMotion
 import org.firstinspires.ftc.teamcode.dsl.composeFtcDriveLifecycle
+import org.firstinspires.ftc.teamcode.dsl.isFtcRobotPathSweepCollisionFree
 import org.firstinspires.ftc.teamcode.dsl.isFtcRobotPoseWithinField
 import org.firstinspires.ftc.teamcode.dsl.isFtcRobotSweepCollisionFree
+import org.firstinspires.ftc.teamcode.dsl.pointInPolygon
+import org.firstinspires.ftc.teamcode.dsl.segmentDistance
+import org.firstinspires.ftc.teamcode.dsl.segmentsIntersect
 import org.firstinspires.ftc.teamcode.dsl.validateFtcAutonomousBounds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -159,6 +166,120 @@ class FtcGeneratedRuntimeTest {
         assertTrue(isFtcRobotPoseWithinField(end, envelope))
         assertFalse(isFtcRobotSweepCollisionFree(start, end, envelope, listOf(obstacle)))
         assertTrue(isFtcRobotSweepCollisionFree(start, end, envelope, emptyList()))
+    }
+
+    @Test
+    fun `path preflight rejects an obstacle the straight chord safely bypasses`() {
+        val envelope = FtcFieldEnvelope(4.0, 4.0, 0.4, 0.4)
+        val robotRadius = 0.5 * Math.hypot(0.4, 0.4)
+        // A middle waypoint pulls the Hermite curve above the start->end chord. The FTC drive
+        // task currently generates 2-point (straight) paths, but the preflight helper must
+        // validate the driven geometry generically so intermediate waypoints cannot reopen
+        // the chord/spline divergence trap.
+        val path = PathPlannerParser.generatePath(
+            points = listOf(Translation2d(0.0, 0.0), Translation2d(0.5, 1.4), Translation2d(1.0, 0.0)),
+            startHeading = Rotation2d(),
+            endHeading = Rotation2d(),
+        )
+        val apex = path.points.maxByOrNull { it.pose.y }!!.pose
+        assertTrue(
+            "test premise: bow apex (${apex.y} m) must clear the chord by more than the robot radius",
+            apex.y - 0.05 > robotRadius,
+        )
+        val obstacle = RobotFieldObstacle(
+            id = "bow",
+            x = apex.x,
+            y = apex.y,
+            width = 0.1,
+            height = 0.1,
+            isBlocking = true,
+            obstacleType = ObstacleType.BLOCKING,
+        )
+        val start = Pose2d(0.0, 0.0, Rotation2d())
+        val end = Pose2d(1.0, 0.0, Rotation2d())
+
+        // The old chord-only preflight would have approved this drive...
+        assertTrue(isFtcRobotSweepCollisionFree(start, end, envelope, listOf(obstacle)))
+        // ...but the robot would have driven the curve straight through the obstacle.
+        assertFalse(isFtcRobotPathSweepCollisionFree(path, envelope, listOf(obstacle)))
+    }
+
+    @Test
+    fun `two-point paths stay straight so chord and path preflight agree`() {
+        val envelope = FtcFieldEnvelope(4.0, 4.0, 0.4, 0.4)
+        val start = Pose2d(-1.0, 0.0, Rotation2d())
+        val end = Pose2d(1.0, 0.0, Rotation2d())
+        // Control points are derived from neighboring waypoints, so a 2-point Hermite path is
+        // collinear with its chord regardless of the requested headings.
+        val path = PathPlannerParser.generatePath(
+            points = listOf(Translation2d(start.x, start.y), Translation2d(end.x, end.y)),
+            startHeading = Rotation2d(Math.PI / 2),
+            endHeading = Rotation2d(-Math.PI / 2),
+        )
+        val obstacle = RobotFieldObstacle(
+            id = "center",
+            x = 0.0,
+            y = 0.0,
+            width = 0.2,
+            height = 0.4,
+            isBlocking = true,
+            obstacleType = ObstacleType.BLOCKING,
+        )
+
+        assertEquals(
+            isFtcRobotSweepCollisionFree(start, end, envelope, listOf(obstacle)),
+            isFtcRobotPathSweepCollisionFree(path, envelope, listOf(obstacle)),
+        )
+        assertFalse(isFtcRobotPathSweepCollisionFree(path, envelope, listOf(obstacle)))
+    }
+
+    @Test
+    fun `path preflight accepts a clear spline and rejects an empty path`() {
+        val envelope = FtcFieldEnvelope(4.0, 4.0, 0.4, 0.4)
+        val start = Pose2d(-1.0, 0.0, Rotation2d())
+        val end = Pose2d(1.0, 0.0, Rotation2d())
+        val path = PathPlannerParser.generatePath(
+            points = listOf(Translation2d(start.x, start.y), Translation2d(end.x, end.y)),
+            startHeading = start.heading,
+            endHeading = end.heading,
+        )
+        assertTrue(isFtcRobotPathSweepCollisionFree(path, envelope, emptyList()))
+
+        val emptyPath = com.areslib.pathing.Path(points = emptyList(), events = emptyList())
+        assertFalse(isFtcRobotPathSweepCollisionFree(emptyPath, envelope, emptyList()))
+    }
+
+    @Test
+    fun `point in polygon handles interior, exterior, and non-finite vertices`() {
+        val square = listOf(
+            RobotFieldPoint(-1.0, -1.0),
+            RobotFieldPoint(1.0, -1.0),
+            RobotFieldPoint(1.0, 1.0),
+            RobotFieldPoint(-1.0, 1.0),
+        )
+        assertTrue(pointInPolygon(0.0, 0.0, square))
+        assertTrue(pointInPolygon(0.99, 0.0, square))
+        assertFalse(pointInPolygon(1.01, 0.0, square))
+        assertFalse(pointInPolygon(2.0, 2.0, square))
+        // Non-finite vertices are treated as blocking (conservative), matching sweep behavior.
+        val withNan = square + RobotFieldPoint(Double.NaN, Double.NaN)
+        assertTrue(pointInPolygon(5.0, 5.0, withNan))
+    }
+
+    @Test
+    fun `segment intersection detects crossings, parallels, and shared endpoints`() {
+        assertTrue(segmentsIntersect(0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 2.0, 0.0))
+        assertTrue(segmentsIntersect(-1.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 1.0))
+        assertFalse(segmentsIntersect(0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0))
+        // T-intersection at an endpoint still counts.
+        assertTrue(segmentsIntersect(0.0, 0.0, 2.0, 0.0, 1.0, -1.0, 1.0, 0.0))
+    }
+
+    @Test
+    fun `segment distance measures point clearance to a finite segment`() {
+        assertEquals(1.0, segmentDistance(0.0, 0.0, 2.0, 0.0, 1.0, 1.0, 1.0, 2.0), 1e-9)
+        assertEquals(0.0, segmentDistance(0.0, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0, 1.0), 1e-9)
+        assertEquals(0.0, segmentDistance(0.0, 0.0, 2.0, 0.0, 0.5, 0.0, 0.5, 5.0), 1e-9)
     }
 
     @Test
