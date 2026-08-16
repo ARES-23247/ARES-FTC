@@ -19,10 +19,12 @@ Check the active JVM:
 Confirm `aresVersion` points to an available Maven Central release. For an unpublished sibling change, build its isolated repository and pass it explicitly:
 
 ```powershell
+$candidate = "8.0.0-rc.<areslib-commit>"
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat apiCheck publishReleaseValidation
+.\gradlew.bat apiCheck publishReleaseValidation "-ParesVersion=$candidate"
 Pop-Location
-.\gradlew.bat :TeamCode:assembleDebug -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
+$repository = ([Uri](Resolve-Path ..\ARESLib-Kotlin\build\release-repository)).AbsoluteUri
+.\gradlew.bat :TeamCode:assembleDebug "-ParesVersion=$candidate" "-ParesRepository=$repository"
 ```
 
 ### Android build works but simulator compilation fails

@@ -112,10 +112,12 @@ From PowerShell in this repository:
 Android builds require JDK 17. The standalone simulator uses a JDK 21 toolchain. Normal builds consume the pinned ARESLib release from Maven Central. To validate an unpublished sibling library bundle:
 
 ```powershell
+$candidate = "8.0.0-rc.<areslib-commit>"
 Push-Location ..\ARESLib-Kotlin
-.\gradlew.bat apiCheck publishReleaseValidation
+.\gradlew.bat apiCheck publishReleaseValidation "-ParesVersion=$candidate"
 Pop-Location
-.\gradlew.bat :TeamCode:testDebugUnitTest -ParesRepository="..\ARESLib-Kotlin\build\release-repository"
+$repository = ([Uri](Resolve-Path ..\ARESLib-Kotlin\build\release-repository)).AbsoluteUri
+.\gradlew.bat :TeamCode:testDebugUnitTest "-ParesVersion=$candidate" "-ParesRepository=$repository"
 ```
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for prerequisites, path deployment, simulator arguments, and validation order.

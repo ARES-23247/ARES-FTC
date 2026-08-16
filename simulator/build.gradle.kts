@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-val aresVersion = providers.gradleProperty("aresVersion").orElse("6.2.0").get()
+val aresVersion = providers.gradleProperty("aresVersion").orElse("8.0.0").get()
 val aresSimulatorRuntime = when {
     System.getProperty("os.name").contains("windows", ignoreCase = true) -> "simulator-runtime-windows"
     System.getProperty("os.name").contains("mac", ignoreCase = true) -> "simulator-runtime-macos"
