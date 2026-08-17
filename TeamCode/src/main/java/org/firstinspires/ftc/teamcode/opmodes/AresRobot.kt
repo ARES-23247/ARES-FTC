@@ -181,7 +181,7 @@ class AresRobot(
                 base.powerManager.batteryVoltage
             }
             this.intakeIO = intakeIO
-            intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO)
+            intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO) { intakeIO.rollerVelocityValid to intakeIO.rollerVelocityTicksPerSec }
             base.registerSubsystem(intakeSubsystem!!)
         } catch (e: Exception) {
             addTelemetry("Subsystem", "Intake failed to load: ${e.message}")
@@ -317,6 +317,11 @@ class AresRobot(
             val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
             base.readAllSensors(timestamp)
 
+            intakeSubsystem?.let { intake ->
+                if (intake.velocityStallSuspected) {
+                    addTelemetry("Intake", "velocity stall suspected: commanded rotation with near-zero encoder velocity")
+                }
+            }
             if (intakeSubsystem?.stalled == true) {
                 val seasonState = base.store.state.superstructure.season
                 if (seasonState.intakeActive) {
