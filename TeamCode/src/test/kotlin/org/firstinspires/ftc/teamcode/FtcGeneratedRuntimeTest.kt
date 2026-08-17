@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.dsl.FtcDriveMotionKind
 import org.firstinspires.ftc.teamcode.dsl.FtcFieldEnvelope
 import org.firstinspires.ftc.teamcode.dsl.FtcRotateToHeadingTask
 import org.firstinspires.ftc.teamcode.dsl.classifyFtcDriveMotion
+import org.firstinspires.ftc.teamcode.dsl.generatedDriveFieldComponents
 import org.firstinspires.ftc.teamcode.dsl.composeFtcDriveLifecycle
 import org.firstinspires.ftc.teamcode.dsl.isFtcRobotPathSweepCollisionFree
 import org.firstinspires.ftc.teamcode.dsl.isFtcRobotPoseWithinField
@@ -326,5 +327,52 @@ class FtcGeneratedRuntimeTest {
             lastInterrupted = interrupted
             return super.end(state, interrupted)
         }
+    }
+}
+
+class GeneratedDriveCommandTest {
+    @Test
+    fun `blue alliance mirrors both translation axes but never rotation`() {
+        val red = generatedDriveFieldComponents(0.25, -0.5, Alliance.RED)
+        val blue = generatedDriveFieldComponents(0.25, -0.5, Alliance.BLUE)
+
+        assertEquals(0.25, red.first, 1e-9)
+        assertEquals(-0.5, red.second, 1e-9)
+        assertEquals(-0.25, blue.first, 1e-9)
+        assertEquals(0.5, blue.second, 1e-9)
+    }
+
+    @Test
+    fun `checked-in scheme binds exactly one binding per drive axis`() {
+        var dir = java.io.File(System.getProperty("user.dir"))
+        var schemeFile: java.io.File? = null
+        while (dir != null) {
+            val candidate = java.io.File(dir, ".ares/controls/driver.arescontrols")
+            if (candidate.isFile) {
+                schemeFile = candidate
+                break
+            }
+            dir = dir.parentFile
+        }
+        val scheme = requireNotNull(schemeFile).let {
+            com.areslib.controls.ControlSchemeCodec.decode(it.readText())
+        }
+        val axes = scheme.bindings.map { it.target }
+        assertTrue(axes.all { it.kind == com.areslib.controls.ControlTargetKind.DRIVE })
+        assertEquals(
+            "starter scheme binds vx, vy, and omega exactly once each",
+            listOf("omega", "vx", "vy"),
+            axes.map { it.key }.sorted(),
+        )
+        assertTrue(
+            com.areslib.controls.validateControlScheme(
+                scheme,
+                com.areslib.controls.ControlValidationContext(
+                    profileControls = mapOf(
+                        "ftc-driver" to setOf("left_stick_x", "left_stick_y", "right_stick_x", "right_stick_y", "a", "b", "x", "y"),
+                    ),
+                ),
+            ).none { it.severity == com.areslib.controls.ControlValidationSeverity.ERROR },
+        )
     }
 }
