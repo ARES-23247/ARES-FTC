@@ -55,7 +55,7 @@ configurations {
     aresCodegen
 }
 
-def aresVersion = providers.gradleProperty('aresVersion').getOrElse('8.1.2')
+def aresVersion = providers.gradleProperty('aresVersion').getOrElse('8.2.0')
 def aresSimulatorRuntime = System.getProperty('os.name').toLowerCase().contains('windows')
     ? 'simulator-runtime-windows'
     : (System.getProperty('os.name').toLowerCase().contains('mac')
