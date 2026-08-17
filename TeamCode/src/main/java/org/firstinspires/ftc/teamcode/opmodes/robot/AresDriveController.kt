@@ -15,10 +15,6 @@ import kotlin.math.pow
  * is not alliance mirrored. Instances retain smoothing history and belong to one robot.
  */
 class AresDriveController(private val base: FtcMecanumRobot) {
-    private var lastX = 0.0
-    private var lastY = 0.0
-    private var lastRot = 0.0
-
     private fun processAxis(input: Double): Double {
         val boundedInput = if (input.isFinite()) input.coerceIn(-1.0, 1.0) else 0.0
         val magnitude = kotlin.math.abs(boundedInput)
@@ -39,13 +35,9 @@ class AresDriveController(private val base: FtcMecanumRobot) {
     private fun smoothTransition(x: Double, y: Double, rot: Double) {
         // Fixed EMA coefficient is loop-frequency dependent and intentionally allocation-free.
         val alpha = 0.4
-        lastX = lastX * 0.6 + x * alpha
-        lastY = lastY * 0.6 + y * alpha
-        lastRot = lastRot * 0.6 + rot * alpha
-        
-        smoothX = lastX
-        smoothY = lastY
-        smoothRot = lastRot
+        smoothX = smoothX * 0.6 + x * alpha
+        smoothY = smoothY * 0.6 + y * alpha
+        smoothRot = smoothRot * 0.6 + rot * alpha
     }
 
     /** Drives from normalized field-relative axes after shaping and alliance transformation. */
@@ -56,10 +48,7 @@ class AresDriveController(private val base: FtcMecanumRobot) {
         smoothTransition(px, py, prot)
 
         // Blue changes the driver station perspective by 180 degrees: mirror X and Y together.
-        val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
-        val outX = if (blueAlliance) -smoothX else smoothX
-        val outY = if (blueAlliance) -smoothY else smoothY
-        base.driveFieldCentric(outX, outY, smoothRot)
+        base.driveFieldCentric(mirrorXForBlue(), mirrorYForBlue(), smoothRot)
     }
     /** Drives from normalized robot-relative axes; alliance does not affect this frame. */
     fun driveRobotCentric(x: Double, y: Double, rotation: Double) {
@@ -85,17 +74,23 @@ class AresDriveController(private val base: FtcMecanumRobot) {
 
         when (base.teleopDriveFrame) {
             FtcTeleopDriveFrame.FIELD_RELATIVE -> {
-                // Both translation axes must be mirrored for the blue driver perspective.
-                val blueAlliance = base.store.state.drive.alliance == Alliance.BLUE
-                val outX = if (blueAlliance) -smoothX else smoothX
-                val outY = if (blueAlliance) -smoothY else smoothY
-                base.mecanumDrive.driveFieldRelativeNormalized(outX, outY, smoothRot, useHeadingLock)
+                base.mecanumDrive.driveFieldRelativeNormalized(
+                    mirrorXForBlue(), mirrorYForBlue(), smoothRot, useHeadingLock
+                )
             }
             FtcTeleopDriveFrame.ROBOT_RELATIVE -> {
                 base.mecanumDrive.driveRobotRelativeNormalized(smoothX, smoothY, smoothRot)
             }
         }
     }
+
+    /** Blue mirrors both field-relative translation axes for the driver's perspective. */
+    private fun mirrorXForBlue(): Double =
+        if (base.store.state.drive.alliance == Alliance.BLUE) -smoothX else smoothX
+
+    /** See [mirrorXForBlue]; rotation is never alliance-mirrored. */
+    private fun mirrorYForBlue(): Double =
+        if (base.store.state.drive.alliance == Alliance.BLUE) -smoothY else smoothY
 
     /** Requests ARESLib target-space alignment to a specific AprilTag ID. */
     fun alignToTag(tagId: Int) {

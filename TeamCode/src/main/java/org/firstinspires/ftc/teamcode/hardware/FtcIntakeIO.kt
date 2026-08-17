@@ -28,6 +28,9 @@ class FtcIntakeIO(
     @Volatile private var cachedRollerAmps = 0.0
     @Volatile private var cachedRollerCurrentValid = false
     @Volatile private var cachedRollerVelocity = 0.0
+    /** False when the last bulk velocity read failed; consumers must not treat 0 as genuine. */
+    @Volatile var rollerVelocityValid: Boolean = true
+        private set
     private var lastPower = UNKNOWN_POWER
     private var outputFaulted = false
     @Volatile
@@ -106,7 +109,16 @@ class FtcIntakeIO(
 
     override fun refresh() {
         // Velocity comes from the already-refreshed REV bulk response.
-        try { cachedRollerVelocity = motor.velocity } catch (_: Exception) { cachedRollerVelocity = 0.0 }
+        try {
+            val velocity = motor.velocity
+            rollerVelocityValid = velocity.isFinite()
+            cachedRollerVelocity = if (velocity.isFinite()) velocity else 0.0
+        } catch (_: Exception) {
+            // A failed read is invalid, not a confident zero: jam-detection consumers must be
+            // able to distinguish them (the current path above follows the same contract).
+            rollerVelocityValid = false
+            cachedRollerVelocity = 0.0
+        }
 
         try {
             val current = motor.getCurrent(CurrentUnit.AMPS)

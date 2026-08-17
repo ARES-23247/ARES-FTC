@@ -33,7 +33,7 @@ class IndicatorLightSubsystem(
             // Negative is the RAINBOW sentinel; RobotClock keeps replay deterministic.
             val nowMs = com.areslib.util.RobotClock.currentTimeMillis()
             // Offset the second indicator by 500 ms to produce a visible wave.
-            val offset = if (name.contains("2")) 500L else 0L
+            val offset = if (name == "indicator2") 500L else 0L
             val cycleTimeMs = 2500.0
             val progress = ((nowMs + offset) % cycleTimeMs.toLong()) / cycleTimeMs
             val minPos = com.areslib.hardware.actuator.IndicatorLightColor.RED.position
