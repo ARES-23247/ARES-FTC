@@ -20,10 +20,24 @@ import org.firstinspires.ftc.teamcode.dsl.season
  * power budget. An invalid state requesting intake and flywheel together fails closed at this
  * final hardware boundary even if an upstream producer bypasses the season controller.
  */
-class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
+class IntakeSubsystem(
+    private val io: IntakeIO,
+    /**
+     * Optional (valid, ticksPerSec) roller-velocity probe from the concrete IO. When wired,
+     * a sustained near-zero velocity under active command and meaningful current is tracked
+     * as [velocityStallSuspected] for telemetry. Observation only by design: latch thresholds
+     * must be calibrated from season hardware logs before this becomes a safety stop.
+     */
+    private val velocityProbe: (() -> Pair<Boolean, Double>)? = null,
+) : Subsystem {
     private var overcurrentStartTimeMs = UNSET_TIME
     private var invalidCurrentStartTimeMs = UNSET_TIME
     private var recoveryStartTimeMs = UNSET_TIME
+    private var velocityStallStartTimeMs = UNSET_TIME
+
+    /** True while commanded rotation produces ~no measured velocity under load. */
+    var velocityStallSuspected = false
+        private set
 
     override fun readSensors(store: Store, timestampMs: Long) {
         val currentAmps = io.rollerCurrentAmps
@@ -66,6 +80,32 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
         } else {
             overcurrentStartTimeMs = UNSET_TIME
         }
+
+        trackVelocityStall(timestampMs, intakeActive, currentAmps)
+    }
+
+    /**
+     * A commanded intake drawing real current while the encoder reports (valid) near-zero
+     * velocity is slipping or jammed ahead of the roller. Requires valid velocity AND valid
+     * current above an idle floor so brownout-scaled or coasting frames cannot latch it.
+     */
+    private fun trackVelocityStall(timestampMs: Long, intakeActive: Boolean, currentAmps: Double) {
+        val probe = velocityProbe?.invoke() ?: run {
+            velocityStallSuspected = false
+            velocityStallStartTimeMs = UNSET_TIME
+            return
+        }
+        val (velocityValid, ticksPerSec) = probe
+        val disagreeing = intakeActive && !stalled && velocityValid &&
+            kotlin.math.abs(ticksPerSec) <= SUSPECT_VELOCITY_TICKS_PER_SEC &&
+            currentAmps >= VELOCITY_STALL_CURRENT_FLOOR_AMPS
+        if (disagreeing) {
+            if (velocityStallStartTimeMs == UNSET_TIME) velocityStallStartTimeMs = timestampMs
+            velocityStallSuspected = elapsedAtLeast(timestampMs, velocityStallStartTimeMs, VELOCITY_STALL_DWELL_MS)
+        } else {
+            velocityStallStartTimeMs = UNSET_TIME
+            velocityStallSuspected = false
+        }
     }
 
     var stalled = false
@@ -87,6 +127,9 @@ class IntakeSubsystem(private val io: IntakeIO) : Subsystem {
     private companion object {
         const val UNSET_TIME = -1L
         const val STALL_CURRENT_AMPS = 8.0
+        const val SUSPECT_VELOCITY_TICKS_PER_SEC = 20.0
+        const val VELOCITY_STALL_CURRENT_FLOOR_AMPS = 2.0
+        const val VELOCITY_STALL_DWELL_MS = 1_000L
         const val RECOVERY_CURRENT_AMPS = 6.0
         const val STALL_DWELL_MS = 250L
         const val INVALID_CURRENT_GRACE_MS = 100L
