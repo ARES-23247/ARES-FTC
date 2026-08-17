@@ -67,7 +67,7 @@ dependencies {
     implementation platform("org.aresfirst.ares:ares-bom:$aresVersion")
     implementation 'org.aresfirst.ares:core'
     implementation 'org.aresfirst.ares:ftc-hardware'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0'
     simRun platform("org.aresfirst.ares:ares-bom:$aresVersion")
     simRun 'org.aresfirst.ares:simulator'
     simRun "org.aresfirst.ares:$aresSimulatorRuntime"
