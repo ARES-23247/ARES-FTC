@@ -55,7 +55,7 @@ configurations {
     aresCodegen
 }
 
-def aresVersion = providers.gradleProperty('aresVersion').getOrElse('8.2.0')
+def aresVersion = providers.gradleProperty('aresVersion').getOrElse('9.0.0')
 def aresSimulatorRuntime = System.getProperty('os.name').toLowerCase().contains('windows')
     ? 'simulator-runtime-windows'
     : (System.getProperty('os.name').toLowerCase().contains('mac')
@@ -67,9 +67,7 @@ dependencies {
     implementation platform("org.aresfirst.ares:ares-bom:$aresVersion")
     implementation 'org.aresfirst.ares:core'
     implementation 'org.aresfirst.ares:ftc-hardware'
-    // Held at 1.8.x to match ARESLib: coroutines >=1.10 emits Kotlin 2.2 metadata
-    // that the 1.9 toolchain cannot read. Revisit with the Kotlin 2.2 migration.
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0'
     simRun platform("org.aresfirst.ares:ares-bom:$aresVersion")
     simRun 'org.aresfirst.ares:simulator'
     simRun "org.aresfirst.ares:$aresSimulatorRuntime"
