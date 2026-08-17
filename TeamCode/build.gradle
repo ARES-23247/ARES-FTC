@@ -264,15 +264,8 @@ tasks.matching { task -> task.name.startsWith("compile") && task.name.endsWith("
     dependsOn tasks.named("verifyAresProject")
 }
 
-koverReport {
-    defaults {
-        filters {
-            excludes {
-                classes("org.firstinspires.ftc.teamcode.opmodes.*")
-            }
-        }
-    }
-    androidReports("debug") {
+kover {
+    reports {
         filters {
             excludes {
                 classes("org.firstinspires.ftc.teamcode.opmodes.*")
