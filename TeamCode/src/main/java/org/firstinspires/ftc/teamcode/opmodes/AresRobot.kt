@@ -129,36 +129,19 @@ class AresRobot(
 
         // Field symmetry changes by season. Load the checked-in field contract before any
         // autonomous target, waypoint, or costmap is resolved.
-        runCatching {
-            hardwareMap.appContext.assets.open("paths/field.json").bufferedReader().use { reader ->
-                com.areslib.state.RobotFieldDocument.decode(reader.readText())
-            }
-        }.mapCatching { config ->
-            require(config.fieldType == com.areslib.state.FieldType.FTC) {
-                "Canonical season field must declare FTC geometry"
-            }
-            require(config.apriltags.isNotEmpty()) { "FTC field must declare its AprilTag layout" }
-            val tagIds = HashSet<Int>(config.apriltags.size)
-            require(config.apriltags.all { tagIds.add(it.id) }) {
-                "FTC field contains duplicate AprilTag IDs"
-            }
-            val tags = config.apriltags.associate { tag ->
-                require(tag.id > 0 && tag.x.isFinite() && tag.y.isFinite() && tag.z.isFinite() && tag.yaw.isFinite()) {
-                    "FTC field contains an invalid AprilTag"
-                }
-                tag.id to com.areslib.math.geometry.Pose3d(
-                    com.areslib.math.geometry.Translation3d(tag.x, tag.y, tag.z),
-                    com.areslib.math.geometry.Rotation3d(0.0, 0.0, Math.toRadians(tag.yaw))
-                )
-            }
-            config to tags
-        }.onSuccess { (config, tags) ->
-            com.areslib.state.RobotFieldManager.setActiveConfig(config)
+        // The asset read stays outside the loader: a missing/failed asset open is an
+        // environment failure with the same fallback as an invalid document.
+        val fieldBytes = runCatching {
+            hardwareMap.appContext.assets.open("paths/field.json").use { it.readBytes() }
+        }.getOrNull()
+        val fieldContract = fieldBytes?.let(::loadFtcFieldContract)
+        if (fieldContract != null) {
+            com.areslib.state.RobotFieldManager.setActiveConfig(fieldContract.config)
             // Auto and every TeleOp use the same checked-in field document. This assignment also
             // replaces the shared generic 1-4 square layout selected before this facade is built.
-            com.areslib.math.estimation.PoseEstimator.activeTags = tags
+            com.areslib.math.estimation.PoseEstimator.activeTags = fieldContract.tags
             hasCanonicalFieldContract = true
-        }.onFailure { error ->
+        } else {
             // Never continue vision localization against the generic/shared tag layout when the
             // season contract is missing or invalid. Manual drive remains available without tags.
             com.areslib.state.RobotFieldManager.setActiveConfig(
@@ -173,7 +156,7 @@ class AresRobot(
             )
             com.areslib.math.estimation.PoseEstimator.activeTags = emptyMap()
             hasCanonicalFieldContract = false
-            addTelemetry("Field", "Canonical field unavailable; vision tags disabled: ${error.message}")
+            addTelemetry("Field", "Canonical field unavailable; vision tags disabled: ${FtcFieldContractLoader.error}")
         }
 
         // Registrations are process-global. Clear the previous OpMode's optional hardware catalog
@@ -440,3 +423,64 @@ class AresRobot(
         )
     }
 }
+
+/**
+ * Result of a successful canonical field-contract load: the validated season configuration
+ * plus its id-indexed AprilTag layout.
+ */
+internal data class FtcFieldContract(
+    val config: com.areslib.state.RobotFieldConfig,
+    val tags: Map<Int, com.areslib.math.geometry.Pose3d>,
+)
+
+/**
+ * Decodes and validates the checked-in FTC season field document.
+ *
+ * Pure function of the asset bytes so the failure taxonomy (non-FTC geometry, missing or
+ * duplicate AprilTags, non-finite tag fields) is unit-testable without an Android context.
+ * On any validation failure the caller must install the empty fallback field and disable
+ * vision tags — never continue against the shared generic layout.
+ */
+internal object FtcFieldContractLoader {
+    /** Description of the most recent load failure; null after a successful load. */
+    var error: String? = null
+        private set
+
+    fun load(bytes: ByteArray): FtcFieldContract? {
+        error = null
+        val config = runCatching {
+            bytes.decodeToString().reader().use { reader ->
+                com.areslib.state.RobotFieldDocument.decode(reader.readText())
+            }
+        }.getOrElse { failure ->
+            error = failure.message ?: failure::class.java.simpleName
+            return null
+        }
+        if (config.fieldType != com.areslib.state.FieldType.FTC) {
+            error = "Canonical season field must declare FTC geometry"
+            return null
+        }
+        if (config.apriltags.isEmpty()) {
+            error = "FTC field must declare its AprilTag layout"
+            return null
+        }
+        val tagIds = HashSet<Int>(config.apriltags.size)
+        if (!config.apriltags.all { tagIds.add(it.id) }) {
+            error = "FTC field contains duplicate AprilTag IDs"
+            return null
+        }
+        val tags = config.apriltags.associate { tag ->
+            if (!(tag.id > 0 && tag.x.isFinite() && tag.y.isFinite() && tag.z.isFinite() && tag.yaw.isFinite())) {
+                error = "FTC field contains an invalid AprilTag"
+                return null
+            }
+            tag.id to com.areslib.math.geometry.Pose3d(
+                com.areslib.math.geometry.Translation3d(tag.x, tag.y, tag.z),
+                com.areslib.math.geometry.Rotation3d(0.0, 0.0, Math.toRadians(tag.yaw))
+            )
+        }
+        return FtcFieldContract(config, tags)
+    }
+}
+
+internal fun loadFtcFieldContract(bytes: ByteArray): FtcFieldContract? = FtcFieldContractLoader.load(bytes)
