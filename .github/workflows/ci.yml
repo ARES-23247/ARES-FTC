@@ -37,7 +37,7 @@ jobs:
       - name: Verify immutable ARES 8 release is available
         run: >-
           curl --fail --silent --show-error --head
-          "https://repo1.maven.org/maven2/org/aresfirst/ares/ares-bom/8.1.2/ares-bom-8.1.2.pom"
+          "https://repo1.maven.org/maven2/org/aresfirst/ares/ares-bom/8.2.0/ares-bom-8.2.0.pom"
 
       - name: Verify generated project, test, and assemble
         working-directory: ARES-FTC
@@ -79,7 +79,7 @@ jobs:
 
       - name: Verify immutable ARES 8 release is available
         shell: pwsh
-        run: Invoke-WebRequest -Method Head -Uri 'https://repo1.maven.org/maven2/org/aresfirst/ares/ares-bom/8.1.2/ares-bom-8.1.2.pom'
+        run: Invoke-WebRequest -Method Head -Uri 'https://repo1.maven.org/maven2/org/aresfirst/ares/ares-bom/8.2.0/ares-bom-8.2.0.pom'
 
       - name: Run all calibration and SysId routines
         working-directory: ARES-FTC
