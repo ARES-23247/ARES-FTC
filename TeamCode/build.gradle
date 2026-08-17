@@ -67,7 +67,9 @@ dependencies {
     implementation platform("org.aresfirst.ares:ares-bom:$aresVersion")
     implementation 'org.aresfirst.ares:core'
     implementation 'org.aresfirst.ares:ftc-hardware'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    // Held at 1.8.x to match ARESLib: coroutines >=1.10 emits Kotlin 2.2 metadata
+    // that the 1.9 toolchain cannot read. Revisit with the Kotlin 2.2 migration.
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
     simRun platform("org.aresfirst.ares:ares-bom:$aresVersion")
     simRun 'org.aresfirst.ares:simulator'
     simRun "org.aresfirst.ares:$aresSimulatorRuntime"
@@ -264,15 +266,8 @@ tasks.matching { task -> task.name.startsWith("compile") && task.name.endsWith("
     dependsOn tasks.named("verifyAresProject")
 }
 
-koverReport {
-    defaults {
-        filters {
-            excludes {
-                classes("org.firstinspires.ftc.teamcode.opmodes.*")
-            }
-        }
-    }
-    androidReports("debug") {
+kover {
+    reports {
         filters {
             excludes {
                 classes("org.firstinspires.ftc.teamcode.opmodes.*")
