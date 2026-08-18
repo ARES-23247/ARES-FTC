@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
+import org.firstinspires.ftc.teamcode.dsl.cyclePrimaryIndicator
 import org.firstinspires.ftc.teamcode.dsl.*
 
 /**
@@ -31,17 +32,15 @@ class IntakeShootTeleOp : AresTeleOpBase() {
                 robot.toggleShooter()
             }
 
-            // Optional primary indicator color selection.
-            val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
+            // Optional primary indicator color selection; the cycle helper resolves the
+            // TeleOp context implicitly from this block's receiver.
             var indicatorIndex = 0
 
             driver.dpadUp.onPress("Indicator Next Color") {
-                indicatorIndex = (indicatorIndex + 1) % indicatorColors.size
-                robot.setIndicatorColor(indicatorColors[indicatorIndex])
+                indicatorIndex = cyclePrimaryIndicator(forward = true, index = indicatorIndex)
             }
             driver.dpadDown.onPress("Indicator Prev Color") {
-                indicatorIndex = (indicatorIndex - 1 + indicatorColors.size) % indicatorColors.size
-                robot.setIndicatorColor(indicatorColors[indicatorIndex])
+                indicatorIndex = cyclePrimaryIndicator(forward = false, index = indicatorIndex)
             }
         }
 
