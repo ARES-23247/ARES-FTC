@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
+import org.firstinspires.ftc.teamcode.dsl.cyclePrimaryIndicator
+import org.firstinspires.ftc.teamcode.dsl.cycleSecondaryIndicator
 
 /**
  * Primary field-centric driver OpMode for the four-motor DECODE robot.
@@ -34,26 +36,23 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
             }
 
             // Primary indicator: D-pad up/down. Secondary indicator: left/right.
-            val indicatorColors = com.areslib.hardware.actuator.IndicatorLightColor.entries
+            // The cycle helpers are context-parameter functions; the TeleOp context resolves
+            // implicitly from this block's receiver.
             var light1Index = 0
             var light2Index = 0
 
             driver.dpadUp.onPress("Light 1 Next Color") {
-                light1Index = (light1Index + 1) % indicatorColors.size
-                robot.setIndicatorColor(indicatorColors[light1Index])
+                light1Index = cyclePrimaryIndicator(forward = true, index = light1Index)
             }
             driver.dpadDown.onPress("Light 1 Prev Color") {
-                light1Index = (light1Index - 1 + indicatorColors.size) % indicatorColors.size
-                robot.setIndicatorColor(indicatorColors[light1Index])
+                light1Index = cyclePrimaryIndicator(forward = false, index = light1Index)
             }
 
             driver.dpadRight.onPress("Light 2 Next Color") {
-                light2Index = (light2Index + 1) % indicatorColors.size
-                robot.setSecondIndicatorColor(indicatorColors[light2Index])
+                light2Index = cycleSecondaryIndicator(forward = true, index = light2Index)
             }
             driver.dpadLeft.onPress("Light 2 Prev Color") {
-                light2Index = (light2Index - 1 + indicatorColors.size) % indicatorColors.size
-                robot.setSecondIndicatorColor(indicatorColors[light2Index])
+                light2Index = cycleSecondaryIndicator(forward = false, index = light2Index)
             }
         }
 
