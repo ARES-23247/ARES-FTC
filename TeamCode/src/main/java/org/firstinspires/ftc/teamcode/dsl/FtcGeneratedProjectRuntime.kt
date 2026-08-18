@@ -57,15 +57,37 @@ internal class FtcGeneratedProjectRuntime(
         }
     }
 
+    /** True when the checked-in scheme binds drivetrain axes, replacing hand-written gamepad drive. */
+    val hasGeneratedDriveBindings: Boolean
+        get() = GeneratedAresProject.HAS_GENERATED_DRIVE_BINDINGS
+
     /** Samples the two FTC Driver Station ports through reusable frames, then runs submitted tasks. */
     fun updateControls(
         driverFrame: com.areslib.input.InputFrame,
         operatorFrame: com.areslib.input.InputFrame,
         nowNanos: Long,
+        emitDriveCommand: Boolean = true,
     ) {
         controllerRuntimesByPort[DRIVER_PORT]?.update(driverFrame, nowNanos)
         controllerRuntimesByPort[OPERATOR_PORT]?.update(operatorFrame, nowNanos)
+        if (emitDriveCommand) GeneratedAresProject.emitDriveCommand(this)
         updateTasks()
+    }
+
+    /**
+     * Generated drivetrain sink. Axis bindings already applied deadband, expo, and slew shaping, so
+     * this only bounds the values, applies the alliance perspective, and hands the field-centric
+     * command to the mecanum facade. Blue mirrors both field-relative translation axes; rotation is
+     * never alliance-mirrored (AGENTS.md §5).
+     */
+    override fun onDriveCommand(vx: Double, vy: Double, omega: Double, active: Boolean) {
+        if (!active) return
+        val boundedVx = if (vx.isFinite()) vx.coerceIn(-1.0, 1.0) else 0.0
+        val boundedVy = if (vy.isFinite()) vy.coerceIn(-1.0, 1.0) else 0.0
+        val boundedOmega = if (omega.isFinite()) omega.coerceIn(-1.0, 1.0) else 0.0
+        val alliance = robot.base.store.state.drive.alliance
+        val (fieldVx, fieldVy) = generatedDriveFieldComponents(boundedVx, boundedVy, alliance)
+        robot.base.mecanumDrive.driveFieldRelativeNormalized(fieldVx, fieldVy, boundedOmega, true)
     }
 
     override fun submit(bindingId: String, task: Task) {
@@ -750,3 +772,15 @@ private fun containsFtcDrive(
         step.children.any { containsFtcDrive(it, routines, visitingRoutines) } ||
         step.elseChildren.any { containsFtcDrive(it, routines, visitingRoutines) }
 }
+
+/**
+ * Field-centric translation components for generated drivetrain commands. Blue alliance mirrors
+ * both translation axes so the driver's perspective matches their alliance wall; rotation is
+ * never mirrored. Kept pure so the mirroring rule stays unit-testable.
+ */
+internal fun generatedDriveFieldComponents(
+    vx: Double,
+    vy: Double,
+    alliance: com.areslib.state.Alliance,
+): Pair<Double, Double> =
+    if (alliance == com.areslib.state.Alliance.BLUE) -vx to -vy else vx to vy

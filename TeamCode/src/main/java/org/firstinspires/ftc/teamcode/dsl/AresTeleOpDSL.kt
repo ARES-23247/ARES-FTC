@@ -20,6 +20,17 @@ abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>(), PhotonEnabledOpMode 
     private var operatorAdapter: FtcInputFrameAdapter? = null
     private var generatedRuntime: FtcGeneratedProjectRuntime? = null
 
+    /** True when the checked-in control scheme binds drivetrain axes through generated bindings. */
+    protected val usesGeneratedDriveBindings: Boolean
+        get() = generatedRuntime?.hasGeneratedDriveBindings == true
+
+    /**
+     * OpModes that want scheme-authored drivetrain control opt in. Default false keeps tuning,
+     * calibration, and diagnostic OpModes on their hand-written gamepad drive even when a scheme
+     * with drive bindings is checked in.
+     */
+    protected open val allowGeneratedDrive: Boolean = false
+
     override fun buildRobot() = AresRobot(hardwareMap, telemetry).also { robot ->
         generatedRuntime = FtcGeneratedProjectRuntime(robot)
         robot.addTelemetry("ARES/Controls/Source", requireNotNull(generatedRuntime).controlsSource)
@@ -35,7 +46,12 @@ abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>(), PhotonEnabledOpMode 
         val nowNanos = com.areslib.util.RobotClock.nanoTime()
         driver.sampleInto(driverFrame, nowNanos)
         operator.sampleInto(operatorFrame, nowNanos)
-        requireNotNull(generatedRuntime).updateControls(driverFrame, operatorFrame, nowNanos)
+        requireNotNull(generatedRuntime).updateControls(
+            driverFrame,
+            operatorFrame,
+            nowNanos,
+            emitDriveCommand = allowGeneratedDrive,
+        )
     }
 
     override fun cancelProjectControls(robot: AresRobot) {

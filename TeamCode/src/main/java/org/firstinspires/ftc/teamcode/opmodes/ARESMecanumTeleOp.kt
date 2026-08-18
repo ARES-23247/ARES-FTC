@@ -13,6 +13,9 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 @TeleOp(name = "Direct Mecanum Drivetrain", group = "ARES")
 class ARESMecanumTeleOp : AresTeleOpBase() {
 
+    /** Scheme-authored drive bindings replace the hand-written gamepad drive when present. */
+    override val allowGeneratedDrive: Boolean = true
+
     override fun define() = teleOp {
         
         var isHeadingLockEnabled = true
@@ -59,7 +62,11 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         }
         
         everyLoop {
-            robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
+            // Generated drive bindings already shaped and mirrored the axes; only OpModes without
+            // scheme-authored drive fall back to the hand-written controller here.
+            if (!usesGeneratedDriveBindings) {
+                robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
+            }
         }
     }
 }

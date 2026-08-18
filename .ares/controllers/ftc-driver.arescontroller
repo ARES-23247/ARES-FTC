@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "documentId": "ftc-driver",
+  "revision": 1,
+  "displayName": "FTC Driver Station gamepad",
+  "deviceMatchers": [
+    {
+      "nameContains": "gamepad",
+      "minimumAxisCount": 4,
+      "minimumButtonCount": 8
+    }
+  ],
+  "controls": [
+    {
+      "controlId": "left_stick_x",
+      "displayName": "Left stick horizontal",
+      "type": "AXIS",
+      "surface": "FRONT",
+      "anchor": {"x": 0.32, "y": 0.5},
+      "mappings": [{"platform": "FTC", "axisIndex": 0}], "aliases": []
+    },
+    {
+      "controlId": "left_stick_y",
+      "displayName": "Left stick vertical",
+      "type": "AXIS",
+      "surface": "FRONT",
+      "anchor": {"x": 0.4, "y": 0.5},
+      "mappings": [{"platform": "FTC", "axisIndex": 1}], "aliases": []
+    },
+    {
+      "controlId": "right_stick_x",
+      "displayName": "Right stick horizontal",
+      "type": "AXIS",
+      "surface": "FRONT",
+      "anchor": {"x": 0.68, "y": 0.5},
+      "mappings": [{"platform": "FTC", "axisIndex": 2}], "aliases": []
+    },
+    {
+      "controlId": "right_stick_y",
+      "displayName": "Right stick vertical",
+      "type": "AXIS",
+      "surface": "FRONT",
+      "anchor": {"x": 0.6, "y": 0.5},
+      "mappings": [{"platform": "FTC", "axisIndex": 3}], "aliases": []
+    },
+    {
+      "controlId": "a",
+      "displayName": "A",
+      "type": "BUTTON",
+      "surface": "FRONT",
+      "anchor": {"x": 0.45, "y": 0.72},
+      "mappings": [{"platform": "FTC", "buttonIndex": 0}], "aliases": []
+    },
+    {
+      "controlId": "b",
+      "displayName": "B",
+      "type": "BUTTON",
+      "surface": "FRONT",
+      "anchor": {"x": 0.55, "y": 0.72},
+      "mappings": [{"platform": "FTC", "buttonIndex": 1}], "aliases": []
+    },
+    {
+      "controlId": "x",
+      "displayName": "X",
+      "type": "BUTTON",
+      "surface": "FRONT",
+      "anchor": {"x": 0.45, "y": 0.62},
+      "mappings": [{"platform": "FTC", "buttonIndex": 2}], "aliases": []
+    },
+    {
+      "controlId": "y",
+      "displayName": "Y",
+      "type": "BUTTON",
+      "surface": "FRONT",
+      "anchor": {"x": 0.55, "y": 0.62},
+      "mappings": [{"platform": "FTC", "buttonIndex": 3}], "aliases": []
+    }
+  ]
+}
