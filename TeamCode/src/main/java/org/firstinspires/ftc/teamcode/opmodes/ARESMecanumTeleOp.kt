@@ -25,6 +25,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         controls {
             driver.leftStickButton.onPress("Toggle Heading Lock") {
                 isHeadingLockEnabled = !isHeadingLockEnabled
+                generatedHeadingLock = isHeadingLockEnabled
             }
 
             driver.y.onPress("Reset Field Centric Pose") {
@@ -63,7 +64,7 @@ class ARESMecanumTeleOp : AresTeleOpBase() {
         everyLoop {
             // Generated drive bindings already shaped and mirrored the axes; only OpModes without
             // scheme-authored drive fall back to the hand-written controller here.
-            if (!usesGeneratedDriveBindings) {
+            if (!generatedDriveActive) {
                 robot.driveWithGamepad(driver, useHeadingLock = isHeadingLockEnabled)
             }
         }

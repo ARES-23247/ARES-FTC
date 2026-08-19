@@ -64,8 +64,8 @@ fun interface GeneratedAresProjectControlTaskSink {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 8
     const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
-    const val CONTENT_SHA256: String = "b7c320601e210779a0f8a8a0a0e4ab7c43caddd48d89a76c43420c4cf962be2a"
-    const val SOURCE_SHA256: String = "fb070916e7362ab23f38592175d46a8ee4d2b4d20aa661aafaa56115b882c1f5"
+    const val CONTENT_SHA256: String = "b8585cb24eba0cc28079b826fbf4a5cf8aa1d59c3772330afcd48e2eb8817501"
+    const val SOURCE_SHA256: String = "883f084ca1bcda4a425300e8a6256b3b154f74bcba0879f1008ec59e51460b34"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -570,7 +570,7 @@ object GeneratedAresProject {
                                 inputCenter = 0.0,
                                 inputMax = 1.0,
                                 deadband = 0.05,
-                                exponent = 3.0,
+                                exponent = 1.0,
                                 inverted = true,
                                 outputMin = -1.0,
                                 outputMax = 1.0,
@@ -594,7 +594,7 @@ object GeneratedAresProject {
                                 inputCenter = 0.0,
                                 inputMax = 1.0,
                                 deadband = 0.05,
-                                exponent = 3.0,
+                                exponent = 1.0,
                                 inverted = true,
                                 outputMin = -1.0,
                                 outputMax = 1.0,
@@ -618,7 +618,7 @@ object GeneratedAresProject {
                                 inputCenter = 0.0,
                                 inputMax = 1.0,
                                 deadband = 0.05,
-                                exponent = 3.0,
+                                exponent = 1.0,
                                 inverted = true,
                                 outputMin = -1.0,
                                 outputMax = 1.0,
