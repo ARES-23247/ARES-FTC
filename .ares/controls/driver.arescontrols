@@ -27,7 +27,7 @@
           "outputMinimum": -1.0,
           "outputMaximum": 1.0,
           "deadband": 0.05,
-          "exponent": 3.0,
+          "exponent": 1.0,
           "inverted": true
         },
         "thresholdDirection": "ABOVE",
@@ -70,7 +70,7 @@
           "outputMinimum": -1.0,
           "outputMaximum": 1.0,
           "deadband": 0.05,
-          "exponent": 3.0,
+          "exponent": 1.0,
           "inverted": true
         },
         "thresholdDirection": "ABOVE",
@@ -113,7 +113,7 @@
           "outputMinimum": -1.0,
           "outputMaximum": 1.0,
           "deadband": 0.05,
-          "exponent": 3.0,
+          "exponent": 1.0,
           "inverted": true
         },
         "thresholdDirection": "ABOVE",

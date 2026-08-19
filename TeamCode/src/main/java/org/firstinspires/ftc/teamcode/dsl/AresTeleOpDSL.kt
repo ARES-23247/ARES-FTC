@@ -25,6 +25,22 @@ abstract class AresTeleOpBase : FtcTeleOpBase<AresRobot>(), PhotonEnabledOpMode 
         get() = generatedRuntime?.hasGeneratedDriveBindings == true
 
     /**
+     * True when scheme-authored drive is actually emitted this frame: the OpMode opted in AND
+     * the scheme binds drive axes. Hand-written drive fallbacks should key off THIS flag, not
+     * usesGeneratedDriveBindings alone - an opted-out OpMode with drive bindings checked in
+     * must keep its hand-written drive.
+     */
+    protected val generatedDriveActive: Boolean
+        get() = allowGeneratedDrive && usesGeneratedDriveBindings
+
+    /** Heading lock used by scheme-authored drive; toggling affects the generated sink. */
+    protected var generatedHeadingLock: Boolean
+        get() = generatedRuntime?.headingLockEnabled ?: true
+        set(value) {
+            generatedRuntime?.let { it.headingLockEnabled = value }
+        }
+
+    /**
      * OpModes that want scheme-authored drivetrain control opt in. Default false keeps tuning,
      * calibration, and diagnostic OpModes on their hand-written gamepad drive even when a scheme
      * with drive bindings is checked in.

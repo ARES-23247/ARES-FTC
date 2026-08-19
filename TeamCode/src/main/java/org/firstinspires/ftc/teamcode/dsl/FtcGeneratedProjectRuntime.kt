@@ -80,14 +80,23 @@ internal class FtcGeneratedProjectRuntime(
      * command to the mecanum facade. Blue mirrors both field-relative translation axes; rotation is
      * never alliance-mirrored (AGENTS.md §5).
      */
+    /** Heading-lock state for scheme-authored drive; OpModes toggle this at runtime. */
+    @Volatile var headingLockEnabled: Boolean = true
+
     override fun onDriveCommand(vx: Double, vy: Double, omega: Double, active: Boolean) {
         if (!active) return
         val boundedVx = if (vx.isFinite()) vx.coerceIn(-1.0, 1.0) else 0.0
         val boundedVy = if (vy.isFinite()) vy.coerceIn(-1.0, 1.0) else 0.0
         val boundedOmega = if (omega.isFinite()) omega.coerceIn(-1.0, 1.0) else 0.0
-        val alliance = robot.base.store.state.drive.alliance
-        val (fieldVx, fieldVy) = generatedDriveFieldComponents(boundedVx, boundedVy, alliance)
-        robot.base.mecanumDrive.driveFieldRelativeNormalized(fieldVx, fieldVy, boundedOmega, true)
+        // Blue mirrors both field-relative translation axes inline; rotation is never
+        // alliance-mirrored. Kept inline (no Pair allocation) per the zero-GC loop contract.
+        val mirror = if (robot.base.store.state.drive.alliance == com.areslib.state.Alliance.BLUE) -1.0 else 1.0
+        robot.base.mecanumDrive.driveFieldRelativeNormalized(
+            mirror * boundedVx,
+            mirror * boundedVy,
+            boundedOmega,
+            headingLockEnabled,
+        )
     }
 
     override fun submit(bindingId: String, task: Task) {
