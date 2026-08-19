@@ -64,8 +64,8 @@ fun interface GeneratedAresProjectControlTaskSink {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 8
     const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
-    const val CONTENT_SHA256: String = "fbd4c7d6404da407c63398b05cefdd396fc94e25e495dea1fe3a73e45b724515"
-    const val SOURCE_SHA256: String = "d5d46b34f95629617846de8d6e418a3b40b97a5b1366c93fa23a4e9c5c998305"
+    const val CONTENT_SHA256: String = "b7c320601e210779a0f8a8a0a0e4ab7c43caddd48d89a76c43420c4cf962be2a"
+    const val SOURCE_SHA256: String = "fb070916e7362ab23f38592175d46a8ee4d2b4d20aa661aafaa56115b882c1f5"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"

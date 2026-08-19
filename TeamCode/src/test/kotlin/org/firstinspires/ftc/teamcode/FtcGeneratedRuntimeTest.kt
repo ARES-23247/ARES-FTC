@@ -369,7 +369,12 @@ class GeneratedDriveCommandTest {
                 scheme,
                 com.areslib.controls.ControlValidationContext(
                     profileControls = mapOf(
-                        "ftc-driver" to setOf("left_stick_x", "left_stick_y", "right_stick_x", "right_stick_y", "a", "b", "x", "y"),
+                        "ftc-driver" to setOf(
+                            "left_stick_x", "left_stick_y", "right_stick_x", "right_stick_y",
+                            "a", "b", "x", "y", "left_bumper", "right_bumper", "left_trigger", "right_trigger",
+                            "dpad_up", "dpad_down", "dpad_left", "dpad_right", "back", "start",
+                            "left_stick_button", "right_stick_button",
+                        ),
                     ),
                 ),
             ).none { it.severity == com.areslib.controls.ControlValidationSeverity.ERROR },
