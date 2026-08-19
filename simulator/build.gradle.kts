@@ -3,7 +3,12 @@ plugins {
     application
 }
 
-val aresVersion = providers.gradleProperty("aresVersion").orElse("9.0.0").get()
+val siblingAresProps = file("../../ARESLib-Kotlin/gradle.properties")
+val siblingAresVersion = if (siblingAresProps.exists()) {
+    val props = java.util.Properties().apply { siblingAresProps.inputStream().use { load(it) } }
+    props.getProperty("aresVersion")
+} else null
+val aresVersion = providers.gradleProperty("aresVersion").orElse(providers.provider { siblingAresVersion }).getOrElse("9.3.2")
 val aresSimulatorRuntime = when {
     System.getProperty("os.name").contains("windows", ignoreCase = true) -> "simulator-runtime-windows"
     System.getProperty("os.name").contains("mac", ignoreCase = true) -> "simulator-runtime-macos"
