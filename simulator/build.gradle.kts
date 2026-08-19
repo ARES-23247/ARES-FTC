@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     kotlin("jvm")
     application
@@ -5,7 +7,7 @@ plugins {
 
 val siblingAresProps = file("../../ARESLib-Kotlin/gradle.properties")
 val siblingAresVersion = if (siblingAresProps.exists()) {
-    val props = java.util.Properties().apply { siblingAresProps.inputStream().use { load(it) } }
+    val props = Properties().apply { siblingAresProps.inputStream().use { load(it) } }
     props.getProperty("aresVersion")
 } else null
 val aresVersion = providers.gradleProperty("aresVersion").orElse(providers.provider { siblingAresVersion }).getOrElse("9.3.2")
