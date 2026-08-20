@@ -85,22 +85,38 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:5.23.0'
 }
 
+// A long-running JavaExec process must not load TeamCode/FtcRobotController classes from mutable
+// build/ output. On Windows those open jars block later verification builds; replacing class
+// directories concurrently can also produce delayed missing-class crashes. Snapshot only
+// workspace-owned entries (Gradle/Android caches are immutable inputs) before starting the JVM.
+def activeSimRuntimeSnapshot = [dir: null]
+def cleanupRunSimRuntimeSnapshot = tasks.register("cleanupRunSimRuntimeSnapshot") {
+    doLast {
+        def snapshotDir = activeSimRuntimeSnapshot.dir as File
+        if (snapshotDir != null && snapshotDir.exists()) {
+            project.delete(snapshotDir)
+        }
+        activeSimRuntimeSnapshot.dir = null
+    }
+}
+
 android.applicationVariants.all { variant ->
     if (variant.name == "debug") {
-        task("runSim", type: JavaExec) {
+        def runSimRuntimeClasspath = files(
+            configurations.simRun, // Place simRun (mocks) first so they override real FTC SDK classes!
+            variant.javaCompileProvider.get().destinationDirectory,
+            "${buildDir}/tmp/kotlin-classes/${variant.name}",
+            variant.getCompileClasspath(null),
+            project.android.bootClasspath
+        )
+        def runSimTask = task("runSim", type: JavaExec) {
             dependsOn variant.javaCompileProvider
             dependsOn "compile${variant.name.capitalize()}Kotlin"
             mainClass = 'com.areslib.sim.DesktopSimLauncher'
-            
+
             // Use getCompileClasspath for Android libs, and simRun for transitive JVM dependencies
-            classpath = files(
-                configurations.simRun, // Place simRun (mocks) first so they override real FTC SDK classes!
-                variant.javaCompileProvider.get().destinationDirectory,
-                "${buildDir}/tmp/kotlin-classes/${variant.name}",
-                variant.getCompileClasspath(null),
-                project.android.bootClasspath
-            )
-            
+            classpath = runSimRuntimeClasspath
+
             // Convert the split array to a List before concatenation. Otherwise Groovy appends the
             // String[] as one Java object and the launcher receives "[Ljava.lang.String;@...".
             def appArgs = project.hasProperty("appArgs")
@@ -109,14 +125,49 @@ android.applicationVariants.all { variant ->
             args(["--headless"] + appArgs)
             def summaryFile = file("${buildDir}/sim-run/ares_run_summary.json")
             systemProperty 'ares.sim.summary.path', summaryFile.absolutePath
-            doFirst { summaryFile.parentFile.mkdirs() }
+            doFirst {
+                summaryFile.parentFile.mkdirs()
+                def snapshotDir = java.nio.file.Files.createTempDirectory("ares-ftc-sim-run-").toFile()
+                activeSimRuntimeSnapshot.dir = snapshotDir
+                def workspaceRoot = rootProject.projectDir.parentFile.canonicalFile.toPath()
+                def isolatedEntries = []
+
+                runSimRuntimeClasspath.files.eachWithIndex { source, index ->
+                    if (!source.exists()) return
+                    def sourcePath = source.canonicalFile.toPath()
+                    if (!sourcePath.startsWith(workspaceRoot)) {
+                        isolatedEntries.add(source)
+                        return
+                    }
+
+                    def target = new File(snapshotDir, String.format("%03d-%s", index, source.name))
+                    if (source.isDirectory()) {
+                        project.copy {
+                            from source
+                            into target
+                        }
+                    } else {
+                        target.parentFile.mkdirs()
+                        java.nio.file.Files.copy(
+                            source.toPath(),
+                            target.toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                        )
+                    }
+                    isolatedEntries.add(target)
+                }
+
+                classpath = files(isolatedEntries)
+                println "[ARES-FTC] Isolated simulator runtime classpath at ${snapshotDir.absolutePath}"
+            }
         }
-        
+        runSimTask.finalizedBy(cleanupRunSimRuntimeSnapshot)
+
         task("runVerification", type: JavaExec) {
             dependsOn variant.javaCompileProvider
             dependsOn "compile${variant.name.capitalize()}Kotlin"
             mainClass = 'com.areslib.sim.VerificationAppKt'
-            
+
             classpath = files(
                 configurations.simRun,
                 variant.javaCompileProvider.get().destinationDirectory,
