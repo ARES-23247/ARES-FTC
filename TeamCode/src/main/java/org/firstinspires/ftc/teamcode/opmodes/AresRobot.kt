@@ -461,24 +461,16 @@ internal object FtcFieldContractLoader {
             error = failure.message ?: failure::class.java.simpleName
             return null
         }
-        if (config.fieldType != com.areslib.state.FieldType.FTC) {
-            error = "Canonical season field must declare FTC geometry"
-            return null
-        }
-        if (config.apriltags.isEmpty()) {
-            error = "FTC field must declare its AprilTag layout"
-            return null
-        }
-        val tagIds = HashSet<Int>(config.apriltags.size)
-        if (!config.apriltags.all { tagIds.add(it.id) }) {
-            error = "FTC field contains duplicate AprilTag IDs"
+        val validationIssues = com.areslib.state.RobotFieldValidator.validate(
+            config = config,
+            requiredFieldType = com.areslib.state.FieldType.FTC,
+            requireAprilTags = true,
+        )
+        if (validationIssues.isNotEmpty()) {
+            error = validationIssues.first().message
             return null
         }
         val tags = config.apriltags.associate { tag ->
-            if (!(tag.id > 0 && tag.x.isFinite() && tag.y.isFinite() && tag.z.isFinite() && tag.yaw.isFinite())) {
-                error = "FTC field contains an invalid AprilTag"
-                return null
-            }
             tag.id to com.areslib.math.geometry.Pose3d(
                 com.areslib.math.geometry.Translation3d(tag.x, tag.y, tag.z),
                 com.areslib.math.geometry.Rotation3d(0.0, 0.0, Math.toRadians(tag.yaw))
