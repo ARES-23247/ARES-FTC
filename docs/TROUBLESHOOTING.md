@@ -35,7 +35,11 @@ The simulator uses JDK 21 and compiles TeamCode against FTC mocks. Look for an u
 
 ### Drive motor is missing
 
-Production names are exactly `fl`, `fr`, `rl`, and `rr`. The rear names are not `bl`/`br`. Run `ARES Drivetrain Diagnostic`; it reports each discovered motor and can power one motor at 0.4 while its button is held. Its `bl`/`br` lookup is diagnostic compatibility only—fix the Robot Controller configuration rather than depending on the alias.
+The generated drivetrain descriptor supplies the exact names; the team template uses `fl`, `fr`,
+`rl`, and `rr`. The rear names are not `bl`/`br`. Run `ARES Drivetrain Diagnostic` with the robot
+securely on blocks. It reports all four generated names and configured directions, blocks all motion
+if any motor is missing, and powers one motor at 0.4 only while its displayed button is held. Fix the
+canonical Drivebase Builder value and regenerate rather than creating a Robot Controller alias.
 
 ### Intake or shooter reports “failed to load”
 
@@ -138,7 +142,8 @@ The robot never uploads directly. Connect the ARES Analytics desktop application
 ## Diagnostic OpModes
 
 - `AAA Blank Null OpMode`: hardware-free control-system isolation; useful for distinguishing app/lifecycle issues from I2C or power trouble.
-- `ARES Drivetrain Diagnostic`: discovers and individually powers drive motors; use on blocks.
+- `ARES Drivetrain Diagnostic`: uses generated names/directions and individually powers one drive
+  motor while held; it must be used on secure blocks with a person ready to press Stop.
 - `ARES Live Tuning TeleOp`: dedicated calibration surface; it still requires a fresh enable token while command is `STOP`.
 - `ARES Remote Drive (NT4)`: tests the atomic v2 frame and 200 ms receiver lease.
 
