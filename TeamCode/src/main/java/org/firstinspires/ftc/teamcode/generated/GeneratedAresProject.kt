@@ -64,8 +64,8 @@ fun interface GeneratedAresProjectControlTaskSink {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 8
     const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
-    const val CONTENT_SHA256: String = "b8585cb24eba0cc28079b826fbf4a5cf8aa1d59c3772330afcd48e2eb8817501"
-    const val SOURCE_SHA256: String = "883f084ca1bcda4a425300e8a6256b3b154f74bcba0879f1008ec59e51460b34"
+    const val CONTENT_SHA256: String = "ef0b0c961d021f90443f17310c58022125fe6f49fd5e0168c9549ebcc1de0f34"
+    const val SOURCE_SHA256: String = "6fdcd16ae25cd5c185ba2abd32cd386ecd9a4e531a28f832d0c9654caacd3e51"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -559,9 +559,36 @@ object GeneratedAresProject {
         return when (activeSchemeId) {
         "driver" -> run {
             val buttonSuppression_driver_b4def821 = ButtonSuppressionState(buttonCapacity = 128)
+            val suppressingChord_recover_drive_neutral_66a0898c = SuppressingButtonChordSource(
+                buttonIndexes = intArrayOf(6, 7),
+                simultaneityWindowNanos = 150000000L,
+                suppression = buttonSuppression_driver_b4def821,
+            )
+
             linkedMapOf(
                 0 to ControllerBindingRuntime(
-                    digitalBindings = emptyList(),
+                    digitalBindings = listOf(
+                        DigitalBinding(
+                            source = suppressingChord_recover_drive_neutral_66a0898c,
+                            timing = DigitalBindingTiming(
+                                pressDebounceNanos = 100000000L,
+                                releaseDebounceNanos = 100000000L,
+                                holdAfterNanos = -1L,
+                                repeatAfterNanos = -1L,
+                                repeatEveryNanos = 0L,
+                                cooldownNanos = 1000000000L,
+                                maximumActiveNanos = -1L,
+                            ),
+                            listener = object : DigitalBindingListener {
+                                override fun onPress() {
+                                    taskSink.submit(
+                                        bindingId = "recover-drive-neutral",
+                                        task = requireNotNull(registry.createActionTask("drivetrain.recoverNeutral", emptyMap())) { "Generated action 'drivetrain.recoverNeutral' is unavailable at runtime" },
+                                    )
+                                }
+                            },
+                        ),
+                    ),
                     analogBindings = listOf(
                         AnalogBinding(
                             axisIndex = 1,

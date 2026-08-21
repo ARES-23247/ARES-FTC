@@ -141,6 +141,35 @@
       "priority": 0,
       "suppressConstituentBindings": false,
       "enabled": true
+    },
+    {
+      "bindingId": "recover-drive-neutral",
+      "displayName": "Recover drive after a fault",
+      "source": {
+        "kind": "CHORD",
+        "controllerSlot": "driver",
+        "controlIds": ["back", "start"],
+        "transform": null,
+        "thresholdDirection": "ABOVE",
+        "zoneHysteresis": 0.0,
+        "chordWindowSeconds": 0.15
+      },
+      "event": "PRESS",
+      "target": {
+        "kind": "ACTION",
+        "key": "drivetrain.recoverNeutral",
+        "arguments": {},
+        "routinePolicy": "IGNORE_IF_RUNNING"
+      },
+      "timing": {
+        "pressDebounceSeconds": 0.1,
+        "releaseDebounceSeconds": 0.1,
+        "cooldownSeconds": 1.0
+      },
+      "analogPolicy": null,
+      "priority": 100,
+      "suppressConstituentBindings": true,
+      "enabled": true
     }
   ]
 }
