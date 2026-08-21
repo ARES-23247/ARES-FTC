@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "documentId": "indicator-lights",
   "uid": "indicator-lights",
   "displayName": "Indicator lights",
