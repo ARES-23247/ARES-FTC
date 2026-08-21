@@ -343,7 +343,7 @@ class GeneratedDriveCommandTest {
     }
 
     @Test
-    fun `checked-in scheme binds exactly one binding per drive axis`() {
+    fun `checked-in scheme binds every drive axis and an explicit neutral recovery chord`() {
         var dir = java.io.File(System.getProperty("user.dir"))
         var schemeFile: java.io.File? = null
         while (dir != null) {
@@ -357,13 +357,21 @@ class GeneratedDriveCommandTest {
         val scheme = requireNotNull(schemeFile).let {
             com.areslib.controls.ControlSchemeCodec.decode(it.readText())
         }
-        val axes = scheme.bindings.map { it.target }
-        assertTrue(axes.all { it.kind == com.areslib.controls.ControlTargetKind.DRIVE })
+        val axes = scheme.bindings
+            .map { it.target }
+            .filter { it.kind == com.areslib.controls.ControlTargetKind.DRIVE }
         assertEquals(
             "starter scheme binds vx, vy, and omega exactly once each",
             listOf("omega", "vx", "vy"),
             axes.map { it.key }.sorted(),
         )
+        val recovery = scheme.bindings.single { it.target.key == "drivetrain.recoverNeutral" }
+        assertEquals(com.areslib.controls.ControlTargetKind.ACTION, recovery.target.kind)
+        assertEquals(com.areslib.controls.ControlSourceKind.CHORD, recovery.source.kind)
+        assertEquals(listOf("back", "start"), recovery.source.controlIds)
+        assertEquals(com.areslib.controls.ControlEvent.PRESS, recovery.event)
+        assertTrue(recovery.suppressConstituentBindings)
+        assertTrue(recovery.priority > 0)
         assertTrue(
             com.areslib.controls.validateControlScheme(
                 scheme,
