@@ -64,7 +64,9 @@ Commit the `.ares` documents and generated Kotlin together.
   tree and neutralizes registered outputs.
 
 FTC autonomous has a 29.5-second default software deadline and never exceeds the 30-second match
-limit. Photon is explicitly enabled by the shared auto and teleop base classes.
+limit. Hub command transport and the Limelight proxy are owned by reviewed `.ares/project.json`
+runtime options. Generated constants feed the same policy to auto, teleop, diagnostics, and robot
+construction; adding a library to the classpath cannot silently enable Photon.
 
 Routines are authored in the repository's canonical field coordinate convention: meters,
 CCW-positive radians, `0 = +X`. Alliance transformation happens once at the FTC runtime boundary;

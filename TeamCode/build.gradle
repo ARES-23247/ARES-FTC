@@ -35,6 +35,11 @@ android {
     packagingOptions {
         jniLibs.useLegacyPackaging true
         excludes += ['META-INF/**/*.sha1', 'META-INF/**/*.dylib', 'META-INF/**/*.dll', 'META-INF/**/*.so']
+        resources.pickFirsts += [
+            'META-INF/LICENSE',
+            'META-INF/NOTICE',
+            'META-INF/THIRD_PARTY_NOTICES.md',
+        ]
     }
 
     kotlinOptions {
@@ -57,7 +62,7 @@ configurations {
 
 def siblingAresProps = file('../../ARESLib-Kotlin/gradle.properties')
 def siblingAresVersion = siblingAresProps.exists() ? (new Properties().with { p -> siblingAresProps.withInputStream { is -> p.load(is) }; p.getProperty('aresVersion') }) : null
-def aresVersion = providers.gradleProperty('aresVersion').orElse(providers.provider { siblingAresVersion }).getOrElse('9.7.0')
+def aresVersion = providers.gradleProperty('aresVersion').orElse(providers.provider { siblingAresVersion }).getOrElse('9.8.0')
 def aresSimulatorRuntime = System.getProperty('os.name').toLowerCase().contains('windows')
     ? 'simulator-runtime-windows'
     : (System.getProperty('os.name').toLowerCase().contains('mac')

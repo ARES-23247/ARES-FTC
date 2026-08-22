@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM
 import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_TICKS_PER_REV
+import org.firstinspires.ftc.teamcode.config.AresRuntimePolicy
 import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresFtcMecanumRuntimeConfig
 import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresTuningConfig
 import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
@@ -65,7 +66,11 @@ class AresRobot(
     val localTelemetry: Telemetry? = null
 ) {
     /** Shared drivetrain, Redux store, EKF, power, logging, telemetry, and hardware lifecycle. */
-    val base: FtcMecanumRobot = GeneratedAresFtcMecanumRuntimeConfig.createRobot(hardwareMap, localTelemetry)
+    val base: FtcMecanumRobot = GeneratedAresFtcMecanumRuntimeConfig.createRobot(
+        hardwareMap,
+        localTelemetry,
+        limelightProxyEnabled = AresRuntimePolicy.options.limelightProxyEnabled,
+    )
 
     private val typedTuningRuntime = GeneratedAresTuningConfig.createRuntime()
 

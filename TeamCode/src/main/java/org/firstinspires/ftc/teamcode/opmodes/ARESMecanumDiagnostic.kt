@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
-import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.ftc.photon.AresFtcRuntimeOptions
+import com.areslib.ftc.photon.AresFtcRuntimeOptionsProvider
 import com.areslib.util.RobotClock
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import org.firstinspires.ftc.teamcode.config.AresRuntimePolicy
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.DcMotorSimple
@@ -54,7 +56,10 @@ internal fun mecanumDiagnosticMotorDefinitions(): List<MecanumDiagnosticMotorDef
  * missing motor blocks all motion, and [finally] attempts to neutralize every discovered motor.
  */
 @TeleOp(name = "ARES Drivetrain Diagnostic", group = "ARES")
-class ARESMecanumDiagnostic : LinearOpMode(), PhotonEnabledOpMode {
+class ARESMecanumDiagnostic : LinearOpMode(), AresFtcRuntimeOptionsProvider {
+    override val aresFtcRuntimeOptions: AresFtcRuntimeOptions
+        get() = AresRuntimePolicy.options
+
     private fun configureMotor(definition: MecanumDiagnosticMotorDefinition): DcMotorEx? = runCatching {
         hardwareMap.get(DcMotorEx::class.java, definition.hardwareMapName).also { motor ->
             motor.power = 0.0
