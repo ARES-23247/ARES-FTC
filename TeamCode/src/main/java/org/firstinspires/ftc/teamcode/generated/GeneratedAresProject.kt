@@ -64,8 +64,8 @@ fun interface GeneratedAresProjectControlTaskSink {
 object GeneratedAresProject {
     const val GENERATOR_VERSION: Int = 8
     const val CATALOG_SHA256: String = "1fd6ecc276f5513ad98050bdceba10e761352c3ff4f15f41e129e2e0fe68e27e"
-    const val CONTENT_SHA256: String = "ef0b0c961d021f90443f17310c58022125fe6f49fd5e0168c9549ebcc1de0f34"
-    const val SOURCE_SHA256: String = "6fdcd16ae25cd5c185ba2abd32cd386ecd9a4e531a28f832d0c9654caacd3e51"
+    const val CONTENT_SHA256: String = "ca536eb270b0c76ec09af047b1c5d6fb761784a4597668c5142c78cbfe8c50e5"
+    const val SOURCE_SHA256: String = "8c66325e93b4d8146ca9a776ea55328557afc98c61dd22eb99fda7c8fc2c256d"
 
     const val PROJECT_ID: String = "team23247-gobilda"
     const val PROJECT_LEAGUE: String = "FTC"
@@ -74,6 +74,12 @@ object GeneratedAresProject {
     const val ROBOT_WIDTH_METERS: Double = 0.4572
     const val FIELD_LENGTH_METERS: Double = 3.6576
     const val FIELD_WIDTH_METERS: Double = 3.6576
+
+    /** Canonical runtime choices reviewed in .ares/project.json. */
+    object RuntimeOptions {
+        const val FTC_HUB_COMMAND_TRANSPORT: String = "ARES_PHOTON"
+        const val FTC_LIMELIGHT_PROXY_ENABLED: Boolean = true
+    }
 
     val knownActionKeys: Set<String> = setOf("SetIndicatorColor_BLUE", "SetIndicatorColor_CYAN", "SetIndicatorColor_GREEN", "SetIndicatorColor_OFF", "SetIndicatorColor_ORANGE", "SetIndicatorColor_PURPLE", "SetIndicatorColor_RAINBOW", "SetIndicatorColor_RED", "SetIndicatorColor_VIOLET", "SetIndicatorColor_WHITE", "SetIndicatorColor_YELLOW", "SetPrismPreset_EMERGENCY_LIGHTS", "SetPrismPreset_FTC_TIMER", "SetPrismPreset_RAINBOW_FULL_COLOR", "SetPrismPreset_SOLID_BLUE", "SetPrismPreset_SOLID_CYAN", "SetPrismPreset_SOLID_GREEN", "SetPrismPreset_SOLID_OFF", "SetPrismPreset_SOLID_ORANGE", "SetPrismPreset_SOLID_PURPLE", "SetPrismPreset_SOLID_RED", "SetPrismPreset_SOLID_WHITE", "SetPrismPreset_SOLID_YELLOW", "SetSecondIndicatorColor_BLUE", "SetSecondIndicatorColor_CYAN", "SetSecondIndicatorColor_GREEN", "SetSecondIndicatorColor_OFF", "SetSecondIndicatorColor_ORANGE", "SetSecondIndicatorColor_PURPLE", "SetSecondIndicatorColor_RAINBOW", "SetSecondIndicatorColor_RED", "SetSecondIndicatorColor_VIOLET", "SetSecondIndicatorColor_WHITE", "SetSecondIndicatorColor_YELLOW", "drivetrain.recoverNeutral", "flywheel.prepare", "flywheel.stop", "intake.collect", "intake.stop")
     val knownConditionKeys: Set<String> = emptySet()

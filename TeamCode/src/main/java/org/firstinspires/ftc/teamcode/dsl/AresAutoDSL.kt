@@ -2,7 +2,8 @@ package org.firstinspires.ftc.teamcode.dsl
 
 import com.areslib.action.RobotAction
 import com.areslib.ftc.FtcMecanumRobot
-import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.ftc.photon.AresFtcRuntimeOptions
+import com.areslib.ftc.photon.AresFtcRuntimeOptionsProvider
 import com.areslib.routine.RoutineRequestResult
 import com.areslib.routine.RoutineStartPolicy
 import com.areslib.state.Alliance
@@ -12,6 +13,7 @@ import com.areslib.util.PoseStorage
 import com.areslib.util.RobotClock
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import org.firstinspires.ftc.teamcode.generated.GeneratedAresProject
+import org.firstinspires.ftc.teamcode.config.AresRuntimePolicy
 import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 
 /**
@@ -24,10 +26,12 @@ import org.firstinspires.ftc.teamcode.opmodes.AresRobot
  * routine through the shared `RoutineManager`, and enforces fail-closed cancellation on timeout,
  * error, stop, or mode transition.
  *
- * Photon remains explicitly enabled for every derived autonomous OpMode through
- * [PhotonEnabledOpMode].
+ * FTC hub transport is selected by the reviewed generated project policy before initialization.
  */
-abstract class AresAutoBase : OpMode(), PhotonEnabledOpMode {
+abstract class AresAutoBase : OpMode(), AresFtcRuntimeOptionsProvider {
+    final override val aresFtcRuntimeOptions: AresFtcRuntimeOptions
+        get() = AresRuntimePolicy.options
+
     private companion object {
         const val DEFAULT_MAXIMUM_RUNTIME_SECONDS = 29.5
         const val OVERRUN_THRESHOLD_MS = 30L

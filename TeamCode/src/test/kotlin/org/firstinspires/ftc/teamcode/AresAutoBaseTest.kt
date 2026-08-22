@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode
 
 import com.areslib.ftc.FtcBaseRobot
-import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.ftc.photon.AresFtcRuntimeOptionsProvider
 import com.areslib.networktables.NT4Instance
 import com.areslib.state.Alliance
 import com.areslib.telemetry.RobotStatusTracker
@@ -125,11 +125,11 @@ class AresAutoBaseTest {
     }
 
     @Test
-    fun `auto opmodes explicitly opt into Photon`() {
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresAutoBase::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(ARESAuto::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(TestAutoRed::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(TestAutoBlue::class.java))
+    fun `auto opmodes inherit generated runtime policy`() {
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(AresAutoBase::class.java))
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(ARESAuto::class.java))
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(TestAutoRed::class.java))
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(TestAutoBlue::class.java))
     }
 
     @Test

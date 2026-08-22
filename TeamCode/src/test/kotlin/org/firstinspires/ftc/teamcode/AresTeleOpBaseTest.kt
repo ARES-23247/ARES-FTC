@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.dsl.AresTeleOpBase
 import org.firstinspires.ftc.teamcode.dsl.AresAutoBase
 import org.firstinspires.ftc.teamcode.opmodes.ARESMecanumDiagnostic
 import com.areslib.ftc.dsl.FtcTeleOpBuilder
-import com.areslib.ftc.photon.PhotonEnabledOpMode
+import com.areslib.ftc.photon.AresFtcRuntimeOptionsProvider
 import com.areslib.ftc.toState
 import com.areslib.ftc.update
 import org.junit.Assert.*
@@ -27,10 +27,10 @@ import com.areslib.telemetry.RobotStatusTracker
  */
 class AresTeleOpBaseTest {
     @Test
-    fun `team TeleOp and Auto bases explicitly opt into Photon`() {
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresTeleOpBase::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(AresAutoBase::class.java))
-        assertTrue(PhotonEnabledOpMode::class.java.isAssignableFrom(ARESMecanumDiagnostic::class.java))
+    fun `team OpModes read generated runtime policy during pre-init`() {
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(AresTeleOpBase::class.java))
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(AresAutoBase::class.java))
+        assertTrue(AresFtcRuntimeOptionsProvider::class.java.isAssignableFrom(ARESMecanumDiagnostic::class.java))
     }
 
     @Test
