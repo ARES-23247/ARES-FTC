@@ -137,3 +137,7 @@ That protection depends on every output device participating in the lifecycle. N
 - Preserve the offline-first design: the robot serves local logs; the desktop analytics application is responsible for cloud synchronization.
 
 FIRST's general SDK documentation remains available at [FTC Docs](https://ftc-docs.firstinspires.org/) and the [FTC SDK Javadoc](https://javadoc.io/doc/org.firstinspires.ftc).
+
+## License
+
+ARES-authored TeamCode and simulator code are licensed under [Apache License 2.0](LICENSE). Inherited FIRST Tech Challenge Robot Controller material remains under `BSD-3-Clause-Clear`; its required notice is preserved in [LICENSES/BSD-3-Clause-Clear.txt](LICENSES/BSD-3-Clause-Clear.txt). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the license boundary.
