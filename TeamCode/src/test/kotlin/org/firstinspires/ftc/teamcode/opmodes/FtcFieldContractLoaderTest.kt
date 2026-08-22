@@ -8,8 +8,8 @@ import org.junit.Test
 
 /** Failure taxonomy of the extracted season field-contract loader. */
 class FtcFieldContractLoaderTest {
-    private fun fieldJson(fieldType: String = "ftc", tags: String = """{"id":1,"x":1.0,"y":1.0,"z":1.0,"yaw":90.0}""") =
-        """{"id":"test-field","name":"Test","fieldType":"$fieldType","widthMeters":3.6576,"heightMeters":3.6576,"apriltags":[$tags]}"""
+    private fun fieldJson(fieldType: String = "ftc", tags: String = """{"id":1,"name":"Test tag","family":"36h11","sizeMeters":0.1651,"x":1.0,"y":1.0,"z":1.0,"roll":10.0,"pitch":20.0,"yaw":90.0}""") =
+        """{"schemaVersion":2,"id":"test-field","name":"Test","fieldType":"$fieldType","widthMeters":3.6576,"heightMeters":3.6576,"apriltags":[$tags]}"""
 
     @Test
     fun `valid document yields config and id-indexed tags`() {
@@ -17,6 +17,8 @@ class FtcFieldContractLoaderTest {
         assertNotNull(contract)
         assertNull(FtcFieldContractLoader.error)
         assertEquals(1, contract!!.tags.size)
+        assertEquals(Math.toRadians(10.0), contract.tags.getValue(1).rotation.x, 1e-9)
+        assertEquals(Math.toRadians(20.0), contract.tags.getValue(1).rotation.y, 1e-9)
         assertEquals(Math.toRadians(90.0), contract.tags.getValue(1).rotation.z, 1e-9)
     }
 
@@ -28,11 +30,11 @@ class FtcFieldContractLoaderTest {
 
     @Test
     fun `duplicate and invalid AprilTags are rejected`() {
-        val tag = """{"id":1,"x":1.0,"y":1.0,"z":1.0,"yaw":0.0}"""
+        val tag = """{"id":1,"name":"Tag","family":"36h11","sizeMeters":0.1651,"x":1.0,"y":1.0,"z":1.0,"yaw":0.0}"""
         assertNull(loadFtcFieldContract(fieldJson(tags = "$tag, $tag").toByteArray()))
         assertEquals("FTC field contains duplicate AprilTag IDs", FtcFieldContractLoader.error)
 
-        assertNull(loadFtcFieldContract(fieldJson(tags = """{"id":1,"x":NaN,"y":1.0,"z":1.0,"yaw":0.0}""").toByteArray()))
+        assertNull(loadFtcFieldContract(fieldJson(tags = """{"id":1,"name":"Tag","family":"36h11","sizeMeters":0.1651,"x":NaN,"y":1.0,"z":1.0,"yaw":0.0}""").toByteArray()))
         assertEquals("FTC field contains an invalid AprilTag", FtcFieldContractLoader.error)
     }
 

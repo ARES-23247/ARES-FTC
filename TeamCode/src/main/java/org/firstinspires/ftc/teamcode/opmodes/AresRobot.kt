@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
 import com.areslib.ftc.FtcMecanumRobot
+import com.areslib.state.aprilTagPoseMap
 import com.areslib.subsystem.Subsystem
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
@@ -470,12 +471,7 @@ internal object FtcFieldContractLoader {
             error = validationIssues.first().message
             return null
         }
-        val tags = config.apriltags.associate { tag ->
-            tag.id to com.areslib.math.geometry.Pose3d(
-                com.areslib.math.geometry.Translation3d(tag.x, tag.y, tag.z),
-                com.areslib.math.geometry.Rotation3d(0.0, 0.0, Math.toRadians(tag.yaw))
-            )
-        }
+        val tags = config.aprilTagPoseMap()
         return FtcFieldContract(config, tags)
     }
 }

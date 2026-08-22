@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "revision": 125,
   "id": "ftc-2025-2026-decode",
   "name": "2025-2026 DECODE",
@@ -101,18 +101,28 @@
   "apriltags": [
     {
       "id": 20,
+      "name": "Blue target 20",
+      "family": "36h11",
+      "sizeMeters": 0.1651,
       "x": -1.48266658,
       "y": -1.4133195,
       "z": 0.7493,
+      "roll": -90.0000032,
+      "pitch": 0.0,
       "yaw": 144.0499447,
       "editorId": "decode_blue_target_20",
       "locked": true
     },
     {
       "id": 24,
+      "name": "Red target 24",
+      "family": "36h11",
+      "sizeMeters": 0.1651,
       "x": -1.48266658,
       "y": 1.4133195,
       "z": 0.7493,
+      "roll": -90.0000032,
+      "pitch": 0.0,
       "yaw": 35.950059,
       "editorId": "decode_red_target_24",
       "locked": true
