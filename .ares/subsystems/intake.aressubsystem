@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 11,
+  "documentId": "intake",
+  "uid": "intake",
+  "displayName": "Intake roller",
+  "kotlinTypeName": "IntakeSubsystem",
+  "description": "Optional DECODE intake roller with cached encoder/current feedback, jam protection, explicit neutral recovery, and an interlock that prevents simultaneous flywheel operation.",
+  "platform": "FTC",
+  "revision": 1,
+  "hardware": [
+    {
+      "hardwareId": "intakeMotor",
+      "uid": "intakeMotor",
+      "displayName": "Intake roller motor",
+      "kind": "MOTOR",
+      "connection": { "hardwareMapName": "intake" },
+      "measurements": [
+        {
+          "fieldId": "rollerVelocityTicksPerSecond",
+          "source": "MOTOR_VELOCITY_NATIVE_PER_SECOND",
+          "maxAgeMs": 100
+        },
+        {
+          "fieldId": "rollerCurrentAmps",
+          "source": "MOTOR_CURRENT_AMPS",
+          "maxAgeMs": 100,
+          "validMinimum": 0.0
+        }
+      ],
+      "required": false,
+      "safeOutput": 0.0,
+      "description": "Configured in the FTC Robot Controller hardware map as 'intake'. The adapter samples velocity and current once per loop."
+    }
+  ],
+  "stateFields": [
+    {
+      "fieldId": "intakeActive",
+      "uid": "intakeActive",
+      "displayName": "Collect requested",
+      "type": "BOOLEAN",
+      "role": "TARGET",
+      "defaultBoolean": false,
+      "description": "Immutable Redux intent. The hardware boundary still rejects output while faulted or while the flywheel is active."
+    },
+    {
+      "fieldId": "nominalVoltage",
+      "uid": "nominalVoltage",
+      "displayName": "Nominal roller voltage",
+      "type": "DOUBLE",
+      "role": "CONFIGURATION",
+      "unit": "V",
+      "defaultNumber": 12.0,
+      "minimum": 0.0,
+      "maximum": 12.0,
+      "description": "Configured in typed FTC subsystem tuning and multiplied by the current safe power budget."
+    },
+    {
+      "fieldId": "rollerVelocityTicksPerSecond",
+      "uid": "rollerVelocityTicksPerSecond",
+      "displayName": "Roller velocity",
+      "type": "DOUBLE",
+      "role": "MEASUREMENT",
+      "unit": "ticks/s",
+      "defaultNumber": 0.0,
+      "description": "Cached encoder observation used for telemetry-only velocity stall detection until calibrated on physical hardware."
+    },
+    {
+      "fieldId": "rollerCurrentAmps",
+      "uid": "rollerCurrentAmps",
+      "displayName": "Roller current",
+      "type": "DOUBLE",
+      "role": "MEASUREMENT",
+      "unit": "A",
+      "defaultNumber": 0.0,
+      "minimum": 0.0,
+      "description": "Cached current observation used by the calibrated 8 A / 250 ms jam latch."
+    },
+    {
+      "fieldId": "stalled",
+      "uid": "stalled",
+      "displayName": "Jam fault latched",
+      "type": "BOOLEAN",
+      "role": "STATUS",
+      "defaultBoolean": false,
+      "description": "Clears only after the intake is disabled and valid current remains below the recovery threshold."
+    },
+    {
+      "fieldId": "velocityStallSuspected",
+      "uid": "velocityStallSuspected",
+      "displayName": "Velocity stall suspected",
+      "type": "BOOLEAN",
+      "role": "STATUS",
+      "defaultBoolean": false,
+      "description": "Diagnostic only; it is intentionally not a safety latch until calibrated from physical robot logs."
+    }
+  ],
+  "controlLoops": [
+    {
+      "loopId": "rollerVoltageControl",
+      "uid": "rollerVoltageControl",
+      "displayName": "Gated roller voltage",
+      "strategy": "DIRECT",
+      "actuatorId": "intakeMotor",
+      "targetFieldId": "nominalVoltage",
+      "feedforward": { "kind": "NONE" },
+      "minimumOutput": -12.0,
+      "maximumOutput": 12.0,
+      "description": "Applies the configured voltage only when Redux requests collection, the flywheel interlock is clear, current is trustworthy, no jam is latched, and the power budget permits output."
+    }
+  ],
+  "tuningParameters": [],
+  "template": "SIMPLE_ACTUATOR",
+  "implementation": {
+    "kind": "HAND_AUTHORED",
+    "ownership": "USER_OWNED",
+    "modulePath": ":TeamCode",
+    "sourceFiles": [
+      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/Subsystems.kt",
+      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/hardware/FtcIntakeIO.kt"
+    ],
+    "subsystemClassName": "org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem",
+    "ioContractClassName": "com.areslib.hardware.actuator.IntakeIO",
+    "hardwareAdapterClassName": "org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO",
+    "simulation": {
+      "support": "HAND_AUTHORED_SIMULATOR",
+      "adapterClassName": "org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO",
+      "interaction": {
+        "role": "INTAKE_COLLECTOR",
+        "triggerActuatorId": "intakeMotor",
+        "triggerThreshold": 1.0,
+        "storageCapacity": 1,
+        "intakeDistanceMeters": 0.35,
+        "captureRadiusMeters": 0.15
+      }
+    },
+    "teaching": {
+      "level": "INTERMEDIATE",
+      "summary": "A fail-closed actuator example showing how immutable intent, cached feedback, interlocks, current-based jam detection, and neutral recovery fit together.",
+      "documentationPath": "docs/examples/HAND_AUTHORED_MECHANISMS.md",
+      "concepts": [
+        "Immutable Redux intent",
+        "Cached hardware feedback",
+        "Current-based jam latching",
+        "Cross-mechanism interlocks",
+        "Explicit neutral recovery"
+      ]
+    }
+  },
+  "capabilityActionKeys": [
+    "intake.collect",
+    "intake.stop"
+  ],
+  "safety": {
+    "feedbackTimeoutMs": 100,
+    "homing": { "method": "NONE" },
+    "requiresCalibration": false,
+    "requiresConfigurationHealth": true,
+    "requiresCurrentMonitoring": true,
+    "latchOutputFaults": true,
+    "requiresExplicitNeutralRecovery": true,
+    "telemetryEnabled": true,
+    "zeroAllocationPeriodic": true
+  },
+  "autonomousResourceKey": "intake",
+  "requiredAtStartup": false,
+  "generateMockIo": false,
+  "generateTest": false
+}
