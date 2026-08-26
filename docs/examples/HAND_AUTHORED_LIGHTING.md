@@ -1,4 +1,9 @@
-# Hand-authored lighting subsystems
+# Historical hand-authored lighting design
+
+Lightbot no longer uses this architecture. Its indicator lights and Prism are now canonical Robot
+Builder documents described in [GUI-owned lighting](GUI_OWNED_LIGHTING.md). This page remains only
+as an advanced comparison for teams maintaining older hand-authored season code; it is not the
+official Lightbot workflow.
 
 The team robot's indicator lights and goBILDA Prism are intentionally small production examples of
 the ARES subsystem lifecycle. Their Kotlin remains user-owned; `.aressubsystem` documents make the

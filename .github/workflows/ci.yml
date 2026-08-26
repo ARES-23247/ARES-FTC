@@ -34,10 +34,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify immutable ARES 8 release is available
-        run: >-
-          curl --fail --silent --show-error --head
-          "https://raw.githubusercontent.com/ARES-23247/ARESLib-Kotlin/maven/org/aresfirst/ares/ares-bom/9.2.2/ares-bom-9.2.2.pom"
+      - name: Verify pinned immutable ARES release is available
+        working-directory: ARES-FTC
+        shell: bash
+        run: |
+          version="$(sed -n 's/^aresVersion=//p' gradle.properties)"
+          test -n "$version"
+          curl --fail --silent --show-error --head \
+            "https://raw.githubusercontent.com/ARES-23247/ARESLib-Kotlin/maven/org/aresfirst/ares/ares-bom/$version/ares-bom-$version.pom"
 
       - name: Verify generated project, test, and assemble
         working-directory: ARES-FTC
@@ -77,9 +81,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify immutable ARES 8 release is available
+      - name: Verify pinned immutable ARES release is available
         shell: pwsh
-        run: Invoke-WebRequest -Method Head -Uri 'https://repo1.maven.org/maven2/org/aresfirst/ares/ares-bom/9.0.0/ares-bom-9.0.0.pom'
+        working-directory: ARES-FTC
+        run: |
+          $version = (Select-String -Path gradle.properties -Pattern '^aresVersion=').Line.Split('=', 2)[1]
+          Invoke-WebRequest -Method Head -Uri "https://raw.githubusercontent.com/ARES-23247/ARESLib-Kotlin/maven/org/aresfirst/ares/ares-bom/$version/ares-bom-$version.pom"
 
       - name: Run all calibration and SysId routines
         working-directory: ARES-FTC

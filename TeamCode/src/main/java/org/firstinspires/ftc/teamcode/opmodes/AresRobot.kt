@@ -5,14 +5,10 @@ import com.areslib.state.aprilTagPoseMap
 import com.areslib.subsystem.Subsystem
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
-import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_MAX_RPM
-import org.firstinspires.ftc.teamcode.config.HardwareConstants.FLYWHEEL_TICKS_PER_REV
 import org.firstinspires.ftc.teamcode.config.AresRuntimePolicy
 import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresFtcMecanumRuntimeConfig
 import org.firstinspires.ftc.teamcode.generated.drivebase.GeneratedAresTuningConfig
 import org.firstinspires.ftc.teamcode.dsl.FtcAutoCapabilities
-import org.firstinspires.ftc.teamcode.dsl.SeasonSuperstructureState
-import org.firstinspires.ftc.teamcode.dsl.season
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresDriveController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresSuperstructureController
 import org.firstinspires.ftc.teamcode.opmodes.robot.AresTelemetryHelper
@@ -43,10 +39,8 @@ internal fun installGeneratedSuperstructures(
 /**
  * Composition root for the FTC season layer over ARESLib's [FtcMecanumRobot].
  *
- * Required drivetrain/localization configuration is passed to [base]. Intake, flywheel,
- * indicators, and Prism are optional: initialization failure is reported without preventing
- * drivetrain use. Successfully constructed mechanism IO is registered both with ARESLib's
- * hardware safety registry and this robot's subsystem lifecycle.
+ * Required drivetrain/localization configuration is passed to [base]. The two indicator lights
+ * and Prism are installed from Robot Builder descriptors through generated lifecycle plumbing.
  *
  * **Physical Units & Conventions:**
  * - Translational velocities: Meters per second ($m/s$).
@@ -82,20 +76,9 @@ class AresRobot(
     val fatalUpdateFailure: Throwable?
         get() = fatalSeasonFailure ?: base.fatalUpdateFailure
     private var closed = false
-    private var intakeIO: org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO? = null
-    private var flywheelIO: org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO? = null
     /** True only after the checked-in season field and its AprilTag projection validate. */
     var hasCanonicalFieldContract: Boolean = false
         private set
-    /** Optional Prism IO, exposed for diagnostics and simulator inspection. */
-    var prismIO: com.areslib.hardware.actuator.PrismDriverIO? = null
-
-    /** Optional intake lifecycle controller; null when `intake` hardware failed to initialize. */
-    var intakeSubsystem: org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem? = null
-
-    /** Optional flywheel lifecycle controller; null when `shooter` hardware failed to initialize. */
-    var flywheelSubsystem: org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem? = null
-
     init {
         val tuningProjectRoot = if (com.areslib.ftc.FtcBaseRobot.isAndroid) {
             java.nio.file.Paths.get("/sdcard/FIRST")
@@ -182,105 +165,7 @@ class AresRobot(
             throw failure
         }
 
-        try {
-            val intakeIO = org.firstinspires.ftc.teamcode.hardware.FtcIntakeIO(hardwareMap) {
-                base.powerManager.batteryVoltage
-            }
-            this.intakeIO = intakeIO
-            intakeSubsystem = org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem(intakeIO) { intakeIO.rollerVelocityValid to intakeIO.rollerVelocityTicksPerSec }
-            base.registerSubsystem(intakeSubsystem!!)
-        } catch (e: Exception) {
-            addTelemetry("Subsystem", "Intake failed to load: ${e.message}")
-        }
-
-        try {
-            val flywheelIO = org.firstinspires.ftc.teamcode.hardware.FtcFlywheelIO(
-                hardwareMap,
-                ticksPerRev = FLYWHEEL_TICKS_PER_REV,
-                maxRpm = FLYWHEEL_MAX_RPM,
-                batteryVoltageSupplier = { base.powerManager.batteryVoltage },
-            )
-            this.flywheelIO = flywheelIO
-            flywheelSubsystem = org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem(flywheelIO)
-            base.registerSubsystem(flywheelSubsystem!!)
-        } catch (e: Exception) {
-            addTelemetry("Subsystem", "Flywheel failed to load: ${e.message}")
-        }
-
-        // Optional hardware is discovered only by its canonical RC configuration name. A typo is
-        // reported as missing instead of silently binding a different servo through fuzzy aliases.
-        val primaryIO = runCatching {
-            requireNotNull(
-                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "indicator")
-            ) { "Optional FTC servo 'indicator' was not discovered" }
-            com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator")
-        }.getOrNull()
-        if (primaryIO != null) {
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(primaryIO, "indicator"))
-            setIndicatorColor("indicator", com.areslib.hardware.actuator.IndicatorLightColor.GREEN)
-        } else {
-            addTelemetry("Subsystem", "Optional 'indicator' servo not configured")
-        }
-
-        val secondaryIO = runCatching {
-            requireNotNull(
-                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "indicator2")
-            ) { "Optional FTC servo 'indicator2' was not discovered" }
-            com.areslib.ftc.hardware.FtcIndicatorLightIO(hardwareMap, "indicator2")
-        }.getOrNull()
-        if (secondaryIO != null) {
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem(secondaryIO, "indicator2"))
-            setSecondIndicatorColor(com.areslib.hardware.actuator.IndicatorLightColor.BLUE)
-        } else {
-            addTelemetry("Subsystem", "Optional 'indicator2' servo not configured")
-        }
-
-        FtcAutoCapabilities.registerIndicatorActions(
-            primaryAvailable = primaryIO != null,
-            secondaryAvailable = secondaryIO != null
-        )
-
-        // --- goBILDA Prism RGB LED Driver ("prism") ---
-        val prismIOInstance = runCatching<com.areslib.hardware.actuator.PrismDriverIO> {
-            requireNotNull(
-                hardwareMap.get(com.qualcomm.robotcore.hardware.I2cDeviceSynch::class.java, "prism")
-            ) { "Optional FTC I2C device 'prism' was not discovered" }
-            com.areslib.ftc.hardware.FtcPrismDriverI2cIO(hardwareMap, "prism")
-        }.recoverCatching {
-            requireNotNull(
-                hardwareMap.get(com.qualcomm.robotcore.hardware.Servo::class.java, "prism")
-            ) { "Optional FTC servo 'prism' was not discovered" }
-            com.areslib.ftc.hardware.FtcPrismDriverIO(hardwareMap, "prism")
-        }.getOrNull()
-        if (prismIOInstance != null) {
-            prismIO = prismIOInstance
-            base.registerSubsystem(org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem(prismIOInstance, "prism"))
-            setPrismPreset(com.areslib.hardware.actuator.PrismPwmPreset.RAINBOW_FULL_COLOR)
-        } else {
-            addTelemetry("Subsystem", "Optional 'prism' device not configured")
-        }
-        FtcAutoCapabilities.registerPrismActions(prismAvailable = prismIOInstance != null)
-
-        FtcAutoCapabilities.registerMechanismActions(
-            intakeAvailable = intakeSubsystem != null,
-            flywheelAvailable = flywheelSubsystem != null
-        )
         FtcAutoCapabilities.registerDriveRecovery(base::recoverDriveOutputWithNeutral)
-        // Simulator game-piece interaction consumes only cached commands that actually reached
-        // season IO after interlocks, brownout scaling, and fault latches. Dashboard intent is not
-        // authoritative for mechanism state.
-        base.simMechanismOutputProvider = object : com.areslib.ftc.sim.FtcSimMechanismStateProvider {
-            override val intakeAccepted: Boolean
-                get() = base.store.state.superstructure.season.intakeActive
-            override val flywheelAccepted: Boolean
-                get() = base.store.state.superstructure.season.flywheelActive
-            override val intakeApplied: Boolean
-                get() = intakeIO?.outputApplied == true
-            override val flywheelApplied: Boolean
-                get() = flywheelIO?.outputApplied == true
-            override val transferApplied: Boolean
-                get() = false // The DECODE robot has no independently actuated transfer.
-        }
     }
 
     /**
@@ -323,17 +208,6 @@ class AresRobot(
             val timestamp = com.areslib.util.RobotClock.currentTimeMillis()
             base.readAllSensors(timestamp)
 
-            intakeSubsystem?.let { intake ->
-                if (intake.velocityStallSuspected) {
-                    addTelemetry("Intake", "velocity stall suspected: commanded rotation with near-zero encoder velocity")
-                }
-            }
-            if (intakeSubsystem?.stalled == true) {
-                val seasonState = base.store.state.superstructure.season
-                if (seasonState.intakeActive) {
-                    base.store.dispatch(com.areslib.action.RobotAction.UpdateSubsystemState(seasonState.copy(intakeActive = false)))
-                }
-            }
             // Apply the freshly computed brownout/current scale to every season mechanism in the
             // same frame. Mechanism voltage normalization reads the same cached power sample.
             base.writeAllOutputs(base.powerManager.powerScale)
@@ -342,13 +216,6 @@ class AresRobot(
             telemetryHelper.updateTelemetry()
         } catch (t: Throwable) {
             fatalSeasonFailure = t
-            // Clear season intent as diagnostic state and perform best-effort safing. The latch
-            // above prevents a later frame from writing these outputs before shared update runs.
-            runCatching {
-                base.store.dispatch(
-                    com.areslib.action.RobotAction.UpdateSubsystemState(SeasonSuperstructureState())
-                )
-            }
             runCatching { base.safeAll() }
             runCatching { base.safeHardware() }
             throw t
@@ -363,42 +230,25 @@ class AresRobot(
     /** Resets localization to the configured origin for the current Redux alliance. */
     fun resetPoseForAlliance() = driveController.resetPoseForAlliance()
 
-    /** Dispatches debounced intake intent. */
-    fun toggleIntake() = superstructureController.toggleIntake()
-
-    /** Dispatches debounced shooter intent subject to the intake interlock. */
-    fun toggleShooter() = superstructureController.toggleShooter()
-
     /** Toggles Redux alliance; the caller decides whether to reset pose. */
     fun toggleAlliance() = superstructureController.toggleAlliance()
 
-    /** Dispatches the primary optional indicator color. */
-    fun setIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(color)
-    fun setSecondIndicatorColor(color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setSecondIndicatorColor(color)
-    fun setIndicatorColor(name: String, color: com.areslib.hardware.actuator.IndicatorLightColor) = telemetryHelper.setIndicatorColor(name, color)
-
-    fun setPrismPreset(preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset("prism", preset)
-    fun setPrismPreset(name: String, preset: com.areslib.hardware.actuator.PrismPwmPreset) = telemetryHelper.setPrismPreset(name, preset)
-
     /** Enables the shared calibration receiver only for a dedicated tuning OpMode. */
     fun enableCalibrationMode() {
-        base.sysIdFlywheelIO = flywheelIO
         base.isLiveTuningEnabled = true
         try {
             base.enableCalibrationMode()
         } catch (failure: Throwable) {
-            base.sysIdFlywheelIO = null
             base.isLiveTuningEnabled = false
             throw failure
         }
     }
 
-    /** Safes characterization output and removes the season mechanism adapter. */
+    /** Safes drivetrain characterization output and disables live tuning. */
     fun disableCalibrationMode() {
         try {
             base.disableCalibrationMode()
         } finally {
-            base.sysIdFlywheelIO = null
             base.isLiveTuningEnabled = false
         }
     }
@@ -419,7 +269,6 @@ class AresRobot(
         }
         attempt(::disableCalibrationMode)
         attempt(base::safeAll)
-        base.simMechanismOutputProvider = null
         attempt(base::closeSubsystems)
         attempt(base::close)
         firstFailure?.let { throw it }

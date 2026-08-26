@@ -56,10 +56,10 @@ their responsibility, physical units, cached-read rule, safe neutral, fault/reco
 the definition field that controls them. A starter containing only unexplained placeholders is not
 ready to apply.
 
-The live intake and flywheel implementations show that subsystem lifecycle code is a real
-customization point: it owns invalid-feedback dwell, fault latching, recovery, and mechanism-specific
-output policy. It therefore remains an editable starter. DSL registration and contract-test assembly
-are mechanical and belong in Gradle generated-source directories.
+Robot Builder keeps descriptor-authored policy explicit while moving registration and contract-test
+assembly into mechanical generated-source directories. Teams that outgrow generated behavior may
+still adopt a generated starter as user-owned code, but doing so is an explicit ownership decision
+and no longer the beginner path.
 
 | Group | Artifact | Normal owner | Project/module | Destination | Why it exists |
 |---|---|---|---|---|---|
@@ -111,10 +111,12 @@ responsibilities. Existing `IntakeSubsystem`/`FtcIntakeIO` and
 `FlywheelSubsystem`/`FtcFlywheelIO` are production examples; they are more useful than a minimal
 motor demo because they include invalid-current/velocity handling and neutral-first recovery.
 
-For smaller examples, see
-[`Hand-authored lighting subsystems`](examples/HAND_AUTHORED_LIGHTING.md). The indicator-light
-example demonstrates a beginner-friendly write-only output, while the Prism example demonstrates
-vendor presets and bounded brightness without bypassing Redux.
+The official beginner example is
+[`GUI-owned Lightbot lighting`](examples/GUI_OWNED_LIGHTING.md): two independent indicators and a
+Prism are editable in Robot Studio, simulated, and mechanically verified without source editing.
+[`Historical hand-authored lighting`](examples/HAND_AUTHORED_LIGHTING.md) remains only as an
+advanced migration comparison. Generic intake and flywheel templates remain available in the
+Builder for other robots.
 
 Start by copying this design worksheet into the pull-request description or a short design note.
 It is the hand-authoring equivalent of the capability template; do not start from the FTC motor API

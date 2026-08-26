@@ -35,11 +35,5 @@
     "slewRateLimit": 999.0,
     "triggerThreshold": 0.5
   },
-  "subsystem": {
-    "ftc": { "intakeNominalVoltage": 12.0, "flywheelTargetRpmPreset": 2000.0 },
-    "flywheel": {
-      "feedforward": { "kS": 0.0, "kV": 0.0, "kA": 0.0 },
-      "velocityGains": { "kP": 0.0, "kI": 0.0, "kD": 0.0, "kF": 0.0 }
-    }
-  }
+  "subsystem": {}
 }

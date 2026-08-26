@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode.opmodes.robot
 
-import com.areslib.action.RobotAction
 import com.areslib.ftc.FtcMecanumRobot
-import com.areslib.hardware.actuator.IndicatorLightColor
 
 /**
- * Bridges season convenience calls to Redux-backed telemetry and lighting state.
+ * Bridges season convenience calls to low-rate Redux-backed telemetry.
  * Driver Station text is capped and rate-limited to avoid dominating the control loop.
  */
 class AresTelemetryHelper(private val base: FtcMecanumRobot) {
@@ -45,22 +43,5 @@ class AresTelemetryHelper(private val base: FtcMecanumRobot) {
         private const val TELEMETRY_PERIOD_MS = 100L
     }
 
-    /** Dispatches an indicator target; absent optional IO leaves the state harmlessly unapplied. */
-    fun setIndicatorColor(name: String = "indicator", color: IndicatorLightColor) {
-        base.store.dispatch(RobotAction.SetIndicatorLight(name, color.position))
-    }
-
-    fun setIndicatorColor(color: IndicatorLightColor) {
-        setIndicatorColor("indicator", color)
-    }
-
-    fun setSecondIndicatorColor(color: IndicatorLightColor) {
-        setIndicatorColor("indicator2", color)
-    }
-
-    /** Dispatches a Prism pulse-width preset through immutable superstructure state. */
-    fun setPrismPreset(name: String = "prism", preset: com.areslib.hardware.actuator.PrismPwmPreset) {
-        base.store.dispatch(RobotAction.SetPrismDriver(name, preset.pulseWidthUs))
-    }
 }
 

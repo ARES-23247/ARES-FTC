@@ -660,11 +660,8 @@ internal fun validateFtcAutonomousBounds(
         path: String,
     ): Set<Pose2d> {
         fun requireAction(key: String?, actionPath: String) {
-            val parsedKey = key?.let { candidate ->
-                runCatching { CommandKey(candidate) }.getOrNull()
-            }
-            if (parsedKey == null || !NamedCommands.contains(parsedKey)) {
-                errors += "$actionPath action '${key ?: "<missing>"}' is unavailable on discovered FTC hardware"
+            if (key == null || key !in GeneratedAresProject.knownActionKeys) {
+                errors += "$actionPath action '${key ?: "<missing>"}' is not present in the generated project action catalog"
             }
         }
         if (step.kind == com.areslib.routine.RoutineStepKind.ACTION) {

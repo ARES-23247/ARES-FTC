@@ -34,23 +34,24 @@ rejected instead of silently completing a no-op.
 After saving in Analytics, run:
 
 ```powershell
-# Update TeamCode's checked-in generated source
+# Regenerate disposable project plumbing from canonical documents
 .\gradlew.bat :TeamCode:generateAresProject
 
-# Confirm the checked-in source exactly matches the project files
+# Validate canonical documents and protected editable extension points
 .\gradlew.bat :TeamCode:verifyAresProject
 
 # Compile the APK and run TeamCode tests
 .\gradlew.bat :TeamCode:testDebugUnitTest :TeamCode:assembleDebug
 ```
 
-The generated file is
-`TeamCode/src/main/java/org/firstinspires/ftc/teamcode/generated/GeneratedAresProject.kt`. Do not
-edit it directly. Every Kotlin compile depends on `verifyAresProject`, so a stale GUI export fails
-the build instead of silently deploying older behavior. Generation runs on the development machine
-and is not an ADB or network operation.
+The generated project bridge lives below
+`TeamCode/build/generated/ares/main/kotlin/`. It is disposable mechanical plumbing and is never
+edited or committed. Every Kotlin compile regenerates and validates it from the pinned codegen
+artifact, so a canonical-document error fails the build instead of silently deploying older
+behavior. Generation runs on the development machine and is not an ADB or network operation.
 
-Commit the `.ares` documents and generated Kotlin together.
+Commit the canonical `.ares` documents and any explicitly USER-OWNED or reviewed GENERATED STARTER
+extension source. Never commit the Gradle `build/generated` tree.
 
 ## Autonomous on the Driver Station
 

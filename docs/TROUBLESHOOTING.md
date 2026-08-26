@@ -41,19 +41,19 @@ securely on blocks. It reports all four generated names and configured direction
 if any motor is missing, and powers one motor at 0.4 only while its displayed button is held. Fix the
 canonical Drivebase Builder value and regenerate rather than creating a Robot Controller alias.
 
-### Intake or shooter reports “failed to load”
-
-The intake must be `intake`; the flywheel must be `shooter`. They are optional in `AresRobot`, so their initialization exception is reported and drive initialization continues. Check the configured device type and hub port as well as its name.
-
 ### Pinpoint, IMU, or Limelight data is absent
 
 Check `pinpoint`, `imu`, and `limelight` configuration names. Pinpoint is the primary pose input. The IMU fallback supplies heading but cannot recover field X/Y translation, so a robot apparently rotating correctly while pose remains at zero usually indicates unavailable odometry.
 
 For Limelight target-space alignment, robot yaw comes from the negative target-space Y rotation; target-space Z rotation is tilt, not heading. Do not add an extra negation to field heading after the Pinpoint boundary.
 
-### Optional lights do not appear
+### Lightbot lights do not appear
 
-See the alias table in [ARCHITECTURE.md](ARCHITECTURE.md#hardware-configuration). The facade enumerates configured devices at startup. Prism tries I2C first and PWM second under its supported aliases. An absent optional light should produce telemetry but should not stop drive or autonomous; named lighting tasks no-op when their IO is absent.
+Confirm the Robot Controller names are exactly `indicator`, `indicator2`, and `prism`, then open
+Robot Studio → Verification. Generated checks prove safe output, independent actions, mock parity,
+and cleanup; the supervised hardware checklist still must confirm wiring and perceived colors. The
+simulator renders the indicators as left/right side squares and Prism as underbody lighting using
+the placements stored in the subsystem descriptors.
 
 ## Driving and localization
 
@@ -80,7 +80,7 @@ Autonomous saves the final pose and alliance through `PoseStorage`; the main Tel
 Confirm:
 
 - `.ares/autonomous-catalog.json` references an existing `.ares/routines/<id>.aresroutine`;
-- `GeneratedAresProject.kt` matches the project (`:TeamCode:verifyAresProject`);
+- disposable `GeneratedAresProject.kt` regenerates successfully from the project (`:TeamCode:verifyAresProject`);
 - every named action has hardware-backed capability on this robot;
 - starting/target poses and complete drive sweeps clear field boundaries and blocking obstacles.
 

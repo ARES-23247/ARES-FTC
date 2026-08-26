@@ -11,6 +11,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.hardware.VoltageSensor
 import java.io.File
 import org.firstinspires.ftc.robotcore.external.Telemetry
@@ -67,11 +68,12 @@ class AresAutoBaseTest {
         val fr = Mockito.mock(DcMotorEx::class.java)
         val bl = Mockito.mock(DcMotorEx::class.java)
         val br = Mockito.mock(DcMotorEx::class.java)
-        val intake = Mockito.mock(DcMotorEx::class.java)
-        val shooter = Mockito.mock(DcMotorEx::class.java)
         val pinpoint = Mockito.mock(GoBildaPinpointDriver::class.java)
         val limelight = Mockito.mock(Limelight3A::class.java)
         val voltageSensor = Mockito.mock(VoltageSensor::class.java)
+        val leftIndicator = Mockito.mock(Servo::class.java)
+        val rightIndicator = Mockito.mock(Servo::class.java)
+        val prism = Mockito.mock(Servo::class.java)
         Mockito.`when`(voltageSensor.voltage).thenReturn(12.5)
 
         val mockHardwareMap = Mockito.mock(HardwareMap::class.java)
@@ -79,10 +81,11 @@ class AresAutoBaseTest {
         Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "fr")).thenReturn(fr)
         Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "rl")).thenReturn(bl)
         Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "rr")).thenReturn(br)
-        Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "intake")).thenReturn(intake)
-        Mockito.`when`(mockHardwareMap.get(DcMotorEx::class.java, "shooter")).thenReturn(shooter)
         Mockito.`when`(mockHardwareMap.get(GoBildaPinpointDriver::class.java, "pinpoint")).thenReturn(pinpoint)
         Mockito.`when`(mockHardwareMap.get(Limelight3A::class.java, "limelight")).thenReturn(limelight)
+        Mockito.`when`(mockHardwareMap.get(Servo::class.java, "indicator")).thenReturn(leftIndicator)
+        Mockito.`when`(mockHardwareMap.get(Servo::class.java, "indicator2")).thenReturn(rightIndicator)
+        Mockito.`when`(mockHardwareMap.get(Servo::class.java, "prism")).thenReturn(prism)
 
         @Suppress("UNCHECKED_CAST")
         Mockito.`when`(mockHardwareMap.getAll(VoltageSensor::class.java)).thenReturn(listOf(voltageSensor))
@@ -243,7 +246,7 @@ class AresAutoBaseTest {
         try {
             blueOpMode.init()
             assertNotNull("FtcBaseRobot active instance should be initialized for TestAutoBlue", FtcBaseRobot.activeInstance)
-            assertEquals(Alliance.BLUE, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
+            assertEquals(blueOpMode.configurationErrorForTest(), Alliance.BLUE, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
         } finally {
             blueOpMode.stop()
             assertNull(FtcBaseRobot.activeInstance)
@@ -262,7 +265,7 @@ class AresAutoBaseTest {
         try {
             redOpMode.init()
             assertNotNull("FtcBaseRobot active instance should be initialized for TestAutoRed", FtcBaseRobot.activeInstance)
-            assertEquals(Alliance.RED, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
+            assertEquals(redOpMode.configurationErrorForTest(), Alliance.RED, FtcBaseRobot.activeInstance?.store?.state?.drive?.alliance)
         } finally {
             redOpMode.stop()
             assertNull(FtcBaseRobot.activeInstance)
@@ -290,5 +293,11 @@ class AresAutoBaseTest {
             NT4Instance.defaultInstance.closeServer()
             com.areslib.hardware.HardwareRegistry.clear()
         }
+    }
+
+    private fun AresAutoBase.configurationErrorForTest(): String? {
+        val field = AresAutoBase::class.java.getDeclaredField("configurationError")
+        field.isAccessible = true
+        return field.get(this) as? String
     }
 }
