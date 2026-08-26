@@ -30,7 +30,7 @@ ARES-FTC/
 ├── FtcRobotController/       Upstream FTC SDK application module
 ├── .ares/                    Canonical routines, action/auto catalogs, and controller mappings
 ├── docs/                     Project documentation
-└── .ares-robot.json          Team/season/robot identity for ARES tooling
+└── .ares/project.json        Canonical team/season/robot identity, geometry, and runtime policy
 ```
 
 Although Kotlin sources are under a directory named `java`, they are Kotlin and are compiled by the Kotlin Android plugin.
@@ -74,10 +74,14 @@ The canonical Robot Controller configuration names are:
 | goBILDA Pinpoint | `pinpoint` | Primary odometry |
 | IMU | `imu` | Fallback heading input |
 | Limelight | `limelight` | Vision localization/alignment |
-| Intake motor | `intake` | Optional season mechanism |
-| Flywheel motor | `shooter` | Optional; encoder configured for 28 ticks/rev by default |
+| Left indicator | `indicator` | Independently controlled side light |
+| Right indicator | `indicator2` | Independently controlled side light |
+| Prism underbody light | `prism` | PWM Prism driver |
 
-Indicator and Prism devices are optional and support the names documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#hardware-configuration). Missing optional season mechanisms report telemetry and do not prevent the drivetrain from initializing. Drivetrain names are exactly `fl`, `fr`, `rl`, and `rr`.
+Lightbot's three lighting devices are fully described by the Robot Builder documents under
+`.ares/subsystems/`; their generated adapters fail closed when an optional device is absent. Generic
+intake and flywheel templates remain available in Robot Studio for other robots, but Lightbot does
+not instantiate them. Drivetrain names are exactly `fl`, `fr`, `rl`, and `rr`.
 
 ## Quick commands
 

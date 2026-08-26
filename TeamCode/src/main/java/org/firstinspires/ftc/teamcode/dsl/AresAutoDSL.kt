@@ -19,9 +19,10 @@ import org.firstinspires.ftc.teamcode.opmodes.AresRobot
 /**
  * Generated-project FTC autonomous lifecycle with an offline, INIT-time Driver Station selector.
  *
- * The checked-in [GeneratedAresProject] is the only autonomous source at runtime: no robot or
- * network connection is needed while authoring, and a stale generated file is rejected by the
- * Gradle verification task before the APK is built. During INIT, D-pad left/right selects a
+ * The build-generated [GeneratedAresProject] is the only autonomous runtime bridge. Canonical
+ * checked-in .ares documents remain the editable source, no network connection is needed while
+ * authoring, and stale generated output is rejected before the APK is built. During INIT,
+ * D-pad left/right selects a
  * routine and X toggles alliance. START seeds the selected catalog pose, invokes its neutral
  * routine through the shared `RoutineManager`, and enforces fail-closed cancellation on timeout,
  * error, stop, or mode transition.

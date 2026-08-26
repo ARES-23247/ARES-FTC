@@ -1,11 +1,14 @@
 {
   "schemaVersion": 2,
   "documentId": "test-auto",
-  "revision": 1,
-  "name": "Test Auto",
-  "description": "Small mechanism-only routine used to verify autonomous execution.",
+  "revision": 2,
+  "name": "Light Practice",
+  "description": "Beginner routine that practices sequential actions with Lightbot's two independent indicators and Prism.",
   "steps": [
-    {"kind":"ACTION","stepId":"step-stop-intake","actionKey":"intake.stop","arguments":{},"children":[],"elseChildren":[]},
-    {"kind":"WAIT","stepId":"step-settle","arguments":{},"durationSeconds":0.25,"children":[],"elseChildren":[]}
+    {"kind":"ACTION","stepId":"step-primary-green","actionKey":"subsystem.indicator-lights.set.primaryColor","arguments":{"value":"GREEN"},"children":[],"elseChildren":[]},
+    {"kind":"WAIT","stepId":"step-wait-primary","arguments":{},"durationSeconds":0.5,"children":[],"elseChildren":[]},
+    {"kind":"ACTION","stepId":"step-secondary-blue","actionKey":"subsystem.indicator-lights.set.secondaryColor","arguments":{"value":"BLUE"},"children":[],"elseChildren":[]},
+    {"kind":"WAIT","stepId":"step-wait-secondary","arguments":{},"durationSeconds":0.5,"children":[],"elseChildren":[]},
+    {"kind":"ACTION","stepId":"step-prism-timer","actionKey":"subsystem.prism.set.pattern","arguments":{"value":"FTC_TIMER"},"children":[],"elseChildren":[]}
   ]
 }

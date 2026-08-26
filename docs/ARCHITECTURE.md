@@ -9,9 +9,9 @@ ARES-FTC is a season-specific shell over ARESLib-Kotlin.
 ARES-FTC owns:
 
 - FTC Robot Controller entry points for the current season;
-- physical configuration names and mechanism constants;
-- FTC SDK implementations of intake and flywheel IO;
-- DECODE superstructure state and driver bindings;
+- canonical Robot Builder documents for the drivetrain, two side indicators, and Prism underbody lighting;
+- generated FTC/mock lighting adapters and generated actions;
+- Lightbot driver bindings and autonomous routines;
 - current-season generated routines, field assets, and named mechanism commands.
 
 ARESLib-Kotlin owns:
@@ -26,14 +26,12 @@ If code is usable unchanged by another season or league, it probably belongs in 
 
 ## Robot composition
 
-`opmodes/AresRobot.kt` is the composition root. Its `base` is an ARESLib `FtcMecanumRobot`. During construction it attempts to add season mechanisms:
-
-- `FtcIntakeIO` → `IntakeSubsystem`;
-- `FtcFlywheelIO` → `FlywheelSubsystem`;
-- zero, one, or two indicator-light subsystems;
-- an optional Prism RGB subsystem using I2C first, then PWM fallback.
-
-Intake, flywheel, and lighting failures are isolated during initialization and reported through telemetry. The base drivetrain remains available when optional season hardware is absent. The live named-command registry contains only capabilities backed by discovered hardware, so a routine requiring a missing mechanism/light is rejected instead of silently completing a no-op.
+`opmodes/AresRobot.kt` is the composition root. Its `base` is an ARESLib `FtcMecanumRobot`, while
+`GeneratedAresProject` installs the two independently controlled indicator lights and Prism output
+from `.ares/subsystems/`. The same descriptors generate mock adapters, capability actions, and
+behavior tests. Missing optional lighting reports a configuration fault and stays neutral; it does
+not prevent the drivetrain from initializing. The live action catalog contains only generated,
+validated capabilities, so a routine cannot silently call an unknown mechanism.
 
 ## Redux data flow
 
@@ -156,16 +154,15 @@ For field-centric driving on blue, `AresDriveController` negates both processed 
 | Pinpoint | `pinpoint` |
 | IMU | `imu` |
 | Limelight | `limelight` |
-| Intake | `intake` |
-| Flywheel | `shooter` |
 | Primary indicator | `indicator` |
 | Secondary indicator | `indicator2` |
-| Prism RGB | `prism`; initialized as I2C address `0x38` before same-name PWM fallback |
+| Prism RGB | `prism` |
 
 Right-side drive motors (`fr`, `rr`) are reversed in the team facade. Rear motors are named `rl`
 and `rr` in production and diagnostics; alternate rear-motor aliases are not supported.
 
-Flywheel conversion defaults to 28 encoder ticks/revolution and 6000 RPM maximum. Change those physical constants only after confirming the installed motor/encoder, then verify closed-loop and fallback open-loop behavior.
+The lighting names and footprint locations are owned by `.ares/subsystems/*.aressubsystem`. Change
+them in Robot Studio and regenerate rather than adding aliases or hand-editing generated adapters.
 
 ## Telemetry and networking
 

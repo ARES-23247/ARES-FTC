@@ -3,144 +3,29 @@
   "documentId": "indicator-lights",
   "uid": "indicator-lights",
   "displayName": "Indicator lights",
-  "kotlinTypeName": "IndicatorLightSubsystem",
-  "description": "Two optional goBILDA RGB indicator lights controlled through immutable Redux state and servo-compatible IO.",
+  "kotlinTypeName": "IndicatorLights",
+  "description": "Two independently controlled goBILDA RGB indicator lights with named color choices and a safe off state.",
   "platform": "FTC",
-  "revision": 1,
+  "revision": 2,
   "hardware": [
-    {
-      "hardwareId": "primaryIndicator",
-      "uid": "primaryIndicator",
-      "displayName": "Primary indicator light",
-      "kind": "POSITIONAL_SERVO",
-      "connection": { "hardwareMapName": "indicator" },
-      "measurements": [],
-      "required": false,
-      "safeOutput": 0.0
-    },
-    {
-      "hardwareId": "secondaryIndicator",
-      "uid": "secondaryIndicator",
-      "displayName": "Secondary indicator light",
-      "kind": "POSITIONAL_SERVO",
-      "connection": { "hardwareMapName": "indicator2" },
-      "measurements": [],
-      "required": false,
-      "safeOutput": 0.0
-    }
+    {"hardwareId":"primaryIndicator","uid":"primaryIndicator","displayName":"Left indicator light","kind":"INDICATOR_LIGHT","connection":{"hardwareMapName":"indicator"},"measurements":[],"required":false,"safeOutput":0.0,"description":"Independently controlled PWM indicator on the left side of Lightbot.","visualPlacement":{"anchor":"LEFT_SIDE","forwardFraction":0.0,"leftFraction":0.5}},
+    {"hardwareId":"secondaryIndicator","uid":"secondaryIndicator","displayName":"Right indicator light","kind":"INDICATOR_LIGHT","connection":{"hardwareMapName":"indicator2"},"measurements":[],"required":false,"safeOutput":0.0,"description":"Independently controlled PWM indicator on the right side of Lightbot.","visualPlacement":{"anchor":"RIGHT_SIDE","forwardFraction":0.0,"leftFraction":-0.5}}
   ],
   "stateFields": [
-    {
-      "fieldId": "primaryPosition",
-      "uid": "primaryPosition",
-      "displayName": "Primary color position",
-      "type": "DOUBLE",
-      "role": "TARGET",
-      "unit": "normalized servo position",
-      "defaultNumber": 0.0,
-      "minimum": -1.0,
-      "maximum": 1.0
-    },
-    {
-      "fieldId": "secondaryPosition",
-      "uid": "secondaryPosition",
-      "displayName": "Secondary color position",
-      "type": "DOUBLE",
-      "role": "TARGET",
-      "unit": "normalized servo position",
-      "defaultNumber": 0.0,
-      "minimum": -1.0,
-      "maximum": 1.0
-    }
+    {"fieldId":"primaryColor","uid":"primaryColor","displayName":"Primary color","description":"Named color selected independently for the primary light.","type":"DOUBLE","role":"TARGET","unit":"normalized","defaultNumber":0.472,"minimum":0.0,"maximum":1.0},
+    {"fieldId":"secondaryColor","uid":"secondaryColor","displayName":"Secondary color","description":"Named color selected independently for the secondary light.","type":"DOUBLE","role":"TARGET","unit":"normalized","defaultNumber":0.611,"minimum":0.0,"maximum":1.0}
   ],
   "controlLoops": [
-    {
-      "loopId": "primaryColorOutput",
-      "uid": "primaryColorOutput",
-      "displayName": "Primary indicator color",
-      "strategy": "SERVO_POSITION",
-      "actuatorId": "primaryIndicator",
-      "targetFieldId": "primaryPosition",
-      "feedforward": { "kind": "NONE" },
-      "minimumOutput": 0.0,
-      "maximumOutput": 1.0
-    },
-    {
-      "loopId": "secondaryColorOutput",
-      "uid": "secondaryColorOutput",
-      "displayName": "Secondary indicator color",
-      "strategy": "SERVO_POSITION",
-      "actuatorId": "secondaryIndicator",
-      "targetFieldId": "secondaryPosition",
-      "feedforward": { "kind": "NONE" },
-      "minimumOutput": 0.0,
-      "maximumOutput": 1.0
-    }
+    {"loopId":"primaryColorOutput","uid":"primaryColorOutput","displayName":"Primary indicator color","description":"Writes the primary color target to only the primary light.","strategy":"DIRECT","actuatorId":"primaryIndicator","targetFieldId":"primaryColor","feedforward":{"kind":"NONE"},"minimumOutput":0.0,"maximumOutput":1.0},
+    {"loopId":"secondaryColorOutput","uid":"secondaryColorOutput","displayName":"Secondary indicator color","description":"Writes the secondary color target to only the secondary light.","strategy":"DIRECT","actuatorId":"secondaryIndicator","targetFieldId":"secondaryColor","feedforward":{"kind":"NONE"},"minimumOutput":0.0,"maximumOutput":1.0}
   ],
   "tuningParameters": [],
-  "template": "SIMPLE_ACTUATOR",
-  "implementation": {
-    "kind": "HAND_AUTHORED",
-    "ownership": "USER_OWNED",
-    "modulePath": ":TeamCode",
-    "sourceFiles": [
-      "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/IndicatorLightSubsystem.kt"
-    ],
-    "subsystemClassName": "org.firstinspires.ftc.teamcode.subsystems.IndicatorLightSubsystem",
-    "ioContractClassName": "com.areslib.hardware.actuator.IndicatorLightIO",
-    "hardwareAdapterClassName": "com.areslib.ftc.hardware.FtcIndicatorLightIO",
-    "simulation": {
-      "support": "HAND_AUTHORED_MOCK",
-      "adapterClassName": "com.areslib.ftc.MockIndicatorLightIO"
-    },
-    "teaching": {
-      "level": "BEGINNER",
-      "summary": "A write-only actuator example that keeps controller bindings, Redux intent, lifecycle caching, and hardware IO separate.",
-      "documentationPath": "docs/examples/HAND_AUTHORED_LIGHTING.md",
-      "concepts": [
-        "Immutable Redux output intent",
-        "Named, colorblind-safe capabilities",
-        "Optional hardware discovery",
-        "Write-only subsystem lifecycle"
-      ]
-    }
-  },
-  "capabilityActionKeys": [
-    "SetIndicatorColor_OFF",
-    "SetIndicatorColor_RAINBOW",
-    "SetIndicatorColor_RED",
-    "SetIndicatorColor_ORANGE",
-    "SetIndicatorColor_YELLOW",
-    "SetIndicatorColor_GREEN",
-    "SetIndicatorColor_CYAN",
-    "SetIndicatorColor_BLUE",
-    "SetIndicatorColor_PURPLE",
-    "SetIndicatorColor_VIOLET",
-    "SetIndicatorColor_WHITE",
-    "SetSecondIndicatorColor_OFF",
-    "SetSecondIndicatorColor_RAINBOW",
-    "SetSecondIndicatorColor_RED",
-    "SetSecondIndicatorColor_ORANGE",
-    "SetSecondIndicatorColor_YELLOW",
-    "SetSecondIndicatorColor_GREEN",
-    "SetSecondIndicatorColor_CYAN",
-    "SetSecondIndicatorColor_BLUE",
-    "SetSecondIndicatorColor_PURPLE",
-    "SetSecondIndicatorColor_VIOLET",
-    "SetSecondIndicatorColor_WHITE"
-  ],
-  "safety": {
-    "feedbackTimeoutMs": null,
-    "homing": { "method": "NONE" },
-    "requiresCalibration": false,
-    "requiresConfigurationHealth": false,
-    "requiresCurrentMonitoring": false,
-    "latchOutputFaults": false,
-    "requiresExplicitNeutralRecovery": false,
-    "telemetryEnabled": true,
-    "zeroAllocationPeriodic": true
-  },
+  "template": "INDICATOR_LIGHT_PWM",
+  "implementation": {"kind":"DECLARATIVE_GENERATED","ownership":"GENERATED_DO_NOT_EDIT","simulation":{"support":"GENERATED_MOCK"},"teaching":{"level":"BEGINNER","summary":"Shows how two write-only devices remain independently addressable through immutable generated state.","documentationPath":"docs/examples/GUI_OWNED_LIGHTING.md","concepts":["Independent actuator targets","Named color choices","Safe off output","FTC and simulator parity"]}},
+  "capabilityActionKeys": [],
+  "safety": {"feedbackTimeoutMs":null,"homing":{"method":"NONE"},"requiresCalibration":false,"requiresConfigurationHealth":false,"requiresCurrentMonitoring":false,"latchOutputFaults":false,"requiresExplicitNeutralRecovery":false,"telemetryEnabled":true,"zeroAllocationPeriodic":true},
+  "autonomousResourceKey": "indicator-lights",
   "requiredAtStartup": false,
-  "generateMockIo": false,
-  "generateTest": false
+  "generateMockIo": true,
+  "generateTest": true
 }

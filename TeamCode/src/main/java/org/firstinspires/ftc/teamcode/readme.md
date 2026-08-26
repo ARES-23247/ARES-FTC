@@ -24,8 +24,9 @@ driver intent. Each receiver exposes named `robot`, `driver`, `operator`, and `t
 The iterative base owns SDK lifecycle callbacks, gamepad snapshots, periodic `robot.update(...)`, and
 idempotent close.
 
-For autonomous, extend `AresAutoBase`; the base selects entries from the checked-in generated ARES
-catalog. A narrow validation mode may lock one entry/alliance:
+For autonomous, extend `AresAutoBase`; the base selects entries from the canonical ARES catalog
+through disposable project code generated during the build. A narrow validation mode may lock one
+entry/alliance:
 
 ```kotlin
 override val lockedAutonomousEntryId = "test-auto"
