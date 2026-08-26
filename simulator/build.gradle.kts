@@ -10,7 +10,7 @@ val siblingAresVersion = if (siblingAresProps.exists()) {
     val props = Properties().apply { siblingAresProps.inputStream().use { load(it) } }
     props.getProperty("aresVersion")
 } else null
-val aresVersion = providers.gradleProperty("aresVersion").orElse(providers.provider { siblingAresVersion }).getOrElse("9.11.0")
+val aresVersion = providers.gradleProperty("aresVersion").orElse(providers.provider { siblingAresVersion }).getOrElse("9.13.0")
 val aresSimulatorRuntime = when {
     System.getProperty("os.name").contains("windows", ignoreCase = true) -> "simulator-runtime-windows"
     System.getProperty("os.name").contains("mac", ignoreCase = true) -> "simulator-runtime-macos"
