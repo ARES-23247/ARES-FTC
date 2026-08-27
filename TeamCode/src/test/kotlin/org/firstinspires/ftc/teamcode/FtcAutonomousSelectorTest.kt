@@ -6,8 +6,8 @@ import com.areslib.routine.AutonomousCatalogEntry
 import com.areslib.routine.RoutineAlliance
 import com.areslib.routine.RoutinePose
 import com.areslib.state.Alliance
-import org.firstinspires.ftc.teamcode.dsl.FtcAutonomousSelector
-import org.firstinspires.ftc.teamcode.dsl.resolveFtcAutonomousPose
+import com.areslib.ftc.runtime.FtcAutonomousSelector
+import com.areslib.ftc.runtime.resolveFtcAutonomousPose
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

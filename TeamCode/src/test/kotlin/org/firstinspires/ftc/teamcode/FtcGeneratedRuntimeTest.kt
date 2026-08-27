@@ -332,6 +332,41 @@ class FtcGeneratedRuntimeTest {
 
 class GeneratedDriveCommandTest {
     @Test
+    fun `FTC simulator owns OpMode behavior and does not import FRC lifecycle or vendor APIs`() {
+        val workingDirectory = requireNotNull(System.getProperty("user.dir"))
+        val root = generateSequence(java.io.File(workingDirectory).canonicalFile, java.io.File::getParentFile)
+            .first { java.io.File(it, "TeamCode").isDirectory && java.io.File(it, ".ares/project.json").isFile }
+        val sources = java.io.File(root, "simulator/src/main").walkTopDown()
+            .filter { it.isFile && it.extension in setOf("kt", "java") }
+            .joinToString("\n") { it.readText() }
+
+        assertFalse(sources.contains("import edu.wpi.first.wpilibj.TimedRobot"))
+        assertFalse(sources.contains("import com.ctre.phoenix"))
+    }
+
+    @Test
+    fun `Lightbot delegates generated scheduling and keeps mechanical output out of source`() {
+        val workingDirectory = requireNotNull(System.getProperty("user.dir"))
+        val root = generateSequence(java.io.File(workingDirectory).canonicalFile, java.io.File::getParentFile)
+            .first { java.io.File(it, "TeamCode").isDirectory && java.io.File(it, ".ares/project.json").isFile }
+        val runtime = java.io.File(
+            root,
+            "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/dsl/FtcGeneratedProjectRuntime.kt",
+        ).readText()
+
+        assertTrue(runtime.contains("GeneratedProjectControlRuntime"))
+        assertTrue(runtime.contains("GeneratedAresProject.runtimeDefinition"))
+        assertFalse(runtime.contains("private val directTaskExecutor"))
+        val autoHost = java.io.File(
+            root,
+            "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/dsl/AresAutoDSL.kt",
+        ).readText()
+        assertTrue(autoHost.contains("FtcGeneratedAutonomousOpMode"))
+        assertFalse(autoHost.contains("override fun loop()"))
+        assertFalse(java.io.File(root, "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/generated").exists())
+    }
+
+    @Test
     fun `blue alliance mirrors both translation axes but never rotation`() {
         val red = generatedDriveFieldComponents(0.25, -0.5, Alliance.RED)
         val blue = generatedDriveFieldComponents(0.25, -0.5, Alliance.BLUE)
@@ -344,15 +379,17 @@ class GeneratedDriveCommandTest {
 
     @Test
     fun `checked-in scheme binds every drive axis and an explicit neutral recovery chord`() {
-        var dir = java.io.File(System.getProperty("user.dir"))
+        val workingDirectory = requireNotNull(System.getProperty("user.dir"))
+        var dir: java.io.File? = java.io.File(workingDirectory)
         var schemeFile: java.io.File? = null
         while (dir != null) {
-            val candidate = java.io.File(dir, ".ares/controls/driver.arescontrols")
+            val current = dir
+            val candidate = java.io.File(current, ".ares/controls/driver.arescontrols")
             if (candidate.isFile) {
                 schemeFile = candidate
                 break
             }
-            dir = dir.parentFile
+            dir = current.parentFile
         }
         val scheme = requireNotNull(schemeFile).let {
             com.areslib.controls.ControlSchemeCodec.decode(it.readText())
