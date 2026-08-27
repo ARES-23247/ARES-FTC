@@ -296,7 +296,14 @@ class AresAutoBaseTest {
     }
 
     private fun AresAutoBase.configurationErrorForTest(): String? {
-        val field = AresAutoBase::class.java.getDeclaredField("configurationError")
+        var type: Class<*>? = AresAutoBase::class.java
+        var field: java.lang.reflect.Field? = null
+        while (type != null && field == null) {
+            val current = type
+            field = runCatching { current.getDeclaredField("configurationError") }.getOrNull()
+            type = current.superclass
+        }
+        field = requireNotNull(field)
         field.isAccessible = true
         return field.get(this) as? String
     }

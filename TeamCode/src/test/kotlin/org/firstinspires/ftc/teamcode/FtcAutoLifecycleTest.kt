@@ -2,9 +2,9 @@ package org.firstinspires.ftc.teamcode
 
 import com.areslib.state.RoutineExecutionState
 import com.areslib.state.RoutineExecutionStatus
-import org.firstinspires.ftc.teamcode.dsl.FtcAutoTerminalDecision
-import org.firstinspires.ftc.teamcode.dsl.classifyFtcAutoTerminal
-import org.firstinspires.ftc.teamcode.dsl.shouldPersistFtcAutoPose
+import com.areslib.ftc.runtime.FtcAutoTerminalDecision
+import com.areslib.ftc.runtime.classifyFtcAutoTerminal
+import com.areslib.ftc.runtime.shouldPersistFtcAutoPose
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
