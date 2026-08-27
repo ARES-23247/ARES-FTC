@@ -332,6 +332,19 @@ class FtcGeneratedRuntimeTest {
 
 class GeneratedDriveCommandTest {
     @Test
+    fun `FTC simulator owns OpMode behavior and does not import FRC lifecycle or vendor APIs`() {
+        val workingDirectory = requireNotNull(System.getProperty("user.dir"))
+        val root = generateSequence(java.io.File(workingDirectory).canonicalFile, java.io.File::getParentFile)
+            .first { java.io.File(it, "TeamCode").isDirectory && java.io.File(it, ".ares/project.json").isFile }
+        val sources = java.io.File(root, "simulator/src/main").walkTopDown()
+            .filter { it.isFile && it.extension in setOf("kt", "java") }
+            .joinToString("\n") { it.readText() }
+
+        assertFalse(sources.contains("import edu.wpi.first.wpilibj.TimedRobot"))
+        assertFalse(sources.contains("import com.ctre.phoenix"))
+    }
+
+    @Test
     fun `Lightbot delegates generated scheduling and keeps mechanical output out of source`() {
         val workingDirectory = requireNotNull(System.getProperty("user.dir"))
         val root = generateSequence(java.io.File(workingDirectory).canonicalFile, java.io.File::getParentFile)
