@@ -17,6 +17,11 @@ then review the structured diff and save the canonical descriptor. Generated def
 registration, and test files are mechanical Gradle products. Editable adapter starters remain
 protected and cannot be silently overwritten during regeneration.
 
+Each side light displays one color at a time. ARESLib derives independent **Set color**, **Cycle
+forward**, and **Cycle backward** actions for the left and right targets. Forward walks red through
+white and wraps to red; backward walks the same visible choices in reverse. **Off** remains an
+explicit named set-color choice rather than an extra stop in the cycle.
+
 ## Runtime flow
 
 `TeleOp or autonomous choice → generated action → Redux reducer → immutable subsystem state → generated controller → shared IO contract → FTC or mock adapter`
